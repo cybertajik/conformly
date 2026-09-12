@@ -94,9 +94,9 @@ Percentages are planning weights from `docs/PRODUCT_SOURCE_OF_TRUTH.md` Section 
 - **40–48% Frameworks/controls:** Canonical/versioned content, overlays, custom controls, mappings, two-person release, impact analysis, controlled adoption. (Complete)
 - **48–55% Evidence:** Encrypted immutable versions, malware quarantine, provenance, hash, expiry, retention, legal hold. (Complete)
 - **55–62% Assessments/findings:** Applicability, assignments, deterministic checks, findings, severity, remediation. (Complete)
-- **62–67% Tasks/notifications:** Owners, dates, reminders, escalation, dashboard. (Complete)
+- **62–67% Tasks/notifications:** Owners, dates, reminders, escalation, dashboard, and automated continuous compliance evaluation cycle. (Complete)
 - **67–72% Policies:** Editor, templates, uploads, versions, approvals, reviews, acknowledgements. (Complete)
-- **72–79% Risks/assets/vendors:** Linked risk/treatment, asset, vendor, changes, recurring review. (In Progress)
+- **72–79% Risks/assets/vendors:** Linked risk/treatment, asset, vendor, DPA tracking, recurring review. (Complete)
 - **79–84% Pre-audit/readiness/public:** Human and second review, approval, frozen result/report/manifest, lifecycle, isolated publication. (Complete)
 - **84–88% LMS:** Assignments, identity/tenant mapping, SSO/API, signed idempotent completion evidence. (Deferred to later integration phase)
 - **88–92% API/webhooks:** Stable v1 API, signed tenant webhooks, replay/retry/dead-letter operations. (Pending)
@@ -104,7 +104,7 @@ Percentages are planning weights from `docs/PRODUCT_SOURCE_OF_TRUTH.md` Section 
 - **95–97% DR:** 3-2-1-1-0, PITR/HA/DR, immutable objects, separated keys. (Procedures documented, drills scheduled)
 - **97–100% Operations & Release:** Observability, runbooks, penetration testing, gate verification. (In Progress)
 
-*Whistleblower Note:* Per Trello V4 Cards 1, 2, 7, 10, 22 and Section 16, Whistleblower is a separate later add-on track (Phases 13–15 skipped in Core). Core Tier A real progress is currently **~45%**.
+*Whistleblower Note:* Per Trello V4 Cards 1, 2, 7, 10, 22 and Section 16, Whistleblower is a separate later add-on track (Phases 13–15 skipped in Core). Core Tier A real progress is currently **~55%**.
 
 
 
