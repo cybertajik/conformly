@@ -200,112 +200,86 @@ export function App() {
 
   const effectiveToken = token || (getAccessToken() ?? "");
 
+  const navItems: { id: Tab; label: string; icon: string; check?: () => boolean }[] = [
+    { id: "overview", label: "Overview", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1" },
+    { id: "frameworks", label: "Frameworks", icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" },
+    { id: "compliance", label: "Compliance", icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" },
+    { id: "preaudit", label: "Pre-Audit", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" },
+    { id: "whistleblower", label: "Whistleblower", icon: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z", check: () => canReadWhistleblowerCases(selected.role) },
+    { id: "public_profile", label: "Trust Center", icon: "M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064", check: () => canReadPublicProfile(selected.role) },
+    { id: "lifecycle", label: "Export & Data", icon: "M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4", check: () => canReadExport(selected.role) },
+    { id: "members", label: "Members", icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z", check: () => canManageMemberships(selected.role) },
+  ];
+
+  const visibleNavItems = navItems.filter((item) => !item.check || item.check());
+  const userInitials = (selected.tenant_name || "U").substring(0, 2).toUpperCase();
+
   return (
-    <main>
-      <section className="workspace" aria-labelledby="page-title">
-        <header>
-          <div>
-            <p className="eyebrow">Secure compliance operations</p>
-            <h1 id="page-title">Conformly</h1>
-          </div>
-          <button className="secondary" onClick={() => void signOut()}>
-            Sign out
-          </button>
-        </header>
-        <label htmlFor="tenant-selector">Organization</label>
-        <select
-          id="tenant-selector"
-          value={selected.tenant_id}
-          onChange={(event) => void chooseTenant(event.target.value)}
-        >
-          {tenants.map((tenant) => (
-            <option key={tenant.tenant_id} value={tenant.tenant_id}>
-              {tenant.tenant_name}
-            </option>
+    <div className="app-shell">
+      {/* ─── Sidebar ─── */}
+      <aside className="sidebar">
+        <div className="sidebar-brand">
+          <div className="brand-icon">C</div>
+          <span className="brand-name">Conformly</span>
+        </div>
+
+        <div className="sidebar-org">
+          <label htmlFor="tenant-selector">Organization</label>
+          <select
+            id="tenant-selector"
+            value={selected.tenant_id}
+            onChange={(event) => void chooseTenant(event.target.value)}
+          >
+            {tenants.map((tenant) => (
+              <option key={tenant.tenant_id} value={tenant.tenant_id}>
+                {tenant.tenant_name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <nav className="sidebar-nav" aria-label="Primary navigation">
+          <div className="sidebar-section-label">Platform</div>
+          {visibleNavItems.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`nav-item${tab === item.id ? " active" : ""}`}
+              onClick={() => setTab(item.id)}
+            >
+              <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d={item.icon} />
+              </svg>
+              {item.label}
+            </button>
           ))}
-        </select>
-        <nav aria-label="Primary navigation">
-          <a
-            href="#overview"
-            onClick={(e) => {
-              e.preventDefault();
-              setTab("overview");
-            }}
-          >
-            Overview
-          </a>
-          <a
-            href="#frameworks"
-            onClick={(e) => {
-              e.preventDefault();
-              setTab("frameworks");
-            }}
-          >
-            Frameworks & Overlays
-          </a>
-          <a
-            href="#compliance"
-            onClick={(e) => {
-              e.preventDefault();
-              setTab("compliance");
-            }}
-          >
-            Compliance Workspace
-          </a>
-          <a
-            href="#preaudit"
-            onClick={(e) => {
-              e.preventDefault();
-              setTab("preaudit");
-            }}
-          >
-            Pre-Audit Readiness
-          </a>
-          {canReadWhistleblowerCases(selected.role) && (
-            <a
-              href="#whistleblower"
-              onClick={(e) => {
-                e.preventDefault();
-                setTab("whistleblower");
-              }}
-            >
-              Whistleblower
-            </a>
-          )}
-          {canReadPublicProfile(selected.role) && (
-            <a
-              href="#public-profile"
-              onClick={(e) => {
-                e.preventDefault();
-                setTab("public_profile");
-              }}
-            >
-              Trust Center
-            </a>
-          )}
-          {canReadExport(selected.role) && (
-            <a
-              href="#lifecycle"
-              onClick={(e) => {
-                e.preventDefault();
-                setTab("lifecycle");
-              }}
-            >
-              Export & Retention
-            </a>
-          )}
-          {canManageMemberships(selected.role) && (
-            <a
-              href="#members"
-              onClick={(e) => {
-                e.preventDefault();
-                setTab("members");
-              }}
-            >
-              Members
-            </a>
-          )}
         </nav>
+
+        <div className="sidebar-footer">
+          <div className="sidebar-user">
+            <div className="user-avatar">{userInitials}</div>
+            <div className="user-info">
+              <div className="user-name">{selected.tenant_name}</div>
+              <div className="user-email">{selected.role.replaceAll("_", " ")}</div>
+            </div>
+            <button
+              className="ghost"
+              onClick={() => void signOut()}
+              title="Sign out"
+              style={{ padding: "0.3rem", minHeight: "auto" }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* ─── Main Content ─── */}
+      <div className="main-content">
         {tab === "overview" && (
           <OnboardingOverview
             tenantName={selected.tenant_name}
@@ -364,10 +338,12 @@ export function App() {
           />
         )}
         {tab === "members" && (
-          <p>Member management is restricted to tenant administrators.</p>
+          <div className="card" style={{ marginTop: "1rem" }}>
+            <p style={{ color: "var(--text-secondary)" }}>Member management is restricted to tenant administrators.</p>
+          </div>
         )}
-      </section>
-    </main>
+      </div>
+    </div>
   );
 }
 
@@ -382,13 +358,14 @@ function Status({
   children?: React.ReactNode;
 }) {
   return (
-    <main>
+    <main className="status-page">
       <section aria-labelledby="page-title">
         <p className="eyebrow">Secure compliance operations</p>
         <h1 id="page-title">{title}</h1>
-        {detail && <p>{detail}</p>}
+        {detail && <p style={{ fontSize: "1.1rem", marginTop: "0.75rem" }}>{detail}</p>}
         {children}
       </section>
     </main>
   );
 }
+
