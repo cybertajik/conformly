@@ -939,4 +939,18 @@ export interface DashboardSummary {
   admin_metrics?: DashboardAdminMetrics | null;
 }
 
+export interface ContinuousComplianceResult {
+  tenant_id: string;
+  expired_evidence_count: number;
+  expiring_evidence_warnings: number;
+  overdue_tasks_escalated: number;
+  policy_reviews_due: number;
+  vendor_reviews_due: number;
+  missing_dpas_flagged: number;
+  tasks_created: number;
+  notifications_enqueued: number;
+  executed_at: string;
+}
+
+
 

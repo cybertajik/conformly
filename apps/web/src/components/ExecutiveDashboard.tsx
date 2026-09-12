@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import type { DashboardSummary, TenantRole } from "@conformly/shared";
-import { getDashboardSummary } from "../api";
+import type { ContinuousComplianceResult, DashboardSummary, TenantRole } from "@conformly/shared";
+import { getDashboardSummary, runContinuousComplianceCycle } from "../api";
 
 export interface ExecutiveDashboardProps {
   token: string;
@@ -26,6 +26,8 @@ export function ExecutiveDashboard({
     "readiness" | "expiring" | "tasks" | "registers" | "activity"
   >("readiness");
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [runningCycle, setRunningCycle] = useState(false);
+  const [cycleResult, setCycleResult] = useState<ContinuousComplianceResult | null>(null);
 
   const fetchSummary = useCallback(async () => {
     try {
@@ -37,6 +39,21 @@ export function ExecutiveDashboard({
       setError(err instanceof Error ? err.message : "Failed to load dashboard metrics");
     } finally {
       setLoading(false);
+    }
+  }, [token, tenantId]);
+
+  const handleRunCycle = useCallback(async () => {
+    try {
+      setRunningCycle(true);
+      setError(null);
+      const res = await runContinuousComplianceCycle(token, tenantId);
+      setCycleResult(res);
+      const updated = await getDashboardSummary(token, tenantId);
+      setSummary(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to execute continuous compliance check");
+    } finally {
+      setRunningCycle(false);
     }
   }, [token, tenantId]);
 
@@ -144,7 +161,21 @@ export function ExecutiveDashboard({
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: "0.75rem" }}>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          {!summary.is_administrator_view && (userRole === "owner" || userRole === "compliance_manager") && (
+            <button
+              className="btn-secondary"
+              style={{ fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" }}
+              onClick={() => void handleRunCycle()}
+              disabled={runningCycle}
+              title="Trigger automated check for expiring evidence, overdue tasks, review-due policies, and vendor DPAs"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              {runningCycle ? "Evaluating..." : "Run Continuous Check"}
+            </button>
+          )}
           <button
             className="btn-secondary"
             style={{ fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" }}
@@ -167,6 +198,43 @@ export function ExecutiveDashboard({
           </button>
         </div>
       </div>
+
+      {/* ── Continuous Compliance Cycle Result Banner ── */}
+      {cycleResult && (
+        <div
+          style={{
+            padding: "1rem 1.25rem",
+            marginBottom: "1.5rem",
+            background: "rgba(16, 185, 129, 0.08)",
+            border: "1px solid rgba(16, 185, 129, 0.3)",
+            borderRadius: "var(--radius-md)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "1rem",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <span style={{ fontSize: "1.25rem" }}>⚡</span>
+            <div>
+              <div style={{ fontWeight: 600, color: "var(--color-success)", fontSize: "0.95rem" }}>
+                Continuous Compliance Evaluation Completed
+              </div>
+              <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                {cycleResult.tasks_created} remediation task(s) created • {cycleResult.notifications_enqueued} notification(s) queued • {cycleResult.overdue_tasks_escalated} overdue task(s) escalated • {cycleResult.missing_dpas_flagged} missing DPA(s) flagged
+              </div>
+            </div>
+          </div>
+          <button
+            className="btn-secondary"
+            style={{ fontSize: "0.8rem", padding: "0.25rem 0.6rem" }}
+            onClick={() => setCycleResult(null)}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* ── Administrator Isolation Notice (if applicable) ── */}
       {summary.is_administrator_view && (

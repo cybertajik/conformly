@@ -163,4 +163,57 @@ describe("ExecutiveDashboard", () => {
     expect(screen.getByText("5")).toBeInTheDocument();
     expect(screen.getByText("TIER_A")).toBeInTheDocument();
   });
+
+  it("triggers continuous compliance check and displays results banner", async () => {
+    vi.spyOn(api, "getDashboardSummary").mockResolvedValue(mockSummary);
+    const mockCycleResult = {
+      tenant_id: "t-123",
+      expired_evidence_count: 1,
+      expiring_evidence_warnings: 2,
+      overdue_tasks_escalated: 1,
+      policy_reviews_due: 1,
+      vendor_reviews_due: 1,
+      missing_dpas_flagged: 1,
+      tasks_created: 3,
+      notifications_enqueued: 4,
+      executed_at: "2026-09-12T22:00:00Z",
+    };
+    const cycleSpy = vi
+      .spyOn(api, "runContinuousComplianceCycle")
+      .mockResolvedValue(mockCycleResult);
+
+    render(
+      <ExecutiveDashboard
+        token="test-token"
+        tenantId="t-123"
+        tenantName="Acme Security"
+        tenantSlug="acme-security"
+        userRole="compliance_manager"
+        onNavigate={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("85%")).toBeInTheDocument();
+    });
+
+    const runBtn = screen.getByRole("button", { name: /Run Continuous Check/i });
+    expect(runBtn).toBeInTheDocument();
+    fireEvent.click(runBtn);
+
+    await waitFor(() => {
+      expect(cycleSpy).toHaveBeenCalledWith("test-token", "t-123");
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Continuous Compliance Evaluation Completed/i)
+      ).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getByText(/3 remediation task\(s\) created/i)
+    ).toBeInTheDocument();
+  });
 });
+

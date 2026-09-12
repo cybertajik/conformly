@@ -69,6 +69,7 @@ import type {
   VendorRiskTier,
   VendorStatus,
   DashboardSummary,
+  ContinuousComplianceResult,
 } from "@conformly/shared";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
@@ -1897,4 +1898,16 @@ export function getDashboardSummary(
 ): Promise<DashboardSummary> {
   return apiRequest(`/v1/tenants/${encodeURIComponent(tenantId)}/dashboard/summary`, token);
 }
+
+export function runContinuousComplianceCycle(
+  token: string,
+  tenantId: string
+): Promise<ContinuousComplianceResult> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/compliance/cycle`,
+    token,
+    { method: "POST" }
+  );
+}
+
 

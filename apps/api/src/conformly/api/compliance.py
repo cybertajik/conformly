@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from conformly.auth.dependencies import CurrentPrincipal, CurrentTenant
 from conformly.authz.policy import AuthorizationDeniedError
+from conformly.compliance.automation import run_continuous_compliance_cycle
 from conformly.compliance.jobs import (
     ComplianceJobResult,
     run_evidence_expiration_check,
@@ -323,6 +324,19 @@ class JobExecutionResponse(BaseModel):
     expired_evidence: ComplianceJobResult
     overdue_tasks: ComplianceJobResult
     policy_alerts: ComplianceJobResult
+
+
+class ContinuousComplianceCycleResponse(BaseModel):
+    tenant_id: UUID
+    expired_evidence_count: int
+    expiring_evidence_warnings: int
+    overdue_tasks_escalated: int
+    policy_reviews_due: int
+    vendor_reviews_due: int
+    missing_dpas_flagged: int
+    tasks_created: int
+    notifications_enqueued: int
+    executed_at: datetime
 
 
 # -----------------------------------------------------------------------------
@@ -1464,8 +1478,8 @@ def run_jobs(
     database: Annotated[Session, Depends(get_db)],
     codec: Annotated[EncryptedFieldCodec, Depends(get_encrypted_field_codec)],
 ) -> Any:
-    # Only Owner, Administrator, Compliance Manager can trigger batch jobs manually
-    if tenant.role not in ("owner", "administrator", "compliance_manager"):
+    # Only Owner, Compliance Manager can trigger compliance batch jobs manually
+    if tenant.role not in ("owner", "compliance_manager"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="job execution capability denied"
         )
@@ -1479,3 +1493,23 @@ def run_jobs(
         overdue_tasks=overdue_result,
         policy_alerts=alerts_result,
     )
+
+
+@compliance_router.post("/cycle", response_model=ContinuousComplianceCycleResponse)
+def trigger_continuous_compliance_cycle(
+    principal: CurrentPrincipal,
+    tenant: CurrentTenant,
+    database: Annotated[Session, Depends(get_db)],
+    codec: Annotated[EncryptedFieldCodec, Depends(get_encrypted_field_codec)],
+) -> Any:
+    """Execute complete deterministic continuous compliance automation cycle for this tenant."""
+    if tenant.role not in ("owner", "compliance_manager"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="compliance cycle execution capability denied",
+        )
+
+    result = run_continuous_compliance_cycle(database, codec, tenant_id=tenant.tenant_id)
+    database.commit()
+    return result
+
