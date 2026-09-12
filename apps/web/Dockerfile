@@ -18,7 +18,7 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
     VITE_OIDC_CLIENT_ID=$VITE_OIDC_CLIENT_ID \
     VITE_OIDC_REDIRECT_URI=$VITE_OIDC_REDIRECT_URI \
     VITE_OIDC_SCOPES=$VITE_OIDC_SCOPES
-RUN npm run build --workspace @conformly/web
+RUN npm run build
 
 FROM nginx:1.27-alpine
 COPY --from=build /workspace/apps/web/dist /usr/share/nginx/html
