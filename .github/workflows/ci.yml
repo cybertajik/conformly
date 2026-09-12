@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: conformly
+          POSTGRES_USER: conformly
+          POSTGRES_PASSWORD: conformly
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U conformly -d conformly"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      CONFORMLY_DATABASE_URL: postgresql+psycopg://conformly:conformly@localhost:5432/conformly
+      CONFORMLY_TEST_APP_DATABASE_URL: postgresql+psycopg://conformly_app:conformly_app@localhost:5432/conformly
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: mypy src tests
+      - run: PGPASSWORD=conformly psql -h localhost -U conformly -d conformly -f ../../infra/postgres/init.sql
+      - run: alembic upgrade head
+      - run: pytest --cov=conformly --cov-report=term-missing
+      - run: alembic upgrade head --sql > /tmp/migration.sql
+      - run: alembic check
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  containers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose build

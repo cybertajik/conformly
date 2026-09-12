@@ -1,0 +1,1 @@
+"""Centralized capability-based authorization."""
