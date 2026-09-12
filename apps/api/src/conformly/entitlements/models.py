@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Index, String, func
+from sqlalchemy import JSON, BigInteger, DateTime, ForeignKey, Index, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from conformly.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -38,7 +38,9 @@ class TenantEntitlement(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         JSON, default=DEFAULT_TIER_A_MODULES, nullable=False
     )
     max_members: Mapped[int] = mapped_column(default=100, nullable=False)
-    max_storage_bytes: Mapped[int] = mapped_column(default=10 * 1024 * 1024 * 1024, nullable=False)  # 10 GB
+    max_storage_bytes: Mapped[int] = mapped_column(
+        BigInteger, default=10 * 1024 * 1024 * 1024, nullable=False
+    )  # 10 GB
     effective_from: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
