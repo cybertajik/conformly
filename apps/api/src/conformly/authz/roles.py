@@ -5,6 +5,11 @@ class Role(StrEnum):
     OWNER = "owner"
     ADMINISTRATOR = "administrator"
     COMPLIANCE_MANAGER = "compliance_manager"
+    CONTROL_OWNER = "control_owner"
+    REVIEWER = "reviewer"
+    EMPLOYEE = "employee"
+
+    # Backward compatibility values
     AUDITOR = "auditor"
     CONTRIBUTOR = "contributor"
     VIEWER = "viewer"
@@ -42,17 +47,45 @@ class Capability(StrEnum):
     EXPORT_READ = "export:read"
     TENANT_CANCEL = "tenant:cancel"
     RETENTION_MANAGE = "retention:manage"
+    ORGANIZATION_READ = "organization:read"
+    ORGANIZATION_MANAGE = "organization:manage"
+    RISK_READ = "risk:read"
+    RISK_MANAGE = "risk:manage"
+    ASSET_READ = "asset:read"
+    ASSET_MANAGE = "asset:manage"
+    VENDOR_READ = "vendor:read"
+    VENDOR_MANAGE = "vendor:manage"
+    ENTITLEMENT_READ = "entitlement:read"
+    ENTITLEMENT_MANAGE = "entitlement:manage"
 
 
 ROLE_CAPABILITIES: dict[Role, frozenset[Capability]] = {
     Role.OWNER: frozenset(Capability),
-    Role.ADMINISTRATOR: frozenset(c for c in Capability if c != Capability.TENANT_CANCEL),
+    Role.ADMINISTRATOR: frozenset(
+        {
+            Capability.TENANT_READ,
+            Capability.TENANT_MANAGE,
+            Capability.MEMBERSHIP_READ,
+            Capability.MEMBERSHIP_MANAGE,
+            Capability.AUDIT_READ,
+            Capability.AUDIT_EXPORT,
+            Capability.ORGANIZATION_READ,
+            Capability.ORGANIZATION_MANAGE,
+            Capability.ENTITLEMENT_READ,
+            Capability.ENTITLEMENT_MANAGE,
+            Capability.PUBLIC_PROFILE_READ,
+            Capability.EXPORT_CREATE,
+            Capability.EXPORT_READ,
+            Capability.RETENTION_MANAGE,
+        }
+    ),
     Role.COMPLIANCE_MANAGER: frozenset(
         {
             Capability.TENANT_READ,
             Capability.MEMBERSHIP_READ,
             Capability.AUDIT_READ,
             Capability.AUDIT_EXPORT,
+            Capability.ORGANIZATION_READ,
             Capability.FILE_READ,
             Capability.FILE_WRITE,
             Capability.FILE_DELETE,
@@ -69,34 +102,26 @@ ROLE_CAPABILITIES: dict[Role, frozenset[Capability]] = {
             Capability.CONTROL_STATUS_MANAGE,
             Capability.PREAUDIT_READ,
             Capability.PREAUDIT_MANAGE,
-            Capability.WHISTLEBLOWER_PORTAL_MANAGE,
-            Capability.WHISTLEBLOWER_CASE_READ,
-            Capability.WHISTLEBLOWER_CASE_MANAGE,
             Capability.PUBLIC_PROFILE_MANAGE,
             Capability.PUBLIC_PROFILE_READ,
             Capability.EXPORT_CREATE,
             Capability.EXPORT_READ,
+            Capability.RISK_READ,
+            Capability.RISK_MANAGE,
+            Capability.ASSET_READ,
+            Capability.ASSET_MANAGE,
+            Capability.VENDOR_READ,
+            Capability.VENDOR_MANAGE,
+            Capability.ENTITLEMENT_READ,
+            Capability.WHISTLEBLOWER_PORTAL_MANAGE,
+            Capability.WHISTLEBLOWER_CASE_READ,
+            Capability.WHISTLEBLOWER_CASE_MANAGE,
         }
     ),
-    Role.AUDITOR: frozenset(
+    Role.CONTROL_OWNER: frozenset(
         {
             Capability.TENANT_READ,
-            Capability.MEMBERSHIP_READ,
-            Capability.AUDIT_READ,
-            Capability.FILE_READ,
-            Capability.FRAMEWORK_READ,
-            Capability.EVIDENCE_READ,
-            Capability.POLICY_READ,
-            Capability.TASK_READ,
-            Capability.FINDING_READ,
-            Capability.PREAUDIT_READ,
-            Capability.PUBLIC_PROFILE_READ,
-            Capability.EXPORT_READ,
-        }
-    ),
-    Role.CONTRIBUTOR: frozenset(
-        {
-            Capability.TENANT_READ,
+            Capability.ORGANIZATION_READ,
             Capability.FILE_READ,
             Capability.FILE_WRITE,
             Capability.FRAMEWORK_READ,
@@ -110,11 +135,45 @@ ROLE_CAPABILITIES: dict[Role, frozenset[Capability]] = {
             Capability.FINDING_MANAGE,
             Capability.PREAUDIT_READ,
             Capability.PUBLIC_PROFILE_READ,
+            Capability.RISK_READ,
+            Capability.ASSET_READ,
+            Capability.ASSET_MANAGE,
+            Capability.VENDOR_READ,
+        }
+    ),
+    Role.REVIEWER: frozenset(
+        {
+            Capability.TENANT_READ,
+            Capability.MEMBERSHIP_READ,
+            Capability.ORGANIZATION_READ,
+            Capability.AUDIT_READ,
+            Capability.FILE_READ,
+            Capability.FRAMEWORK_READ,
+            Capability.EVIDENCE_READ,
+            Capability.POLICY_READ,
+            Capability.TASK_READ,
+            Capability.FINDING_READ,
+            Capability.PREAUDIT_READ,
+            Capability.PUBLIC_PROFILE_READ,
+            Capability.EXPORT_READ,
+            Capability.RISK_READ,
+            Capability.ASSET_READ,
+            Capability.VENDOR_READ,
+        }
+    ),
+    Role.EMPLOYEE: frozenset(
+        {
+            Capability.TENANT_READ,
+            Capability.ORGANIZATION_READ,
+            Capability.POLICY_READ,
+            Capability.TASK_READ,
+            Capability.PUBLIC_PROFILE_READ,
         }
     ),
     Role.VIEWER: frozenset(
         {
             Capability.TENANT_READ,
+            Capability.ORGANIZATION_READ,
             Capability.FILE_READ,
             Capability.FRAMEWORK_READ,
             Capability.EVIDENCE_READ,
@@ -126,3 +185,8 @@ ROLE_CAPABILITIES: dict[Role, frozenset[Capability]] = {
         }
     ),
 }
+
+# Backward compatibility aliases
+ROLE_CAPABILITIES[Role.AUDITOR] = ROLE_CAPABILITIES[Role.REVIEWER]
+ROLE_CAPABILITIES[Role.CONTRIBUTOR] = ROLE_CAPABILITIES[Role.CONTROL_OWNER]
+

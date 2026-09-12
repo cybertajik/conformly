@@ -178,7 +178,7 @@ class TestPublicProfileLifecycle:
 
     def test_configure_profile_invalid_slug(self, session: Session) -> None:
         tenant = _seed_tenant(session)
-        principal, ctx = _seed_context(session, tenant.id, Role.ADMINISTRATOR)
+        principal, ctx = _seed_context(session, tenant.id, Role.COMPLIANCE_MANAGER)
         service = PublicProfileService(session)
 
         prof = service.get_or_create_tenant_profile(tenant.id, principal, ctx)

@@ -54,6 +54,20 @@ import type {
   WhistleblowerPortalSummary,
   WhistleblowerPublicCaseSummary,
   WhistleblowerSubmissionResult,
+  LegalEntitySummary,
+  BusinessUnitSummary,
+  LocationSummary,
+  TenantEntitlementSummary,
+  RiskItemSummary,
+  RiskCategory,
+  RiskStatus,
+  RiskTreatmentStrategy,
+  AssetItemSummary,
+  AssetType,
+  AssetCriticality,
+  VendorItemSummary,
+  VendorRiskTier,
+  VendorStatus,
 } from "@conformly/shared";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
@@ -1634,3 +1648,245 @@ export function deleteStoredFile(
     { method: "DELETE" }
   );
 }
+
+// ── Organizational Scopes (Section 8) ─────────────────────────────────────────
+
+export function listLegalEntities(
+  token: string,
+  tenantId: string
+): Promise<LegalEntitySummary[]> {
+  return apiRequest(`/v1/tenants/${encodeURIComponent(tenantId)}/organization/legal-entities`, token);
+}
+
+export function createLegalEntity(
+  token: string,
+  tenantId: string,
+  payload: { name: string; country: string; registration_number?: string | null }
+): Promise<LegalEntitySummary> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/organization/legal-entities`,
+    token,
+    { method: "POST", body: JSON.stringify(payload) }
+  );
+}
+
+export function listBusinessUnits(
+  token: string,
+  tenantId: string
+): Promise<BusinessUnitSummary[]> {
+  return apiRequest(`/v1/tenants/${encodeURIComponent(tenantId)}/organization/business-units`, token);
+}
+
+export function createBusinessUnit(
+  token: string,
+  tenantId: string,
+  payload: { legal_entity_id: string; name: string; code?: string | null; description?: string | null }
+): Promise<BusinessUnitSummary> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/organization/business-units`,
+    token,
+    { method: "POST", body: JSON.stringify(payload) }
+  );
+}
+
+export function listLocations(
+  token: string,
+  tenantId: string
+): Promise<LocationSummary[]> {
+  return apiRequest(`/v1/tenants/${encodeURIComponent(tenantId)}/organization/locations`, token);
+}
+
+export function createLocation(
+  token: string,
+  tenantId: string,
+  payload: { legal_entity_id: string; name: string; country: string; city?: string | null; address?: string | null }
+): Promise<LocationSummary> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/organization/locations`,
+    token,
+    { method: "POST", body: JSON.stringify(payload) }
+  );
+}
+
+// ── Entitlements (Section 4 & 5) ──────────────────────────────────────────────
+
+export function getTenantEntitlement(
+  token: string,
+  tenantId: string
+): Promise<TenantEntitlementSummary> {
+  return apiRequest(`/v1/tenants/${encodeURIComponent(tenantId)}/entitlements`, token);
+}
+
+export function updateTenantEntitlement(
+  token: string,
+  tenantId: string,
+  payload: { plan_code?: string; max_members?: number; enabled_modules?: string[] }
+): Promise<TenantEntitlementSummary> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/entitlements`,
+    token,
+    { method: "PUT", body: JSON.stringify(payload) }
+  );
+}
+
+// ── Operational Registers: Risks (Section 15, Card 17) ────────────────────────
+
+export function listRisks(
+  token: string,
+  tenantId: string,
+  params?: { status?: RiskStatus; category?: RiskCategory }
+): Promise<RiskItemSummary[]> {
+  const query = new URLSearchParams();
+  if (params?.status) query.set("status", params.status);
+  if (params?.category) query.set("category", params.category);
+  const qStr = query.toString() ? `?${query.toString()}` : "";
+  return apiRequest(`/v1/tenants/${encodeURIComponent(tenantId)}/risks${qStr}`, token);
+}
+
+export function createRisk(
+  token: string,
+  tenantId: string,
+  payload: {
+    title: string;
+    category: RiskCategory;
+    inherent_likelihood: number;
+    inherent_impact: number;
+    description?: string | null;
+    owner_id?: string | null;
+  }
+): Promise<RiskItemSummary> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/risks`,
+    token,
+    { method: "POST", body: JSON.stringify(payload) }
+  );
+}
+
+export function updateRisk(
+  token: string,
+  tenantId: string,
+  riskId: string,
+  payload: {
+    status?: RiskStatus;
+    residual_likelihood?: number | null;
+    residual_impact?: number | null;
+    treatment_strategy?: RiskTreatmentStrategy | null;
+    treatment_plan?: string | null;
+    review_date?: string | null;
+  }
+): Promise<RiskItemSummary> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/risks/${encodeURIComponent(riskId)}`,
+    token,
+    { method: "PATCH", body: JSON.stringify(payload) }
+  );
+}
+
+// ── Operational Registers: Assets (Section 15, Card 17) ───────────────────────
+
+export function listAssets(
+  token: string,
+  tenantId: string,
+  params?: { asset_type?: AssetType; criticality?: AssetCriticality }
+): Promise<AssetItemSummary[]> {
+  const query = new URLSearchParams();
+  if (params?.asset_type) query.set("asset_type", params.asset_type);
+  if (params?.criticality) query.set("criticality", params.criticality);
+  const qStr = query.toString() ? `?${query.toString()}` : "";
+  return apiRequest(`/v1/tenants/${encodeURIComponent(tenantId)}/assets${qStr}`, token);
+}
+
+export function createAsset(
+  token: string,
+  tenantId: string,
+  payload: {
+    name: string;
+    asset_type: AssetType;
+    criticality: AssetCriticality;
+    classification: string;
+    identifier?: string | null;
+    owner_id?: string | null;
+    location?: string | null;
+    description?: string | null;
+  }
+): Promise<AssetItemSummary> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/assets`,
+    token,
+    { method: "POST", body: JSON.stringify(payload) }
+  );
+}
+
+export function updateAsset(
+  token: string,
+  tenantId: string,
+  assetId: string,
+  payload: {
+    name?: string;
+    criticality?: AssetCriticality;
+    classification?: string;
+    location?: string | null;
+    description?: string | null;
+  }
+): Promise<AssetItemSummary> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/assets/${encodeURIComponent(assetId)}`,
+    token,
+    { method: "PATCH", body: JSON.stringify(payload) }
+  );
+}
+
+// ── Operational Registers: Vendors (Section 15, Card 17) ──────────────────────
+
+export function listVendors(
+  token: string,
+  tenantId: string,
+  params?: { status?: VendorStatus; risk_tier?: VendorRiskTier }
+): Promise<VendorItemSummary[]> {
+  const query = new URLSearchParams();
+  if (params?.status) query.set("status", params.status);
+  if (params?.risk_tier) query.set("risk_tier", params.risk_tier);
+  const qStr = query.toString() ? `?${query.toString()}` : "";
+  return apiRequest(`/v1/tenants/${encodeURIComponent(tenantId)}/vendors${qStr}`, token);
+}
+
+export function createVendor(
+  token: string,
+  tenantId: string,
+  payload: {
+    name: string;
+    risk_tier: VendorRiskTier;
+    status?: VendorStatus;
+    service_description?: string | null;
+    business_owner_id?: string | null;
+    dpa_signed?: boolean;
+    security_review_date?: string | null;
+    next_assessment_due?: string | null;
+  }
+): Promise<VendorItemSummary> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/vendors`,
+    token,
+    { method: "POST", body: JSON.stringify(payload) }
+  );
+}
+
+export function updateVendor(
+  token: string,
+  tenantId: string,
+  vendorId: string,
+  payload: {
+    status?: VendorStatus;
+    risk_tier?: VendorRiskTier;
+    dpa_signed?: boolean;
+    security_review_date?: string | null;
+    next_assessment_due?: string | null;
+  }
+): Promise<VendorItemSummary> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/vendors/${encodeURIComponent(vendorId)}`,
+    token,
+    { method: "PATCH", body: JSON.stringify(payload) }
+  );
+}
+

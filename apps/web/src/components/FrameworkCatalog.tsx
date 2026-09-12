@@ -378,12 +378,12 @@ export function FrameworkCatalog({ tenantId, userRole }: FrameworkCatalogProps) 
 
             {/* Impact Analysis Warning Panel (if computed) */}
             {impactReport && (
-              <div className="card" style={{ padding: "1.25rem", borderLeft: "4px solid #f59e0b", backgroundColor: "#fffbeb" }}>
-                <h4 style={{ margin: "0 0 0.5rem", color: "#92400e" }}>
+              <div className="card" style={{ padding: "1.25rem", borderLeft: "4px solid var(--color-warning)", backgroundColor: "var(--color-warning-bg)" }}>
+                <h4 style={{ margin: "0 0 0.5rem", color: "var(--color-warning)" }}>
                   Version Upgrade Impact Analysis: v{impactReport.source_version_string} → v{impactReport.target_version_string}
                 </h4>
                 <div style={{ display: "flex", gap: "1.5rem", fontSize: "0.875rem", marginBottom: "0.75rem" }}>
-                  <div><strong>Overall Risk:</strong> <span style={{ textTransform: "uppercase", fontWeight: 700, color: impactReport.overall_impact_level === "high" ? "#dc2626" : "#d97706" }}>{impactReport.overall_impact_level}</span></div>
+                  <div><strong>Overall Risk:</strong> <span style={{ textTransform: "uppercase", fontWeight: 700, color: impactReport.overall_impact_level === "high" ? "var(--color-danger)" : "var(--color-warning)" }}>{impactReport.overall_impact_level}</span></div>
                   <div><strong>Added:</strong> {impactReport.added_controls.length}</div>
                   <div><strong>Modified:</strong> {impactReport.modified_controls.length}</div>
                   <div><strong>Removed:</strong> {impactReport.removed_controls.length}</div>

@@ -569,11 +569,11 @@ export function PreAuditWorkspace({
             <div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
                 <div className="card" style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: "0.8125rem", color: "#64748b", textTransform: "uppercase" }}>Overall Score</div>
-                  <div style={{ fontSize: "2.25rem", fontWeight: 700, color: "#147356", margin: "0.5rem 0" }}>
+                  <div style={{ fontSize: "0.8125rem", color: "var(--text-muted)", textTransform: "uppercase" }}>Overall Score</div>
+                  <div style={{ fontSize: "2.25rem", fontWeight: 700, color: "var(--accent)", margin: "0.5rem 0" }}>
                     {selectedAudit.overall_score !== null ? `${Math.round(selectedAudit.overall_score * 100)}%` : "N/A"}
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "#64748b" }}>Deterministic weighted score</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Deterministic weighted score</div>
                 </div>
 
                 <div className="card" style={{ textAlign: "center" }}>
@@ -873,13 +873,13 @@ export function PreAuditWorkspace({
               ) : (
                 <div>
                   {selectedAudit.certificates.map((cert) => (
-                    <div key={cert.id} className="card" style={{ border: "2px solid #147356", padding: "1.5rem" }}>
+                    <div key={cert.id} className="card" style={{ border: "2px solid var(--border-accent-strong)", padding: "1.5rem" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                         <div>
-                          <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#147356", fontWeight: 700 }}>
+                          <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--accent)", fontWeight: 700 }}>
                             Conformly Pre-Audit Readiness Badge
                           </div>
-                          <h3 style={{ margin: "0.5rem 0", color: "#10251f" }}>
+                          <h3 style={{ margin: "0.5rem 0", color: "var(--text-primary)" }}>
                             Credential #{cert.certificate_number}
                           </h3>
                         </div>
@@ -901,7 +901,7 @@ export function PreAuditWorkspace({
                       </div>
 
                       {canManage && cert.status === "active" && (
-                        <div style={{ marginTop: "1rem", borderTop: "1px solid #e2e8e4", paddingTop: "0.75rem" }}>
+                        <div style={{ marginTop: "1rem", borderTop: "1px solid var(--border-default)", paddingTop: "0.75rem" }}>
                           <button
                             className="secondary"
                             style={{ color: "#dc2626", borderColor: "#fca5a5", fontSize: "0.75rem", minHeight: "auto", padding: "0.3rem 0.6rem" }}
@@ -978,7 +978,7 @@ export function PreAuditWorkspace({
       {/* Modal: Create Pre-Audit */}
       {showCreateModal && (
         <div className="modal-backdrop" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", placeItems: "center", justifyContent: "center", zIndex: 1000 }}>
-          <div className="card" style={{ width: "min(90vw, 32rem)", background: "#fff", padding: "1.5rem" }}>
+          <div className="card" style={{ width: "min(90vw, 32rem)", background: "var(--bg-surface)", padding: "1.5rem" }}>
             <h3 style={{ marginTop: 0 }}>New Readiness Assessment</h3>
             <form onSubmit={(e) => void handleCreatePreAudit(e)}>
               <label htmlFor="pa-title">Assessment Title</label>
@@ -1035,7 +1035,7 @@ export function PreAuditWorkspace({
       {/* Modal: Add Finding */}
       {showFindingModal && (
         <div className="modal-backdrop" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", placeItems: "center", justifyContent: "center", zIndex: 1000 }}>
-          <div className="card" style={{ width: "min(90vw, 32rem)", background: "#fff", padding: "1.5rem" }}>
+          <div className="card" style={{ width: "min(90vw, 32rem)", background: "var(--bg-surface)", padding: "1.5rem" }}>
             <h3 style={{ marginTop: 0 }}>Record Readiness Gap</h3>
             <form onSubmit={(e) => void handleAddFinding(e)}>
               <label htmlFor="f-title">Gap Summary</label>
@@ -1098,7 +1098,7 @@ export function PreAuditWorkspace({
       {/* Modal: Submit for Review */}
       {showReviewModal && (
         <div className="modal-backdrop" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", placeItems: "center", justifyContent: "center", zIndex: 1000 }}>
-          <div className="card" style={{ width: "min(90vw, 28rem)", background: "#fff", padding: "1.5rem" }}>
+          <div className="card" style={{ width: "min(90vw, 28rem)", background: "var(--bg-surface)", padding: "1.5rem" }}>
             <h3 style={{ marginTop: 0 }}>Submit Assessment for Review</h3>
             <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
               To ensure independence, the reviewer must be a different tenant member than the assessment lead.
@@ -1134,7 +1134,7 @@ export function PreAuditWorkspace({
       {/* Modal: Revoke Certificate */}
       {showRevokeModal && (
         <div className="modal-backdrop" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", placeItems: "center", justifyContent: "center", zIndex: 1000 }}>
-          <div className="card" style={{ width: "min(90vw, 28rem)", background: "#fff", padding: "1.5rem" }}>
+          <div className="card" style={{ width: "min(90vw, 28rem)", background: "var(--bg-surface)", padding: "1.5rem" }}>
             <h3 style={{ marginTop: 0, color: "#dc2626" }}>Revoke Credential</h3>
             <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
               Revocation is irreversible. Please specify the compliance justification.
@@ -1174,7 +1174,7 @@ export function PreAuditWorkspace({
       {/* Modal: Snapshot Inspector */}
       {snapshotModalCheck && (
         <div className="modal-backdrop" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", placeItems: "center", justifyContent: "center", zIndex: 1000 }}>
-          <div className="card" style={{ width: "min(90vw, 36rem)", background: "#fff", padding: "1.5rem" }}>
+          <div className="card" style={{ width: "min(90vw, 36rem)", background: "var(--bg-surface)", padding: "1.5rem" }}>
             <h3 style={{ marginTop: 0 }}>Deterministic Evaluation Snapshot</h3>
             <pre style={{ background: "#f8fafc", padding: "1rem", borderRadius: "0.5rem", overflowX: "auto", fontSize: "0.75rem" }}>
               {JSON.stringify(

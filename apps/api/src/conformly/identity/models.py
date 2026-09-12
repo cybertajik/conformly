@@ -110,6 +110,12 @@ class Membership(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         default=MembershipStatus.INVITED,
         nullable=False,
     )
+    legal_entity_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("legal_entities.id", ondelete="SET NULL"), nullable=True
+    )
+    business_unit_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("business_units.id", ondelete="SET NULL"), nullable=True
+    )
 
     tenant: Mapped[Tenant] = relationship(back_populates="memberships")
     user: Mapped[User] = relationship(back_populates="memberships")

@@ -280,6 +280,22 @@ Pre-audits are tenant-scoped readiness assessments that evaluate compliance work
   must replace the process-local store with a shared implementation using the same
   interface before horizontal scaling.
 
+## D-047 — Alignment with Canonical Product Source of Truth (Trello V4.0)
+
+1. **Product Authority Reconciliation:** Reconcile all local architectures and implementation contracts with `docs/PRODUCT_SOURCE_OF_TRUTH.md` (canonical mirror of Trello DEU V4.0).
+2. **Canonical 6 Locked Roles:** Supersede D-029 role names with the locked set from Trello V4 Card 11:
+   - `Tenant Owner` (`owner`)
+   - `Tenant Administrator` (`administrator`)
+   - `Compliance Manager` (`compliance_manager`)
+   - `Control Owner` (`control_owner`)
+   - `Reviewer` (`reviewer`)
+   - `Employee` (`employee`)
+3. **Tenant Administrator Compliance Boundary:** Enforce the strict product rule that `Tenant Administrator` manages users, SSO, settings, and memberships, but is explicitly denied access to compliance content (evidence, policies, control status, tasks, findings, pre-audits).
+4. **Whistleblower Add-on Decoupling:** Whistleblower is formally decoupled from Core Tier A navigation and core release gates. All whistleblower code is preserved under an add-on boundary and protected with a module entitlement check (`require_module("whistleblower")`).
+5. **Organizational Scopes:** Implement `LegalEntity`, `BusinessUnit`, and `Location` models partitioned by tenant with PostgreSQL RLS. Memberships can be scoped to specific organizational entities.
+6. **Entitlements Engine:** Implement data-driven module enablement, storage limits, and member limits enforced server-side.
+7. **Tier A Operational Registers:** Implement the **Risk Register** (with treatments and control links), **Asset Register**, and **Vendor / Third-Party Register** in Core Tier A.
+
 ## Decision Process
 
 When Codex encounters a missing architectural choice:
@@ -288,4 +304,5 @@ When Codex encounters a missing architectural choice:
 3. avoid irreversible architecture,
 4. add the decision here if material,
 5. add migration/upgrade notes if applicable.
+
 

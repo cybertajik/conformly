@@ -91,13 +91,18 @@ describe("FrameworkCatalog", () => {
 
   it("checks framework management permissions correctly", () => {
     expect(canManageFrameworks("owner")).toBe(true);
-    expect(canManageFrameworks("administrator")).toBe(true);
+    expect(canManageFrameworks("administrator")).toBe(false);
     expect(canManageFrameworks("compliance_manager")).toBe(true);
+    expect(canManageFrameworks("control_owner")).toBe(true);
     expect(canManageFrameworks("contributor")).toBe(true);
     expect(canManageFrameworks("auditor")).toBe(false);
     expect(canManageFrameworks("viewer")).toBe(false);
+    expect(canManageFrameworks("employee")).toBe(false);
 
     expect(canReadFrameworks("auditor")).toBe(true);
+    expect(canReadFrameworks("reviewer")).toBe(true);
     expect(canReadFrameworks("viewer")).toBe(true);
+    expect(canReadFrameworks("administrator")).toBe(false);
+    expect(canReadFrameworks("employee")).toBe(false);
   });
 });

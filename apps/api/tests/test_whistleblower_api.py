@@ -23,6 +23,7 @@ from conformly.identity.models import (
     TenantStatus,
     User,
 )
+from conformly.entitlements.models import TenantEntitlement
 from conformly.main import app
 from conformly.storage.models import StoredFile  # noqa: F401
 from conformly.whistleblower.rate_limit import anonymous_whistleblower_rate_limiter
@@ -88,7 +89,12 @@ def test_data(db_session):
         role=Role.COMPLIANCE_MANAGER.value,
         status=MembershipStatus.ACTIVE,
     )
-    db_session.add_all([m_comp, m_auditor, m_inv])
+    entitlement = TenantEntitlement(
+        tenant_id=tenant.id,
+        plan_code="pilot",
+        enabled_modules=["core", "whistleblower"],
+    )
+    db_session.add_all([m_comp, m_auditor, m_inv, entitlement])
     db_session.flush()
 
     return {

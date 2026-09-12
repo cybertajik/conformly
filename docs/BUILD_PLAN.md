@@ -81,30 +81,31 @@ A slice is complete only when all applicable items are true:
 - No secret, protected sample data, or generated artifact is committed accidentally.
 - User-facing language does not imply accredited certification.
 
-## 5. Progress Model
+## 5. Progress Model (Reconciled with Product Source of Truth Section 15)
 
-Percentages are planning weights, not estimates of calendar time. A phase contributes to total
-completion only after its exit gate passes.
+Percentages are planning weights from `docs/PRODUCT_SOURCE_OF_TRUTH.md` Section 15 (mirroring Trello DEU V4.0). A phase contributes to total completion only after its exit gate passes.
 
-- 0–8%: Phase 0 — Repository foundation. Implemented locally; container verification pending.
-- 8–18%: Phase 1 — Identity, tenancy, authorization. Implementation complete; the local host
-  lacks Docker/PostgreSQL, so the live RLS/container exit-gate run remains external verification.
-- 18–27%: Phase 2 — Audit and cryptography. Implementation complete; the local security and
-  negative-test gate passes, with live PostgreSQL RLS execution delegated to CI.
-- 27–34%: Phase 3 — Encrypted object storage. Implementation complete; providers (Memory, Filesystem,
-  S3/MinIO), pipeline, envelope encryption, PostgreSQL metadata with RLS, audit, and tests verified.
-- 34–45%: Phase 4 — Framework catalog. Implementation complete; system-scoped catalog, independent
-  two-person approval, release immutability, tenant overlays, custom controls, control mappings,
-  deterministic impact analysis, UI, and automated tests verified.
-- 45–58%: Phase 5 — Compliance workspace. Implementation complete; multi-tenant evidence repository,
-  versioned policies with independent 2-person approval, compliance tasks, findings & remediation,
-  control posture matrix, application-layer envelope encryption for Restricted fields, optimistic
-  concurrency control, idempotent deterministic background jobs, UI components, and test suite verified.
-- 58–68%: Phase 6 — Pre-audit. Implementation complete; readiness assessment state machine, deterministic rules engine (v1.0.0), reproducible scoring snapshots, findings & remediation, human-readable reports and SHA-256 cryptographic manifests, Conformly Pre-Audit Readiness Credential issuance and revocation, wording compliance, UI workspace, and automated tests verified.
-- 68–78%: Phase 7 — Whistleblower. Implementation complete; strict anonymous intake and zero identity tracking, salted PBKDF2-HMAC-SHA256 one-way return verifiers, AES-256-GCM application-layer envelope encryption for message bodies and report summaries, strict handler role capabilities (Owner/Admin/Compliance Manager only), public reporting portal and authenticated triage workspace UI, and complete test suites verified.
-- 78–83%: Phase 8 — Public profiles. Implementation complete; explicit public projection schema with RLS, public approval workflow, dual credential ecosystem (Conformly pre-audit readiness badges with mandatory disclaimer notice + third-party certified credentials), ETag caching with OCC versioning, tenant admin workspace, public Trust Center UI, and complete backend (302 passing tests) and frontend (35 passing tests) test suites verified.
-- 83–90%: Phase 9 — Export, retention, deletion. Implementation complete; multi-format encrypted export packaging, SHA-256 manifests, deterministic 30-day window and 90-day deletion lifecycle, multi-table purge across all 33 tenant-scoped tables, zero-knowledge deletion proofs, background retention worker sweep, and full UI workspace verified with 319 backend tests and 37 frontend tests.
-- 90–100%: Phase 10 — Operational readiness and pilot release. Implementation complete; production readiness and liveness probes, production security headers middleware, comprehensive operational runbooks (deployment, rollback, incident response, key compromise, backup and recovery, whistleblower privacy incident), STRIDE threat model across all modules, security negative and cross-tenant IDOR audit tests, backup restore and manifest verification rehearsal, complete end-to-end customer journey staging rehearsal, frontend onboarding overview with pre-audit checklist and pilot support intake, clean Alembic migration SQL generation, clean mypy type-check (0 errors across 140 files), and 100% passing tests (328 backend tests, 40 frontend tests). Platform reaches 100% MVP pilot readiness.
+- **0–5% Foundation:** Monorepo, ADRs, toolchains, CI, config, i18n, threat models. (Complete)
+- **5–12% Local platform:** PostgreSQL, Redis, S3 dev store, Keycloak, mail catcher, malware scanner, migrations, health/logging. (Complete)
+- **12–22% Tenant/identity/isolation:** entities, units, memberships, six roles/scopes, RLS, tenant-safe jobs/caches. (Realigning: 6 locked roles, Administrator compliance boundary, and LegalEntity/BusinessUnit scopes)
+- **22–28% Authz/entitlements:** Neutral plan/module/framework/limit/storage/feature data; audited backend enforcement; A active, B–D reserved. (In Progress)
+- **28–34% Audit/outbox:** Append-only hash-chained audit, immutable seal adapter, transactional outbox, idempotent retry/dead-letter workers. (Partial: audit and notifications outbox complete)
+- **34–40% Organization/scope:** Full legal-entity/unit/location workflows, assignments, onboarding, daily workspace. (In Progress)
+- **40–48% Frameworks/controls:** Canonical/versioned content, overlays, custom controls, mappings, two-person release, impact analysis, controlled adoption. (Complete)
+- **48–55% Evidence:** Encrypted immutable versions, malware quarantine, provenance, hash, expiry, retention, legal hold. (Complete)
+- **55–62% Assessments/findings:** Applicability, assignments, deterministic checks, findings, severity, remediation. (Complete)
+- **62–67% Tasks/notifications:** Owners, dates, reminders, escalation, dashboard. (Complete)
+- **67–72% Policies:** Editor, templates, uploads, versions, approvals, reviews, acknowledgements. (Complete)
+- **72–79% Risks/assets/vendors:** Linked risk/treatment, asset, vendor, changes, recurring review. (In Progress)
+- **79–84% Pre-audit/readiness/public:** Human and second review, approval, frozen result/report/manifest, lifecycle, isolated publication. (Complete)
+- **84–88% LMS:** Assignments, identity/tenant mapping, SSO/API, signed idempotent completion evidence. (Deferred to later integration phase)
+- **88–92% API/webhooks:** Stable v1 API, signed tenant webhooks, replay/retry/dead-letter operations. (Pending)
+- **92–95% Export/retention/deletion:** Structured data, originals, reports, manifest, legal hold, deletion lifecycle. (Complete)
+- **95–97% DR:** 3-2-1-1-0, PITR/HA/DR, immutable objects, separated keys. (Procedures documented, drills scheduled)
+- **97–100% Operations & Release:** Observability, runbooks, penetration testing, gate verification. (In Progress)
+
+*Whistleblower Note:* Per Trello V4 Cards 1, 2, 7, 10, 22 and Section 16, Whistleblower is a separate later add-on track (Phases 13–15 skipped in Core). Core Tier A real progress is currently **~45%**.
+
 
 
 ## 6. Phase 0 — Repository Foundation (0–8%)

@@ -240,7 +240,7 @@ describe("WhistleblowerWorkspace", () => {
         token="test-token"
         tenantContext={{
           tenant_id: "tenant-1",
-          role: "administrator",
+          role: "compliance_manager",
         }}
         onOpenPublicPortal={mockOpenPortal}
       />,

@@ -11,6 +11,21 @@ from conformly.crypto.envelope import EnvelopeEncryptionService
 from conformly.crypto.fields import EncryptedFieldCodec
 from conformly.crypto.providers import AES256GCMProvider, LocalKeyManagementProvider
 from conformly.db.base import Base
+import conformly.identity.models  # noqa: F401
+import conformly.organization.models  # noqa: F401
+import conformly.entitlements.models  # noqa: F401
+import conformly.risks.models  # noqa: F401
+import conformly.assets.models  # noqa: F401
+import conformly.vendors.models  # noqa: F401
+import conformly.audit.models  # noqa: F401
+import conformly.compliance.models  # noqa: F401
+import conformly.frameworks.models  # noqa: F401
+import conformly.storage.models  # noqa: F401
+import conformly.preaudit.models  # noqa: F401
+import conformly.profiles.models  # noqa: F401
+import conformly.retention.models  # noqa: F401
+import conformly.exports.models  # noqa: F401
+import conformly.whistleblower.models  # noqa: F401
 
 
 @pytest.fixture

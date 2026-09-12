@@ -17,6 +17,7 @@ from conformly.authz.policy import AuthorizationDeniedError, authorize
 from conformly.authz.roles import Capability
 from conformly.crypto.fields import EncryptedFieldCodec, get_encrypted_field_codec
 from conformly.db.session import get_db
+from conformly.entitlements.dependencies import require_module
 from conformly.whistleblower.models import WhistleblowerCaseStatus
 from conformly.whistleblower.rate_limit import (
     WhistleblowerRateLimitExceeded,
@@ -42,6 +43,7 @@ public_whistleblower_router = APIRouter(
 whistleblower_router = APIRouter(
     prefix="/v1/tenants/{tenant_id}/whistleblower",
     tags=["whistleblower"],
+    dependencies=[Depends(require_module("whistleblower"))],
 )
 
 

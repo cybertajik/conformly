@@ -1557,8 +1557,8 @@ export function ComplianceWorkspace({
             </button>
 
             {lastJobResult && (
-              <div style={{ background: "#f8faf9", padding: "1rem", borderRadius: "0.5rem", border: "1px solid #e2e8e4", fontSize: "0.875rem" }}>
-                <strong style={{ color: "#147356" }}>Last Run Summary:</strong>
+              <div style={{ background: "var(--bg-card)", padding: "1rem", borderRadius: "0.5rem", border: "1px solid var(--border-default)", fontSize: "0.875rem" }}>
+                <strong style={{ color: "var(--accent)" }}>Last Run Summary:</strong>
                 <div style={{ marginTop: "0.5rem", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
                   <div>Evidence Checked: <strong>{lastJobResult.expired_evidence.processed_count}</strong></div>
                   <div>Evidence Alerts: <strong>{lastJobResult.expired_evidence.alerts_enqueued}</strong></div>
@@ -1566,7 +1566,7 @@ export function ComplianceWorkspace({
                   <div>Tasks Alerts: <strong>{lastJobResult.overdue_tasks.alerts_enqueued}</strong></div>
                   <div>Policies Checked: <strong>{lastJobResult.policy_alerts.processed_count}</strong></div>
                   <div>Policy Alerts: <strong>{lastJobResult.policy_alerts.alerts_enqueued}</strong></div>
-                  <div style={{ gridColumn: "1 / -1", color: "#166534" }}>
+                  <div style={{ gridColumn: "1 / -1", color: "var(--color-success)" }}>
                     Total Notifications Queued:{" "}
                     <strong>
                       {lastJobResult.expired_evidence.alerts_enqueued +

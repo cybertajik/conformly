@@ -38,6 +38,11 @@ from conformly.api.whistleblower import (
     public_whistleblower_router,
     whistleblower_router,
 )
+from conformly.organization.api import router as organization_router
+from conformly.entitlements.api import router as entitlements_router
+from conformly.risks.api import router as risks_router
+from conformly.assets.api import router as assets_router
+from conformly.vendors.api import router as vendors_router
 from conformly.compliance.service import InvalidStateTransitionError, InvalidTenantReferenceError
 from conformly.config import get_settings
 from conformly.logging import configure_logging
@@ -105,6 +110,11 @@ app.include_router(public_profiles_router)
 app.include_router(tenant_profiles_router)
 app.include_router(tenants_router)
 app.include_router(lifecycle_router)
+app.include_router(organization_router)
+app.include_router(entitlements_router)
+app.include_router(risks_router)
+app.include_router(assets_router)
+app.include_router(vendors_router)
 
 
 @app.middleware("http")

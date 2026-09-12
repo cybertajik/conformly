@@ -11,6 +11,9 @@ export const TENANT_ROLES = [
   "owner",
   "administrator",
   "compliance_manager",
+  "control_owner",
+  "reviewer",
+  "employee",
   "auditor",
   "contributor",
   "viewer",
@@ -740,15 +743,113 @@ export interface TenantCancellationStatus {
   legal_hold: boolean;
 }
 
-export interface StoredFileSummary {
+// ── Organizational Scopes (Section 8) ─────────────────────────────────────────
+
+export interface LegalEntitySummary {
   id: string;
   tenant_id: string;
-  created_by_user_id: string;
-  original_filename: string;
-  content_type: string;
-  classification: DataClassification;
-  plaintext_size_bytes: number;
-  plaintext_sha256: string;
+  name: string;
+  country: string;
+  registration_number?: string | null;
   created_at: string;
+  updated_at: string;
 }
+
+export interface BusinessUnitSummary {
+  id: string;
+  tenant_id: string;
+  legal_entity_id: string;
+  name: string;
+  code?: string | null;
+  description?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LocationSummary {
+  id: string;
+  tenant_id: string;
+  legal_entity_id: string;
+  name: string;
+  country: string;
+  city?: string | null;
+  address?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Entitlements Engine (Section 4 & 5) ────────────────────────────────────────
+
+export interface TenantEntitlementSummary {
+  tenant_id: string;
+  plan_code: string;
+  max_members: number;
+  enabled_modules: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Operational Registers (Section 15, Card 17) ──────────────────────────────
+
+export type RiskCategory = "operational" | "security" | "compliance" | "financial" | "strategic";
+export type RiskStatus = "identified" | "assessed" | "treating" | "monitored" | "closed";
+export type RiskTreatmentStrategy = "mitigate" | "accept" | "transfer" | "avoid";
+
+export interface RiskItemSummary {
+  id: string;
+  tenant_id: string;
+  title: string;
+  description?: string | null;
+  category: RiskCategory;
+  status: RiskStatus;
+  inherent_likelihood: number;
+  inherent_impact: number;
+  inherent_score: number;
+  residual_likelihood?: number | null;
+  residual_impact?: number | null;
+  residual_score?: number | null;
+  treatment_strategy?: RiskTreatmentStrategy | null;
+  treatment_plan?: string | null;
+  owner_id?: string | null;
+  review_date?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type AssetType = "hardware" | "software" | "cloud_service" | "data" | "physical";
+export type AssetCriticality = "critical" | "high" | "medium" | "low";
+
+export interface AssetItemSummary {
+  id: string;
+  tenant_id: string;
+  name: string;
+  identifier?: string | null;
+  asset_type: AssetType;
+  criticality: AssetCriticality;
+  classification: DataClassification;
+  owner_id?: string | null;
+  location?: string | null;
+  description?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type VendorStatus = "active" | "under_review" | "suspended" | "terminated";
+export type VendorRiskTier = "tier_1_critical" | "tier_2_significant" | "tier_3_low";
+
+export interface VendorItemSummary {
+  id: string;
+  tenant_id: string;
+  name: string;
+  service_description?: string | null;
+  risk_tier: VendorRiskTier;
+  status: VendorStatus;
+  business_owner_id?: string | null;
+  dpa_signed: boolean;
+  security_review_date?: string | null;
+  next_assessment_due?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 

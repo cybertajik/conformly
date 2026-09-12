@@ -235,7 +235,7 @@ def test_policy_approval_workflow_api(client: TestClient, session: Session) -> N
             Membership(
                 tenant_id=tenant.id,
                 user_id=approver.id,
-                role=Role.ADMINISTRATOR,
+                role=Role.COMPLIANCE_MANAGER,
                 status=MembershipStatus.ACTIVE,
             ),
             AuthSession(
