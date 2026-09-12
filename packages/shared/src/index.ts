@@ -739,3 +739,16 @@ export interface TenantCancellationStatus {
   is_export_window_active: boolean;
   legal_hold: boolean;
 }
+
+export interface StoredFileSummary {
+  id: string;
+  tenant_id: string;
+  created_by_user_id: string;
+  original_filename: string;
+  content_type: string;
+  classification: DataClassification;
+  plaintext_size_bytes: number;
+  plaintext_sha256: string;
+  created_at: string;
+}
+

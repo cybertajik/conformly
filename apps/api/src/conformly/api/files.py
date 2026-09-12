@@ -160,11 +160,17 @@ def download_file(
             principal, tenant_context, file_id=file_id, request_id=request_id
         )
         database.commit()
+        safe_filename = (
+            file.original_filename.replace("\\", "_")
+            .replace('"', "_")
+            .replace("\r", "")
+            .replace("\n", "")
+        )
         return Response(
             content=plaintext,
             media_type=file.content_type,
             headers={
-                "Content-Disposition": f'attachment; filename="{file.original_filename}"',
+                "Content-Disposition": f'attachment; filename="{safe_filename}"',
                 "X-Content-Type-Options": "nosniff",
             },
         )

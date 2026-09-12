@@ -66,12 +66,12 @@ def run_retention_lifecycle(
         )
         suspended = 1
 
-    due_job_ids = list(
+    due_jobs = list(
         session.scalars(
-            select(DeletionJob.id)
+            select(DeletionJob)
             .where(
                 DeletionJob.tenant_id == tenant_id,
-                DeletionJob.state == DeletionJobState.SCHEDULED,
+                DeletionJob.state.in_([DeletionJobState.SCHEDULED, DeletionJobState.ON_HOLD]),
                 DeletionJob.scheduled_at <= current_time,
             )
             .order_by(DeletionJob.scheduled_at, DeletionJob.id)
@@ -81,11 +81,14 @@ def run_retention_lifecycle(
     completed = 0
     held = 0
     failed = 0
-    for job_id in due_job_ids:
+    for job in due_jobs:
+        if job.state == DeletionJobState.ON_HOLD or tenant.legal_hold:
+            held += 1
+            continue
         try:
             service.execute_deletion_job(
-                job_id,
-                request_id=f"job:retention:delete:{job_id}",
+                job.id,
+                request_id=f"job:retention:delete:{job.id}",
                 now=current_time,
             )
             completed += 1

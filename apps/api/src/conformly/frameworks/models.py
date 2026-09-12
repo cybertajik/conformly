@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import StrEnum
 from uuid import UUID
 
@@ -171,7 +171,9 @@ class TenantFrameworkAdoption(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         default=AdoptionStatus.ACTIVE,
         nullable=False,
     )
-    adopted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    adopted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
     adopted_by_user_id: Mapped[UUID] = mapped_column(
         Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
     )

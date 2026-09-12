@@ -38,6 +38,7 @@ import type {
   PublicStatementSummary,
   RemediationStatus,
   SessionIdentity,
+  StoredFileSummary,
   TaskPriority,
   TaskStatus,
   TenantCancellationStatus,
@@ -61,11 +62,18 @@ export class SessionExpiredError extends Error {}
 export class AccessDeniedError extends Error {}
 
 async function apiRequest<T>(path: string, token: string, init?: RequestInit): Promise<T> {
+  const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
+  const defaultHeaders: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+  };
+  if (!isFormData) {
+    defaultHeaders["Content-Type"] = "application/json";
+  }
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
+      ...defaultHeaders,
       ...init?.headers,
     },
   });
@@ -1534,4 +1542,95 @@ export function listDeletionProofs(
   tenantId: string
 ): Promise<DeletionProofSummary[]> {
   return apiRequest(`/v1/tenants/${encodeURIComponent(tenantId)}/deletion-proofs`, token);
+}
+
+// ---------------------------------------------------------------------------
+// File Storage & Evidence Uploads
+// ---------------------------------------------------------------------------
+
+export function uploadStoredFile(
+  token: string,
+  tenantId: string,
+  file: File | Blob,
+  filename?: string,
+  classification: DataClassification = "Internal"
+): Promise<StoredFileSummary> {
+  const formData = new FormData();
+  if (filename) {
+    formData.append("file", file, filename);
+  } else {
+    formData.append("file", file);
+  }
+  formData.append("classification", classification);
+
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/files`,
+    token,
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+}
+
+export function listStoredFiles(
+  token: string,
+  tenantId: string
+): Promise<StoredFileSummary[]> {
+  return apiRequest(`/v1/tenants/${encodeURIComponent(tenantId)}/files`, token);
+}
+
+export function getStoredFileMetadata(
+  token: string,
+  tenantId: string,
+  fileId: string
+): Promise<StoredFileSummary> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/files/${encodeURIComponent(fileId)}`,
+    token
+  );
+}
+
+export async function downloadStoredFile(
+  token: string,
+  tenantId: string,
+  fileId: string
+): Promise<Blob> {
+  const response = await fetch(
+    `${API_BASE_URL}/v1/tenants/${encodeURIComponent(tenantId)}/files/${encodeURIComponent(fileId)}/download`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new SessionExpiredError("Your session has expired.");
+    }
+    if (response.status === 403) {
+      throw new AccessDeniedError("You do not have access.");
+    }
+    let errorDetail = "File download failed.";
+    try {
+      const errJson = await response.json();
+      if (errJson.detail) errorDetail = errJson.detail;
+    } catch {
+      // ignore
+    }
+    throw new Error(errorDetail);
+  }
+  return response.blob();
+}
+
+export function deleteStoredFile(
+  token: string,
+  tenantId: string,
+  fileId: string
+): Promise<void> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/files/${encodeURIComponent(fileId)}`,
+    token,
+    { method: "DELETE" }
+  );
 }

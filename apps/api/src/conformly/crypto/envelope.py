@@ -7,6 +7,7 @@ from conformly.crypto.providers import (
     AES_256_KEY_BYTES,
     AES256GCMProvider,
     CryptoProvider,
+    InvalidCiphertextError,
     KeyConfigurationError,
     KeyManagementProvider,
     LocalKeyManagementProvider,
@@ -55,9 +56,9 @@ class EnvelopeEncryptionService:
 
     def decrypt(self, payload: EncryptedPayload, context: EncryptionContext) -> bytes:
         if payload.algorithm != self._crypto.algorithm:
-            raise ValueError("unsupported encryption algorithm")
+            raise InvalidCiphertextError("unsupported encryption algorithm")
         if payload.context_version != context.version:
-            raise ValueError("encryption context version mismatch")
+            raise InvalidCiphertextError("encryption context version mismatch")
         aad = authenticated_context(context)
         dek = self._keys.unwrap_key(
             WrappedKey(
@@ -74,6 +75,10 @@ class EnvelopeEncryptionService:
         )
 
     def rewrap(self, payload: EncryptedPayload, context: EncryptionContext) -> EncryptedPayload:
+        if payload.algorithm != self._crypto.algorithm:
+            raise InvalidCiphertextError("unsupported encryption algorithm")
+        if payload.context_version != context.version:
+            raise InvalidCiphertextError("encryption context version mismatch")
         aad = authenticated_context(context)
         dek = self._keys.unwrap_key(
             WrappedKey(

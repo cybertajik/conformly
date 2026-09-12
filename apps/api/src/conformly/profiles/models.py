@@ -37,7 +37,7 @@ SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$")
 
 def is_valid_profile_slug(slug: str) -> bool:
     """Validate public profile URL slug."""
-    return bool(SLUG_PATTERN.match(slug.lower()))
+    return bool(SLUG_PATTERN.match(slug))
 
 
 class PublicProfile(Base):
