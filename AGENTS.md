@@ -2,7 +2,15 @@
 
 This repository is for **Conformly**, a multi-tenant compliance SaaS platform.
 
-This file is the highest-level coding instruction for Codex. Read this file first, then read all documents under `docs/` before making architectural decisions.
+This file is the highest-level coding instruction for Codex. Read this file first. Then read
+`docs/PRODUCT_SOURCE_OF_TRUTH.md` before every product, architecture, scope, entitlement, tier,
+module, or roadmap decision, followed by the remaining documents under `docs/`.
+
+The Conformly DEU Trello board is the canonical product authority.
+`docs/PRODUCT_SOURCE_OF_TRUTH.md` is its required repository-local execution mirror. If Trello
+DEU, the mirror, another local document, the build plan, or existing code conflict, stop product
+implementation and reconcile the source of truth. Never infer that existing code or a checked
+task overrides the product authority.
 
 ## Core Rule
 

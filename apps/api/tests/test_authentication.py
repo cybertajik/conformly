@@ -136,3 +136,22 @@ def test_oidc_verifier_rejects_wrong_audience(monkeypatch: pytest.MonkeyPatch) -
 
     with pytest.raises(AuthenticationError):
         verifier.verify(token)
+
+
+def test_dev_token_verifier_and_mint_roundtrip() -> None:
+    from conformly.auth.tokens import DevTokenVerifier, mint_dev_token
+
+    token = mint_dev_token(
+        email="dev-tester@development.invalid",
+        subject="dev-tester",
+        display_name="Dev Tester",
+    )
+    verifier = DevTokenVerifier()
+    claims = verifier.verify(token)
+
+    assert claims.email == "dev-tester@development.invalid"
+    assert claims.subject == "dev-tester"
+    assert claims.display_name == "Dev Tester"
+    assert claims.email_verified is True
+    assert claims.issuer == "https://development.invalid"
+

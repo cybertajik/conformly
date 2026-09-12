@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -11,10 +11,18 @@ from conformly.audit.service import record_audit_event
 from conformly.auth.bootstrap import IdentityBootstrapError, bootstrap_identity_session
 from conformly.auth.dependencies import CurrentPrincipal, bearer_scheme
 from conformly.auth.lifecycle import SessionLifecycleError, revoke_own_auth_session
-from conformly.auth.tokens import AuthenticationError, TokenVerifier, get_token_verifier
+from conformly.auth.tokens import (
+    DEV_DEFAULT_SECRET,
+    AuthenticationError,
+    TokenVerifier,
+    get_token_verifier,
+    mint_dev_token,
+)
+from conformly.config import get_settings
 from conformly.db.session import get_db
 
 router = APIRouter(prefix="/v1/auth", tags=["authentication"])
+
 
 
 class SessionBootstrapResponse(BaseModel):
@@ -112,3 +120,29 @@ def revoke_session(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+class DevLoginRequest(BaseModel):
+    email: str = "example-user@development.invalid"
+
+
+class DevLoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+@router.post("/dev-login", response_model=DevLoginResponse)
+def dev_login(request: Request, body: DevLoginRequest = DevLoginRequest()) -> DevLoginResponse:
+    settings = get_settings()
+    if settings.environment not in ("development", "local", "test"):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="not found")
+
+    secret = settings.invitation_token_pepper or DEV_DEFAULT_SECRET
+    token = mint_dev_token(
+        email=body.email,
+        subject="example-user" if body.email == "example-user@development.invalid" else body.email,
+        display_name="Example User" if body.email == "example-user@development.invalid" else body.email.split("@")[0],
+        secret=secret,
+    )
+    return DevLoginResponse(access_token=token)
+

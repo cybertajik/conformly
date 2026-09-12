@@ -24,11 +24,27 @@ export function clearLocalSession(): void {
 }
 
 export async function beginOidcLogin(): Promise<void> {
-  const authorizationUrl = configured(
-    "OIDC authorization URL",
-    import.meta.env.VITE_OIDC_AUTHORIZATION_URL,
-  );
+  const authorizationUrl = import.meta.env.VITE_OIDC_AUTHORIZATION_URL;
+  if (!authorizationUrl) {
+    const apiBase = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+    const response = await fetch(`${apiBase}/v1/auth/dev-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "example-user@development.invalid" }),
+    });
+    if (!response.ok) {
+      throw new Error("Development sign-in failed. Ensure the server is running in development mode.");
+    }
+    const body = (await response.json()) as { access_token?: unknown };
+    if (typeof body.access_token !== "string") {
+      throw new Error("Development sign-in failed: invalid token received.");
+    }
+    sessionStorage.setItem(ACCESS_TOKEN_KEY, body.access_token);
+    window.location.reload();
+    return;
+  }
   const clientId = configured("OIDC client ID", import.meta.env.VITE_OIDC_CLIENT_ID);
+
   const redirectUri = configured("OIDC redirect URI", import.meta.env.VITE_OIDC_REDIRECT_URI);
   const verifier = base64Url(crypto.getRandomValues(new Uint8Array(32)));
   const state = base64Url(crypto.getRandomValues(new Uint8Array(24)));

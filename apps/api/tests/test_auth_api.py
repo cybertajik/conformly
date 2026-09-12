@@ -239,3 +239,17 @@ def test_authenticated_user_can_revoke_current_session(session: Session) -> None
     assert response.status_code == 204
     session.refresh(auth_session)
     assert auth_session.revoked_at is not None
+
+
+def test_dev_login_endpoint(session: Session) -> None:
+    client = client_for(session, None)
+    try:
+        response = client.post("/v1/auth/dev-login", json={"email": "example-user@development.invalid"})
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert "access_token" in payload
+    assert payload["token_type"] == "bearer"
+
