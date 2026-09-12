@@ -20,7 +20,7 @@ import { AssetWorkspace } from "./components/AssetWorkspace";
 import { ComplianceWorkspace } from "./components/ComplianceWorkspace";
 import { DataLifecycleWorkspace } from "./components/DataLifecycleWorkspace";
 import { FrameworkCatalog } from "./components/FrameworkCatalog";
-import { OnboardingOverview } from "./components/OnboardingOverview";
+import { ExecutiveDashboard } from "./components/ExecutiveDashboard";
 import { OrganizationWorkspace } from "./components/OrganizationWorkspace";
 import { PreAuditWorkspace } from "./components/PreAuditWorkspace";
 import { PublicProfileView } from "./components/PublicProfileView";
@@ -300,7 +300,9 @@ export function App() {
       {/* ─── Main Content ─── */}
       <div className="main-content">
         {tab === "overview" && (
-          <OnboardingOverview
+          <ExecutiveDashboard
+            token={effectiveToken}
+            tenantId={selected.tenant_id}
             tenantName={selected.tenant_name}
             tenantSlug={selected.tenant_slug}
             userRole={selected.role}

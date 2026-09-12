@@ -68,6 +68,7 @@ import type {
   VendorItemSummary,
   VendorRiskTier,
   VendorStatus,
+  DashboardSummary,
 } from "@conformly/shared";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
@@ -1888,5 +1889,12 @@ export function updateVendor(
     token,
     { method: "PATCH", body: JSON.stringify(payload) }
   );
+}
+
+export function getDashboardSummary(
+  token: string,
+  tenantId: string
+): Promise<DashboardSummary> {
+  return apiRequest(`/v1/tenants/${encodeURIComponent(tenantId)}/dashboard/summary`, token);
 }
 

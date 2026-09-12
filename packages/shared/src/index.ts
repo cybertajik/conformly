@@ -852,4 +852,91 @@ export interface VendorItemSummary {
   updated_at: string;
 }
 
+export interface DashboardControlsSummary {
+  total: number;
+  implemented: number;
+  in_progress: number;
+  not_started: number;
+}
+
+export interface DashboardFrameworkProgress {
+  framework_id: string;
+  framework_name: string;
+  version_name?: string | null;
+  total_controls: number;
+  implemented_controls: number;
+  progress_percentage: number;
+}
+
+export interface DashboardExpiringEvidence {
+  id: string;
+  title: string;
+  expires_at: string;
+  days_remaining: number;
+  classification: DataClassification;
+}
+
+export interface DashboardReviewDuePolicy {
+  id: string;
+  title: string;
+  review_due_at: string;
+  days_remaining: number;
+}
+
+export interface DashboardTaskItem {
+  id: string;
+  title: string;
+  priority: string;
+  status: string;
+  due_date?: string | null;
+}
+
+export interface DashboardRiskItem {
+  id: string;
+  title: string;
+  residual_score?: number | null;
+  inherent_score: number;
+  status: string;
+}
+
+export interface DashboardVendorHealth {
+  total_vendors: number;
+  signed_dpa_count: number;
+  missing_dpa_count: number;
+  critical_vendors: number;
+}
+
+export interface DashboardActivityItem {
+  id: string;
+  action: string;
+  resource_type: string;
+  actor_type: string;
+  occurred_at: string;
+}
+
+export interface DashboardAdminMetrics {
+  total_members: number;
+  legal_entities: number;
+  business_units: number;
+  locations: number;
+  storage_bytes_used: number;
+  max_storage_bytes: number;
+  plan_code: string;
+  enabled_modules: string[];
+}
+
+export interface DashboardSummary {
+  readiness_score: number;
+  controls_summary: DashboardControlsSummary;
+  frameworks_adopted: DashboardFrameworkProgress[];
+  expiring_evidence: DashboardExpiringEvidence[];
+  review_due_policies: DashboardReviewDuePolicy[];
+  open_tasks: DashboardTaskItem[];
+  top_risks: DashboardRiskItem[];
+  vendor_health: DashboardVendorHealth;
+  recent_activity: DashboardActivityItem[];
+  is_administrator_view: boolean;
+  admin_metrics?: DashboardAdminMetrics | null;
+}
+
 
