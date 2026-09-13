@@ -85,6 +85,7 @@ SAFE_METADATA_KEYS = frozenset(
         "is_external_advisor",
         "is_published",
         "is_publicly_visible",
+        "is_primary",
         "is_workforce",
         "issued_at",
         "issuer_name",
