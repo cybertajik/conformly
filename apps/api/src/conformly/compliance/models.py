@@ -108,6 +108,8 @@ class EvidenceItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     valid_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     valid_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    legal_hold: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    retention_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     __mapper_args__ = {"version_id_col": version, "version_id_generator": False}
     restricted_notes_encrypted: Mapped[dict[str, Any] | None] = mapped_column(JSON)
@@ -116,6 +118,9 @@ class EvidenceItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         back_populates="evidence", cascade="all, delete-orphan"
     )
     control_links: Mapped[list["EvidenceControlLink"]] = relationship(
+        back_populates="evidence", cascade="all, delete-orphan"
+    )
+    revisions: Mapped[list["EvidenceRevision"]] = relationship(
         back_populates="evidence", cascade="all, delete-orphan"
     )
 
@@ -215,6 +220,12 @@ class Policy(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     control_links: Mapped[list["PolicyControlLink"]] = relationship(
         back_populates="policy", cascade="all, delete-orphan"
     )
+    revisions: Mapped[list["PolicyRevision"]] = relationship(
+        back_populates="policy", cascade="all, delete-orphan"
+    )
+    acknowledgements: Mapped[list["PolicyAcknowledgement"]] = relationship(
+        back_populates="policy", cascade="all, delete-orphan"
+    )
 
 
 class PolicyControlLink(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -247,6 +258,135 @@ class PolicyControlLink(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
 
     policy: Mapped["Policy"] = relationship(back_populates="control_links")
+
+
+class EvidenceRevision(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """Immutable snapshot of an evidence item at a point in time."""
+
+    __tablename__ = "evidence_revisions"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "evidence_id", "revision_number", name="uq_evidence_revisions_number"),
+        Index("ix_evidence_revisions_tenant_evidence", "tenant_id", "evidence_id"),
+    )
+
+    tenant_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
+    )
+    evidence_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("evidence_items.id", ondelete="CASCADE"), nullable=False
+    )
+    revision_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    classification: Mapped[str] = mapped_column(String(32), nullable=False)
+    status: Mapped[EvidenceStatus] = mapped_column(
+        Enum(EvidenceStatus, native_enum=False, length=32), nullable=False
+    )
+    valid_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    valid_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    file_ids: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    control_ids: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    created_by_user_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
+    )
+    change_summary: Mapped[str | None] = mapped_column(Text)
+
+    evidence: Mapped["EvidenceItem"] = relationship(back_populates="revisions")
+
+
+class PolicyRevision(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """Immutable snapshot of a policy revision."""
+
+    __tablename__ = "policy_revisions"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "policy_id", "revision_number", name="uq_policy_revisions_number"),
+        Index("ix_policy_revisions_tenant_policy", "tenant_id", "policy_id"),
+    )
+
+    tenant_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
+    )
+    policy_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("policies.id", ondelete="CASCADE"), nullable=False
+    )
+    revision_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    version_string: Mapped[str] = mapped_column(String(50), nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    content: Mapped[str | None] = mapped_column(Text)
+    classification: Mapped[str] = mapped_column(String(32), nullable=False)
+    status: Mapped[PolicyStatus] = mapped_column(
+        Enum(PolicyStatus, native_enum=False, length=32), nullable=False
+    )
+    restricted_content_encrypted: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    created_by_user_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
+    )
+    approved_by_user_id: Mapped[UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="SET NULL")
+    )
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    change_summary: Mapped[str | None] = mapped_column(Text)
+
+    policy: Mapped["Policy"] = relationship(back_populates="revisions")
+
+
+class PolicyTemplate(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """Canonical baseline or tenant-specific policy template."""
+
+    __tablename__ = "policy_templates"
+    __table_args__ = (
+        Index("ix_policy_templates_tenant_slug", "tenant_id", "slug"),
+        Index("ix_policy_templates_category", "category"),
+    )
+
+    tenant_id: Mapped[UUID | None] = mapped_column(
+        Uuid, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True
+    )
+    slug: Mapped[str] = mapped_column(String(100), nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    category: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    content_template: Mapped[str] = mapped_column(Text, nullable=False)
+    suggested_classification: Mapped[str] = mapped_column(
+        String(32), default="Internal", nullable=False
+    )
+    is_canonical: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class PolicyAcknowledgement(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """Workforce acknowledgement of a published policy."""
+
+    __tablename__ = "policy_acknowledgements"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id",
+            "policy_id",
+            "user_id",
+            "policy_revision_id",
+            name="uq_policy_acknowledgements_user_rev",
+        ),
+        Index("ix_policy_acknowledgements_tenant_policy", "tenant_id", "policy_id"),
+        Index("ix_policy_acknowledgements_tenant_user", "tenant_id", "user_id"),
+    )
+
+    tenant_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
+    )
+    policy_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("policies.id", ondelete="CASCADE"), nullable=False
+    )
+    policy_revision_id: Mapped[UUID | None] = mapped_column(
+        Uuid, ForeignKey("policy_revisions.id", ondelete="SET NULL"), nullable=True
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
+    )
+    acknowledged_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    ip_address: Mapped[str | None] = mapped_column(String(45))
+    user_agent: Mapped[str | None] = mapped_column(String(255))
+
+    policy: Mapped["Policy"] = relationship(back_populates="acknowledgements")
 
 
 class ComplianceTask(UUIDPrimaryKeyMixin, TimestampMixin, Base):

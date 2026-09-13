@@ -373,6 +373,14 @@ class PreAuditService:
         pa.version += 1
         self._session.flush()
 
+        if any(r == CheckResult.FAIL for r, _ in all_results):
+            auto_suspend_active_certificates(
+                self._session,
+                tenant_context.tenant_id,
+                pre_audit_id=pa.id,
+                reason="Pre-audit checks yielded failing control evaluations",
+            )
+
         record_audit_event(
             self._session,
             tenant_id=tenant_context.tenant_id,
@@ -652,7 +660,7 @@ class PreAuditService:
         *,
         expected_version: int,
     ) -> PreAudit:
-        authorize(principal, tenant_context, Capability.PREAUDIT_MANAGE)
+        authorize(principal, tenant_context, Capability.PREAUDIT_REVIEW)
         self._set_rls(principal, tenant_context)
         pa = self._get_pre_audit(tenant_context.tenant_id, pre_audit_id)
 
@@ -686,6 +694,56 @@ class PreAuditService:
                 "pre_audit_id": str(pa.id),
                 "status": pa.status.value,
                 "overall_score": str(round(pa.overall_score, 2) if pa.overall_score else "0"),
+            },
+        )
+        return pa
+
+    def tenant_approve(
+        self,
+        principal: Principal,
+        tenant_context: TenantContext,
+        pre_audit_id: UUID,
+        *,
+        expected_version: int,
+        notes: str | None = None,
+    ) -> PreAudit:
+        self._set_rls(principal, tenant_context)
+        pa = self._get_pre_audit(tenant_context.tenant_id, pre_audit_id)
+
+        if pa.reviewer_user_id is not None and pa.reviewer_user_id == principal.user_id:
+            raise ReviewerConflictError(
+                "Assigned reviewer cannot provide tenant approval (separation of duties required)"
+            )
+
+        authorize(principal, tenant_context, Capability.PREAUDIT_MANAGE)
+
+        if pa.version != expected_version:
+            raise PreAuditOptimisticLockError("Pre-audit changed; reload and retry")
+
+        if pa.reviewed_at is None:
+            raise InvalidPreAuditTransitionError(
+                "Pre-audit review must be completed before explicit tenant approval"
+            )
+
+        pa.tenant_approved_at = datetime.now(UTC)
+        pa.tenant_approved_by_user_id = principal.user_id
+        pa.version += 1
+        self._session.flush()
+
+        record_audit_event(
+            self._session,
+            tenant_id=tenant_context.tenant_id,
+            actor_type=AuditActorType.USER,
+            actor_id=principal.user_id,
+            action="preaudit.tenant_approved",
+            resource_type="pre_audit",
+            resource_id=str(pa.id),
+            request_id=f"preaudit:tenant_approve:{pa.id}",
+            outcome=AuditOutcome.SUCCESS,
+            metadata={
+                "pre_audit_id": str(pa.id),
+                "tenant_approved_at": pa.tenant_approved_at.isoformat(),
+                "notes": notes or "",
             },
         )
         return pa
@@ -861,6 +919,11 @@ class PreAuditService:
                 "Pre-audit must be reviewed before issuing a readiness credential"
             )
 
+        if pa.tenant_approved_at is None:
+            raise CertificateIssuanceBlockedError(
+                "Pre-audit must have explicit tenant approval before issuing a readiness credential"
+            )
+
         all_checks = [c for s in pa.scopes for c in s.checks]
         failed = [c for c in all_checks if c.result == CheckResult.FAIL]
         if failed:
@@ -871,6 +934,15 @@ class PreAuditService:
 
         if not all_checks:
             raise CertificateIssuanceBlockedError("No checks have been evaluated")
+
+        # Supersede any currently active or suspended certificates for this pre-audit
+        existing_active = self._session.scalars(
+            select(PreAuditCertificate).where(
+                PreAuditCertificate.tenant_id == tenant_context.tenant_id,
+                PreAuditCertificate.pre_audit_id == pa.id,
+                PreAuditCertificate.status.in_([CertificateStatus.ACTIVE, CertificateStatus.SUSPENDED]),
+            )
+        ).all()
 
         now = datetime.now(UTC)
         cert_number = f"CONF-RA-{now.strftime('%Y%m%d')}-{secrets.token_hex(4).upper()}"
@@ -885,6 +957,11 @@ class PreAuditService:
         )
         self._session.add(cert)
         self._session.flush()
+
+        for old_cert in existing_active:
+            old_cert.status = CertificateStatus.SUPERSEDED
+            old_cert.superseded_at = now
+            old_cert.superseded_by_certificate_id = cert.id
 
         record_audit_event(
             self._session,
@@ -956,6 +1033,114 @@ class PreAuditService:
         )
         return cert
 
+    def suspend_certificate(
+        self,
+        principal: Principal,
+        tenant_context: TenantContext,
+        pre_audit_id: UUID,
+        certificate_id: UUID,
+        *,
+        reason: str,
+    ) -> PreAuditCertificate:
+        authorize(principal, tenant_context, Capability.PREAUDIT_MANAGE)
+        self._set_rls(principal, tenant_context)
+        self._get_pre_audit(tenant_context.tenant_id, pre_audit_id)
+
+        cert = self._session.scalar(
+            select(PreAuditCertificate).where(
+                PreAuditCertificate.id == certificate_id,
+                PreAuditCertificate.tenant_id == tenant_context.tenant_id,
+                PreAuditCertificate.pre_audit_id == pre_audit_id,
+            )
+        )
+        if cert is None:
+            raise CertificateNotFoundError("Certificate not found")
+
+        if cert.status != CertificateStatus.ACTIVE:
+            raise InvalidPreAuditTransitionError(f"Cannot suspend certificate with status '{cert.status.value}'")
+
+        now = datetime.now(UTC)
+        cert.status = CertificateStatus.SUSPENDED
+        cert.suspended_at = now
+        cert.suspended_reason = reason
+        self._session.flush()
+
+        record_audit_event(
+            self._session,
+            tenant_id=tenant_context.tenant_id,
+            actor_type=AuditActorType.USER,
+            actor_id=principal.user_id,
+            action="preaudit.certificate.suspend",
+            resource_type="pre_audit_certificate",
+            resource_id=str(cert.id),
+            request_id=f"preaudit:cert:suspend:{cert.id}",
+            outcome=AuditOutcome.SUCCESS,
+            metadata={
+                "pre_audit_id": str(pre_audit_id),
+                "certificate_id": str(cert.id),
+                "certificate_number": cert.certificate_number,
+                "reason": reason[:255],
+            },
+        )
+        return cert
+
+    def reinstate_certificate(
+        self,
+        principal: Principal,
+        tenant_context: TenantContext,
+        pre_audit_id: UUID,
+        certificate_id: UUID,
+        *,
+        reason: str | None = None,
+    ) -> PreAuditCertificate:
+        authorize(principal, tenant_context, Capability.PREAUDIT_MANAGE)
+        self._set_rls(principal, tenant_context)
+        pa = self._get_pre_audit(tenant_context.tenant_id, pre_audit_id, eager=True)
+
+        cert = self._session.scalar(
+            select(PreAuditCertificate).where(
+                PreAuditCertificate.id == certificate_id,
+                PreAuditCertificate.tenant_id == tenant_context.tenant_id,
+                PreAuditCertificate.pre_audit_id == pre_audit_id,
+            )
+        )
+        if cert is None:
+            raise CertificateNotFoundError("Certificate not found")
+
+        if cert.status != CertificateStatus.SUSPENDED:
+            raise InvalidPreAuditTransitionError(f"Cannot reinstate certificate with status '{cert.status.value}'")
+
+        all_checks = [c for s in pa.scopes for c in s.checks]
+        failed = [c for c in all_checks if c.result == CheckResult.FAIL]
+        if failed:
+            raise CertificateIssuanceBlockedError(
+                f"Cannot reinstate certificate while {len(failed)} check(s) are failing"
+            )
+
+        cert.status = CertificateStatus.ACTIVE
+        cert.suspended_at = None
+        cert.suspended_reason = None
+        self._session.flush()
+
+        record_audit_event(
+            self._session,
+            tenant_id=tenant_context.tenant_id,
+            actor_type=AuditActorType.USER,
+            actor_id=principal.user_id,
+            action="preaudit.certificate.reinstate",
+            resource_type="pre_audit_certificate",
+            resource_id=str(cert.id),
+            request_id=f"preaudit:cert:reinstate:{cert.id}",
+            outcome=AuditOutcome.SUCCESS,
+            metadata={
+                "pre_audit_id": str(pre_audit_id),
+                "certificate_id": str(cert.id),
+                "certificate_number": cert.certificate_number,
+                "reason": reason or "",
+            },
+        )
+        return cert
+
     # ── Score summary ─────────────────────────────────────────────────────
 
     def compute_score_summary(self, pa: PreAudit) -> dict[str, Any]:
@@ -979,3 +1164,59 @@ class PreAuditService:
             "pending_checks": pending,
             "open_findings": open_findings,
         }
+
+
+def auto_suspend_active_certificates(
+    session: Session,
+    tenant_id: UUID,
+    *,
+    framework_adoption_id: UUID | None = None,
+    control_id: UUID | None = None,
+    pre_audit_id: UUID | None = None,
+    reason: str,
+) -> int:
+    """Automatically suspend active certificates upon material scope or control changes."""
+    query = (
+        select(PreAuditCertificate)
+        .join(PreAudit, PreAudit.id == PreAuditCertificate.pre_audit_id)
+        .where(
+            PreAuditCertificate.tenant_id == tenant_id,
+            PreAuditCertificate.status == CertificateStatus.ACTIVE,
+        )
+    )
+    if pre_audit_id:
+        query = query.where(PreAuditCertificate.pre_audit_id == pre_audit_id)
+    if framework_adoption_id:
+        query = query.where(PreAudit.framework_adoption_id == framework_adoption_id)
+    if control_id:
+        query = (
+            query.join(PreAuditScope, PreAuditScope.pre_audit_id == PreAudit.id)
+            .join(PreAuditCheck, PreAuditCheck.scope_id == PreAuditScope.id)
+            .where(PreAuditCheck.control_id == control_id)
+        )
+
+    certs = session.scalars(query).all()
+    now = datetime.now(UTC)
+    count = 0
+    for cert in certs:
+        cert.status = CertificateStatus.SUSPENDED
+        cert.suspended_at = now
+        cert.suspended_reason = f"Automatic suspension: {reason}"
+        count += 1
+        record_audit_event(
+            session,
+            tenant_id=tenant_id,
+            actor_type=AuditActorType.SYSTEM,
+            actor_id=None,
+            action="preaudit.certificate.auto_suspend",
+            resource_type="pre_audit_certificate",
+            resource_id=str(cert.id),
+            request_id=f"auto_suspend:{cert.id}",
+            outcome=AuditOutcome.SUCCESS,
+            metadata={"reason": reason, "certificate_number": cert.certificate_number},
+            occurred_at=now,
+        )
+
+    if count > 0:
+        session.flush()
+    return count

@@ -38,6 +38,7 @@ class Capability(StrEnum):
     CONTROL_STATUS_MANAGE = "control_status:manage"
     PREAUDIT_READ = "preaudit:read"
     PREAUDIT_MANAGE = "preaudit:manage"
+    PREAUDIT_REVIEW = "preaudit:review"
     WHISTLEBLOWER_PORTAL_MANAGE = "whistleblower:portal_manage"
     WHISTLEBLOWER_CASE_READ = "whistleblower:case_read"
     WHISTLEBLOWER_CASE_MANAGE = "whistleblower:case_manage"
@@ -100,6 +101,7 @@ ROLE_CAPABILITIES: dict[Role, frozenset[Capability]] = {
             Capability.CONTROL_STATUS_MANAGE,
             Capability.PREAUDIT_READ,
             Capability.PREAUDIT_MANAGE,
+            Capability.PREAUDIT_REVIEW,
             Capability.PUBLIC_PROFILE_MANAGE,
             Capability.PUBLIC_PROFILE_READ,
             Capability.EXPORT_CREATE,
@@ -152,6 +154,7 @@ ROLE_CAPABILITIES: dict[Role, frozenset[Capability]] = {
             Capability.TASK_READ,
             Capability.FINDING_READ,
             Capability.PREAUDIT_READ,
+            Capability.PREAUDIT_REVIEW,
             Capability.PUBLIC_PROFILE_READ,
             Capability.RISK_READ,
             Capability.ASSET_READ,

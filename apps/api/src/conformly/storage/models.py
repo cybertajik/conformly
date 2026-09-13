@@ -12,6 +12,7 @@ class StoredFileStatus(StrEnum):
     ACTIVE = "active"
     DELETE_PENDING = "delete_pending"
     DELETED = "deleted"
+    QUARANTINED = "quarantined"
 
 
 class StoredFile(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -51,4 +52,5 @@ class StoredFile(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         default=StoredFileStatus.ACTIVE,
         nullable=False,
     )
+    quarantine_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

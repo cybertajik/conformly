@@ -533,6 +533,7 @@ class TestCertificateIssuance:
             expected_version=pa.version,
         )
         pa = svc.complete_review(reviewer_p, reviewer_ctx, pa.id, expected_version=pa.version)
+        pa = svc.tenant_approve(lead_p, lead_ctx, pa.id, expected_version=pa.version)
         return t, lead, reviewer, pa, svc, lead_p, reviewer_p, lead_ctx
 
     def test_issue_certificate_on_completed(self) -> None:
@@ -609,6 +610,71 @@ class TestCertificateIssuance:
         revoked = svc.revoke_certificate(lead_p, ctx, pa.id, cert.id, reason="Policy violation")
         assert revoked.status == CertificateStatus.REVOKED
         assert revoked.revoked_reason == "Policy violation"
+
+    def test_suspend_and_reinstate_certificate(self) -> None:
+        session = _session()
+        _, _, _, pa, svc, lead_p, _, ctx = self._completed_pa(session)
+
+        cert = svc.issue_certificate(lead_p, ctx, pa.id)
+        assert cert.status == CertificateStatus.ACTIVE
+
+        suspended = svc.suspend_certificate(lead_p, ctx, pa.id, cert.id, reason="Control under review")
+        assert suspended.status == CertificateStatus.SUSPENDED
+        assert suspended.suspended_reason == "Control under review"
+        assert suspended.suspended_at is not None
+
+        reinstated = svc.reinstate_certificate(lead_p, ctx, pa.id, cert.id, reason="Review cleared")
+        assert reinstated.status == CertificateStatus.ACTIVE
+        assert reinstated.suspended_at is None
+        assert reinstated.suspended_reason is None
+
+    def test_reissue_certificate_auto_supersedes_existing(self) -> None:
+        session = _session()
+        _, _, _, pa, svc, lead_p, _, ctx = self._completed_pa(session)
+
+        cert1 = svc.issue_certificate(lead_p, ctx, pa.id)
+        assert cert1.status == CertificateStatus.ACTIVE
+
+        cert2 = svc.issue_certificate(lead_p, ctx, pa.id)
+        assert cert2.status == CertificateStatus.ACTIVE
+        assert cert2.id != cert1.id
+
+        # cert1 should be superseded by cert2
+        assert cert1.status == CertificateStatus.SUPERSEDED
+        assert cert1.superseded_by_certificate_id == cert2.id
+        assert cert1.superseded_at is not None
+
+    def test_reviewer_cannot_tenant_approve(self) -> None:
+        from conformly.preaudit.service import ReviewerConflictError
+
+        session = _session()
+        t, lead, reviewer, _, _, _, adoption = _setup_tenant(session)
+        svc = PreAuditService(session)
+        lead_p = _make_principal(lead.id)
+        reviewer_p = _make_principal(reviewer.id)
+        lead_ctx = _make_tenant_ctx(t.id, lead.id)
+        reviewer_ctx = _make_tenant_ctx(t.id, reviewer.id)
+
+        pa = svc.create_pre_audit(
+            lead_p,
+            lead_ctx,
+            title="Test",
+            framework_adoption_id=adoption.id,
+            lead_user_id=lead.id,
+        )
+        pa = svc.run_checks(lead_p, lead_ctx, pa.id)
+        pa = svc.submit_for_review(
+            lead_p,
+            lead_ctx,
+            pa.id,
+            reviewer_user_id=reviewer.id,
+            expected_version=pa.version,
+        )
+        pa = svc.complete_review(reviewer_p, reviewer_ctx, pa.id, expected_version=pa.version)
+
+        # Reviewer attempting tenant approval must fail with ReviewerConflictError
+        with pytest.raises(ReviewerConflictError):
+            svc.tenant_approve(reviewer_p, reviewer_ctx, pa.id, expected_version=pa.version)
 
 
 class TestCancelPreAudit:

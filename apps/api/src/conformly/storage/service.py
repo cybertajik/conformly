@@ -1,7 +1,7 @@
 import hashlib
 import secrets
 from datetime import UTC, datetime
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 from fastapi import Depends
@@ -20,7 +20,9 @@ from conformly.storage.models import StoredFile, StoredFileStatus
 from conformly.storage.providers import StorageProvider, get_storage_provider
 from conformly.storage.validation import (
     BuiltinMalwareScanner,
+    MalwareDetectedError,
     MalwareScanner,
+    ProductionMalwareScanner,
     normalize_content_type,
     normalize_filename,
     validate_classification,
@@ -37,6 +39,14 @@ class StorageFileNotFoundError(Exception):
     """Raised when a file cannot be found in the current tenant scope."""
 
 
+class LegalHoldActiveError(Exception):
+    """Raised when an operation is blocked due to an active legal hold."""
+
+
+class FileQuarantinedError(MalwareDetectedError):
+    """Raised when an operation is attempted on a quarantined file."""
+
+
 class StorageService:
     """Manages encrypted file lifecycle, metadata persistence, and access audits."""
 
@@ -51,7 +61,7 @@ class StorageService:
         self.session = session
         self.storage_provider = storage_provider
         self.encryption = encryption_service
-        self.malware_scanner = malware_scanner or BuiltinMalwareScanner()
+        self.malware_scanner = malware_scanner or ProductionMalwareScanner()
         self.max_file_size = max_file_size_bytes or get_settings().max_file_size_bytes
 
     def upload_file(
@@ -60,13 +70,21 @@ class StorageService:
         tenant_context: TenantContext,
         *,
         filename: str,
-        content: bytes,
+        content: bytes | None = None,
+        data_stream: Any | None = None,
         classification: str,
         content_type: str | None,
-        request_id: str,
+        request_id: str | None = None,
         now: datetime | None = None,
     ) -> StoredFile:
         current_time = now or datetime.now(UTC)
+        req_id = request_id or str(uuid4())
+
+        if content is None:
+            if data_stream is not None:
+                content = data_stream.read()
+            else:
+                content = b""
 
         try:
             authorize(principal, tenant_context, Capability.FILE_WRITE)
@@ -79,7 +97,7 @@ class StorageService:
                 action="file.upload_denied",
                 resource_type="stored_file",
                 resource_id=None,
-                request_id=request_id,
+                request_id=req_id,
                 outcome=AuditOutcome.DENIED,
                 metadata={"reason": "capability_denied"},
                 occurred_at=current_time,
@@ -91,7 +109,75 @@ class StorageService:
         clean_classification = validate_classification(classification)
         clean_content_type = normalize_content_type(content_type)
 
-        self.malware_scanner.scan(content, clean_filename)
+        try:
+            self.malware_scanner.scan(content, clean_filename)
+        except MalwareDetectedError as exc:
+            file_id = uuid4()
+            plaintext_sha256 = hashlib.sha256(content).hexdigest()
+            context = EncryptionContext(
+                tenant_id=tenant_context.tenant_id,
+                resource_type="stored_file",
+                resource_id=str(file_id),
+                field_name="quarantine_content",
+                version=1,
+            )
+            payload = self.encryption.encrypt(content, context)
+            ciphertext_sha256 = hashlib.sha256(payload.ciphertext).hexdigest()
+            random_token = secrets.token_hex(16)
+            object_key = f"tenants/{tenant_context.tenant_id}/quarantine/{file_id}/{random_token}.enc"
+            self.storage_provider.put_object(
+                object_key, payload.ciphertext, content_type="application/octet-stream"
+            )
+            settings = get_settings()
+            stored_file = StoredFile(
+                id=file_id,
+                tenant_id=tenant_context.tenant_id,
+                created_by_user_id=principal.user_id,
+                original_filename=clean_filename,
+                content_type=clean_content_type,
+                classification=clean_classification,
+                plaintext_size_bytes=len(content),
+                ciphertext_size_bytes=len(payload.ciphertext),
+                plaintext_sha256=plaintext_sha256,
+                ciphertext_sha256=ciphertext_sha256,
+                storage_backend=settings.storage_backend,
+                object_key=object_key,
+                encryption_algorithm=payload.algorithm,
+                context_version=payload.context_version,
+                key_version=payload.key_version,
+                wrapped_dek_nonce=payload.wrapped_dek_nonce.hex(),
+                wrapped_dek=payload.wrapped_dek.hex(),
+                ciphertext_nonce=payload.nonce.hex(),
+                status=StoredFileStatus.QUARANTINED,
+                quarantine_reason=str(exc),
+            )
+            set_rls_context(
+                self.session,
+                tenant_id=tenant_context.tenant_id,
+                user_id=principal.user_id,
+                tenant_verified=True,
+            )
+            self.session.add(stored_file)
+            self.session.flush()
+
+            record_audit_event(
+                self.session,
+                tenant_id=tenant_context.tenant_id,
+                actor_type=AuditActorType.USER,
+                actor_id=principal.user_id,
+                action="file.quarantined",
+                resource_type="stored_file",
+                resource_id=str(file_id),
+                request_id=req_id,
+                outcome=AuditOutcome.DENIED,
+                metadata={
+                    "file_id": str(file_id),
+                    "filename": clean_filename,
+                    "quarantine_reason": str(exc),
+                },
+                occurred_at=current_time,
+            )
+            raise FileQuarantinedError(str(exc)) from exc
 
         file_id = uuid4()
         plaintext_sha256 = hashlib.sha256(content).hexdigest()
@@ -160,7 +246,7 @@ class StorageService:
                 action="file.uploaded",
                 resource_type="stored_file",
                 resource_id=str(file_id),
-                request_id=request_id,
+                request_id=req_id,
                 outcome=AuditOutcome.SUCCESS,
                 metadata={
                     "classification": clean_classification,
@@ -197,10 +283,13 @@ class StorageService:
             select(StoredFile).where(
                 StoredFile.tenant_id == tenant_context.tenant_id,
                 StoredFile.id == file_id,
-                StoredFile.status == StoredFileStatus.ACTIVE,
             )
         )
-        if file is None:
+        if file is None or file.status == StoredFileStatus.DELETED:
+            raise StorageFileNotFoundError(f"file not found: {file_id}")
+        if file.status == StoredFileStatus.QUARANTINED:
+            raise FileQuarantinedError("file is quarantined due to detected malware")
+        if file.status != StoredFileStatus.ACTIVE:
             raise StorageFileNotFoundError(f"file not found: {file_id}")
         return file
 
@@ -290,12 +379,17 @@ class StorageService:
         self,
         principal: Principal,
         tenant_context: TenantContext,
+        file_id: UUID | None = None,
         *,
-        file_id: UUID,
-        request_id: str,
+        request_id: str | None = None,
         now: datetime | None = None,
+        **kwargs: Any,
     ) -> None:
+        target_file_id = file_id or kwargs.get("file_id")
+        if target_file_id is None:
+            raise ValueError("file_id is required")
         current_time = now or datetime.now(UTC)
+        req_id = request_id or str(uuid4())
 
         try:
             authorize(principal, tenant_context, Capability.FILE_DELETE)
@@ -307,10 +401,10 @@ class StorageService:
                 actor_id=principal.user_id,
                 action="file.delete_denied",
                 resource_type="stored_file",
-                resource_id=str(file_id),
-                request_id=request_id,
+                resource_id=str(target_file_id),
+                request_id=req_id,
                 outcome=AuditOutcome.DENIED,
-                metadata={"file_id": str(file_id), "reason": "capability_denied"},
+                metadata={"file_id": str(target_file_id), "reason": "capability_denied"},
                 occurred_at=current_time,
             )
             raise
@@ -324,7 +418,7 @@ class StorageService:
         stored_file = self.session.scalar(
             select(StoredFile)
             .where(
-                StoredFile.id == file_id,
+                StoredFile.id == target_file_id,
                 StoredFile.tenant_id == tenant_context.tenant_id,
                 StoredFile.status.in_([StoredFileStatus.ACTIVE, StoredFileStatus.DELETE_PENDING]),
             )
@@ -334,6 +428,21 @@ class StorageService:
             raise StorageFileNotFoundError("file not found")
         if stored_file.status == StoredFileStatus.DELETE_PENDING:
             return
+
+        from conformly.compliance.models import EvidenceFileLink, EvidenceItem
+
+        held = self.session.scalar(
+            select(EvidenceItem.id)
+            .join(EvidenceFileLink, EvidenceFileLink.evidence_id == EvidenceItem.id)
+            .where(
+                EvidenceFileLink.file_id == target_file_id,
+                EvidenceFileLink.tenant_id == tenant_context.tenant_id,
+                EvidenceItem.legal_hold.is_(True),
+            )
+            .limit(1)
+        )
+        if held is not None:
+            raise LegalHoldActiveError("Cannot delete file attached to evidence under active legal hold")
 
         # Commit this durable intent before irreversible object deletion.
         stored_file.status = StoredFileStatus.DELETE_PENDING
@@ -347,11 +456,11 @@ class StorageService:
             actor_id=principal.user_id,
             action="file.deletion_requested",
             resource_type="stored_file",
-            resource_id=str(file_id),
-            request_id=request_id,
+            resource_id=str(target_file_id),
+            request_id=req_id,
             outcome=AuditOutcome.SUCCESS,
             metadata={
-                "file_id": str(file_id),
+                "file_id": str(target_file_id),
                 "filename": stored_file.original_filename,
             },
             occurred_at=current_time,
@@ -399,6 +508,49 @@ class StorageService:
             )
         self.session.flush()
         return len(files)
+
+    def quarantine_file(
+        self,
+        principal: Principal,
+        tenant_context: TenantContext,
+        *,
+        file_id: UUID,
+        reason: str,
+        request_id: str,
+    ) -> StoredFile:
+        authorize(principal, tenant_context, Capability.FILE_WRITE)
+        set_rls_context(
+            self.session,
+            tenant_id=tenant_context.tenant_id,
+            user_id=principal.user_id,
+            tenant_verified=True,
+        )
+        file = self.session.scalar(
+            select(StoredFile).where(
+                StoredFile.id == file_id,
+                StoredFile.tenant_id == tenant_context.tenant_id,
+            )
+        )
+        if file is None:
+            raise StorageFileNotFoundError("file not found")
+
+        file.status = StoredFileStatus.QUARANTINED
+        file.quarantine_reason = reason
+        self.session.flush()
+
+        record_audit_event(
+            self.session,
+            tenant_id=tenant_context.tenant_id,
+            actor_type=AuditActorType.USER,
+            actor_id=principal.user_id,
+            action="file.quarantined",
+            resource_type="stored_file",
+            resource_id=str(file_id),
+            request_id=request_id,
+            outcome=AuditOutcome.SUCCESS,
+            metadata={"file_id": str(file_id), "reason": reason},
+        )
+        return file
 
     def list_files(
         self,

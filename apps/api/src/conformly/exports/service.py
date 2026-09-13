@@ -22,9 +22,13 @@ from conformly.compliance.models import (
     EvidenceControlLink,
     EvidenceFileLink,
     EvidenceItem,
+    EvidenceRevision,
     Finding,
     Policy,
+    PolicyAcknowledgement,
     PolicyControlLink,
+    PolicyRevision,
+    PolicyTemplate,
     UserNotificationPreference,
 )
 from conformly.crypto.fields import EncryptedFieldCodec
@@ -494,6 +498,79 @@ class ExportService:
                 dataset_record_counts["policies"] = len(policies_data)
                 total_records += len(policies_data)
 
+                # Policy revisions, templates, and workforce acknowledgements
+                policy_revisions = self.session.scalars(
+                    select(PolicyRevision).where(PolicyRevision.tenant_id == tenant.id)
+                ).all()
+                policy_revisions_data = [
+                    {
+                        "id": str(pr.id),
+                        "policy_id": str(pr.policy_id),
+                        "revision_number": pr.revision_number,
+                        "version_string": pr.version_string,
+                        "title": pr.title,
+                        "description": pr.description,
+                        "content": pr.content,
+                        "classification": str(pr.classification),
+                        "status": str(pr.status),
+                        "restricted_content": self._decrypt_field(
+                            tenant.id,
+                            "policy",
+                            pr.policy_id,
+                            "restricted_content",
+                            pr.restricted_content_encrypted,
+                        ),
+                        "created_by_user_id": str(pr.created_by_user_id),
+                        "approved_by_user_id": str(pr.approved_by_user_id) if pr.approved_by_user_id else None,
+                        "approved_at": pr.approved_at.isoformat() if pr.approved_at else None,
+                        "change_summary": pr.change_summary,
+                        "created_at": pr.created_at.isoformat(),
+                    }
+                    for pr in policy_revisions
+                ]
+                zf.writestr("data/policy_revisions.json", json.dumps(policy_revisions_data, indent=2))
+                dataset_record_counts["policy_revisions"] = len(policy_revisions_data)
+                total_records += len(policy_revisions_data)
+
+                policy_templates = self.session.scalars(
+                    select(PolicyTemplate).where(PolicyTemplate.tenant_id == tenant.id)
+                ).all()
+                policy_templates_data = [
+                    {
+                        "id": str(pt.id),
+                        "slug": pt.slug,
+                        "title": pt.title,
+                        "category": pt.category,
+                        "description": pt.description,
+                        "content_template": pt.content_template,
+                        "suggested_classification": str(pt.suggested_classification),
+                        "created_at": pt.created_at.isoformat(),
+                    }
+                    for pt in policy_templates
+                ]
+                zf.writestr("data/policy_templates.json", json.dumps(policy_templates_data, indent=2))
+                dataset_record_counts["policy_templates"] = len(policy_templates_data)
+                total_records += len(policy_templates_data)
+
+                policy_acknowledgements = self.session.scalars(
+                    select(PolicyAcknowledgement).where(PolicyAcknowledgement.tenant_id == tenant.id)
+                ).all()
+                policy_acknowledgements_data = [
+                    {
+                        "id": str(pa.id),
+                        "policy_id": str(pa.policy_id),
+                        "policy_revision_id": str(pa.policy_revision_id) if pa.policy_revision_id else None,
+                        "user_id": str(pa.user_id),
+                        "acknowledged_at": pa.acknowledged_at.isoformat(),
+                        "ip_address": pa.ip_address,
+                        "user_agent": pa.user_agent,
+                    }
+                    for pa in policy_acknowledgements
+                ]
+                zf.writestr("data/policy_acknowledgements.json", json.dumps(policy_acknowledgements_data, indent=2))
+                dataset_record_counts["policy_acknowledgements"] = len(policy_acknowledgements_data)
+                total_records += len(policy_acknowledgements_data)
+
                 control_statuses = self.session.scalars(
                     select(ControlStatusRecord).where(ControlStatusRecord.tenant_id == tenant.id)
                 ).all()
@@ -532,6 +609,8 @@ class ExportService:
                             e.restricted_notes_encrypted,
                         ),
                         "file_ids": [str(fl.file_id) for fl in e.file_links],
+                        "legal_hold": e.legal_hold,
+                        "retention_until": e.retention_until.isoformat() if e.retention_until else None,
                         "created_at": e.created_at.isoformat(),
                     }
                     for e in evidence_items
@@ -539,6 +618,33 @@ class ExportService:
                 zf.writestr("data/evidence_items.json", json.dumps(evidence_data, indent=2))
                 dataset_record_counts["evidence_items"] = len(evidence_data)
                 total_records += len(evidence_data)
+
+                # Evidence revisions
+                evidence_revisions = self.session.scalars(
+                    select(EvidenceRevision).where(EvidenceRevision.tenant_id == tenant.id)
+                ).all()
+                evidence_revisions_data = [
+                    {
+                        "id": str(er.id),
+                        "evidence_id": str(er.evidence_id),
+                        "revision_number": er.revision_number,
+                        "title": er.title,
+                        "description": er.description,
+                        "classification": str(er.classification),
+                        "status": str(er.status),
+                        "valid_from": er.valid_from.isoformat() if er.valid_from else None,
+                        "valid_until": er.valid_until.isoformat() if er.valid_until else None,
+                        "file_ids": er.file_ids,
+                        "control_ids": er.control_ids,
+                        "created_by_user_id": str(er.created_by_user_id),
+                        "change_summary": er.change_summary,
+                        "created_at": er.created_at.isoformat(),
+                    }
+                    for er in evidence_revisions
+                ]
+                zf.writestr("data/evidence_revisions.json", json.dumps(evidence_revisions_data, indent=2))
+                dataset_record_counts["evidence_revisions"] = len(evidence_revisions_data)
+                total_records += len(evidence_revisions_data)
 
                 # Compliance tasks & findings
                 tasks = self.session.scalars(

@@ -832,6 +832,14 @@ class FrameworkService:
 
         self.session.flush()
 
+        from conformly.preaudit.service import auto_suspend_active_certificates
+        auto_suspend_active_certificates(
+            self.session,
+            tenant_context.tenant_id,
+            framework_adoption_id=adoption_id,
+            reason="Control overlay created or updated",
+        )
+
         record_audit_event(
             self.session,
             tenant_id=tenant_context.tenant_id,
@@ -888,8 +896,17 @@ class FrameworkService:
         if not overlay or overlay.tenant_id != tenant_context.tenant_id:
             raise ControlOverlayNotFoundError(f"overlay {overlay_id} not found")
 
+        adoption_id = overlay.adoption_id
         self.session.delete(overlay)
         self.session.flush()
+
+        from conformly.preaudit.service import auto_suspend_active_certificates
+        auto_suspend_active_certificates(
+            self.session,
+            tenant_context.tenant_id,
+            framework_adoption_id=adoption_id,
+            reason="Control overlay deleted",
+        )
 
         record_audit_event(
             self.session,

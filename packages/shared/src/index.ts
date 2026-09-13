@@ -231,10 +231,30 @@ export interface EvidenceItemSummary {
   valid_until?: string | null;
   version: number;
   restricted_notes?: string | null;
+  legal_hold: boolean;
+  retention_until?: string | null;
   file_links?: EvidenceFileLinkSummary[];
   control_links?: EvidenceControlLinkSummary[];
   created_at: string;
   updated_at: string;
+}
+
+export interface EvidenceRevisionSummary {
+  id: string;
+  tenant_id: string;
+  evidence_id: string;
+  revision_number: number;
+  title: string;
+  description: string;
+  classification: DataClassification;
+  status: EvidenceStatus;
+  valid_from?: string | null;
+  valid_until?: string | null;
+  file_ids: string[];
+  control_ids: string[];
+  created_by_user_id: string;
+  change_summary?: string | null;
+  created_at: string;
 }
 
 export interface PolicyControlLinkSummary {
@@ -265,6 +285,49 @@ export interface PolicySummary {
   control_links?: PolicyControlLinkSummary[];
   created_at: string;
   updated_at: string;
+}
+
+export interface PolicyRevisionSummary {
+  id: string;
+  tenant_id: string;
+  policy_id: string;
+  revision_number: number;
+  version_string: string;
+  title: string;
+  description: string;
+  content?: string | null;
+  classification: DataClassification;
+  status: PolicyStatus;
+  restricted_content?: string | null;
+  created_by_user_id: string;
+  approved_by_user_id?: string | null;
+  approved_at?: string | null;
+  change_summary?: string | null;
+  created_at: string;
+}
+
+export interface PolicyTemplateSummary {
+  id: string;
+  tenant_id?: string | null;
+  slug: string;
+  title: string;
+  category: string;
+  description: string;
+  content_template: string;
+  suggested_classification: DataClassification;
+  is_canonical: boolean;
+  created_at: string;
+}
+
+export interface PolicyAcknowledgementSummary {
+  id: string;
+  tenant_id: string;
+  policy_id: string;
+  policy_revision_id?: string | null;
+  user_id: string;
+  acknowledged_at: string;
+  ip_address?: string | null;
+  user_agent?: string | null;
 }
 
 export interface ComplianceTaskSummary {
@@ -356,7 +419,7 @@ export type PreAuditStatus =
 
 export type PreAuditCheckResult = "pass" | "fail" | "not_applicable" | "pending";
 
-export type CertificateStatus = "active" | "expired" | "revoked";
+export type CertificateStatus = "active" | "expired" | "revoked" | "suspended" | "superseded";
 
 export interface PreAuditScopeSummary {
   id: string;
@@ -433,6 +496,10 @@ export interface PreAuditCertificateSummary {
   expires_at: string;
   revoked_at: string | null;
   revoked_reason: string | null;
+  suspended_at?: string | null;
+  suspended_reason?: string | null;
+  superseded_at?: string | null;
+  superseded_by_certificate_id?: string | null;
   created_at: string;
 }
 
@@ -456,6 +523,8 @@ export interface PreAuditSummary {
   lead_user_id: string;
   reviewer_user_id: string | null;
   reviewed_at: string | null;
+  tenant_approved_at?: string | null;
+  tenant_approved_by_user_id?: string | null;
   rule_version: string;
   overall_score: number | null;
   version: number;

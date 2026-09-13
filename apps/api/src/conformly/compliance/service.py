@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from conformly.audit.models import AuditActorType, AuditOutcome
@@ -17,12 +17,16 @@ from conformly.compliance.models import (
     EvidenceControlLink,
     EvidenceFileLink,
     EvidenceItem,
+    EvidenceRevision,
     EvidenceStatus,
     Finding,
     FindingSeverity,
     Policy,
+    PolicyAcknowledgement,
     PolicyControlLink,
+    PolicyRevision,
     PolicyStatus,
+    PolicyTemplate,
     RemediationStatus,
     TaskPriority,
     TaskStatus,
@@ -61,6 +65,25 @@ class FindingNotFoundError(ComplianceWorkspaceError):
     """Raised when a finding is not found."""
 
 
+class PolicyRevisionNotFoundError(ComplianceWorkspaceError):
+    """Raised when a policy revision is not found."""
+
+
+class PolicyTemplateNotFoundError(ComplianceWorkspaceError):
+    """Raised when a policy template is not found."""
+
+
+class EvidenceRevisionNotFoundError(ComplianceWorkspaceError):
+    """Raised when an evidence revision is not found."""
+
+
+class ComplianceLegalHoldActiveError(ComplianceWorkspaceError):
+    """Raised when an operation is blocked due to active legal hold."""
+
+
+LegalHoldActiveError = ComplianceLegalHoldActiveError
+
+
 class ControlStatusRecordNotFoundError(ComplianceWorkspaceError):
     """Raised when a control status record is not found."""
 
@@ -87,6 +110,58 @@ class InvalidFileReferenceError(ComplianceWorkspaceError):
 
 class InvalidTenantReferenceError(ComplianceWorkspaceError):
     """A reference is not available within this tenant."""
+
+
+CANONICAL_POLICY_TEMPLATES: list[dict[str, Any]] = [
+    {
+        "slug": "information-security-policy",
+        "title": "Information Security Policy",
+        "category": "Governance",
+        "description": "Foundational information security policy defining organizational commitments, security roles, risk assessments, and asset protection.",
+        "content_template": "# Information Security Policy\n\n## 1. Objective\nThis policy defines the core principles and standards for safeguarding the organization's information assets...\n\n## 2. Scope\nApplies to all employees, contractors, systems, and third-party environments...\n\n## 3. Policy Statements\n- All assets must be classified and handled according to sensitivity.\n- Access is granted on a least-privilege basis.\n- Security incidents must be reported promptly.\n",
+        "suggested_classification": "Internal",
+    },
+    {
+        "slug": "access-control-policy",
+        "title": "Access Control & Authentication Policy",
+        "category": "Access Management",
+        "description": "Defines credential complexity, multi-factor authentication, least privilege, and role-based access standards.",
+        "content_template": "# Access Control & Authentication Policy\n\n## 1. Purpose\nEnsure that access to systems and sensitive data is restricted to authorized workforce members...\n\n## 2. Standards\n- Multi-factor authentication (MFA) is required for all administrative access and remote logins.\n- Passwords must meet minimum complexity guidelines.\n- Access reviews must be conducted at least quarterly.\n",
+        "suggested_classification": "Internal",
+    },
+    {
+        "slug": "data-protection-retention-policy",
+        "title": "Data Protection & Retention Policy",
+        "category": "Data Privacy",
+        "description": "Governs data classification, handling, customer privacy, encryption at rest/transit, and retention/disposal schedules.",
+        "content_template": "# Data Protection & Retention Policy\n\n## 1. Overview\nEstablishes rules for classifying, securing, retaining, and safely purging customer and organizational data...\n\n## 2. Classification Levels\n- Public\n- Internal\n- Confidential\n- Restricted\n\n## 3. Retention & Legal Hold\nData subject to active legal hold must never be deleted until the hold is formally released.\n",
+        "suggested_classification": "Internal",
+    },
+    {
+        "slug": "incident-response-policy",
+        "title": "Incident Response & Breach Notification Policy",
+        "category": "Operations",
+        "description": "Standard operating procedure for detecting, reporting, containing, remediating security incidents and notifying stakeholders.",
+        "content_template": "# Incident Response & Breach Notification Policy\n\n## 1. Policy\nAll security and privacy events must be reported and investigated immediately in accordance with our CIRT process...\n\n## 2. Severity Classification\n- Low / Medium / High / Critical\n\n## 3. Timelines\nRegulatory and tenant notifications must occur within required statutory windows (e.g., 72 hours under GDPR).\n",
+        "suggested_classification": "Internal",
+    },
+    {
+        "slug": "vendor-risk-management-policy",
+        "title": "Vendor & Third-Party Risk Management Policy",
+        "category": "Third-Party",
+        "description": "Framework for evaluating, onboarding, monitoring, and offboarding third-party vendors and sub-processors.",
+        "content_template": "# Vendor & Third-Party Risk Management Policy\n\n## 1. Purpose\nMitigate security and operational risks associated with third-party suppliers, SaaS providers, and contractors...\n\n## 2. Assessment Requirements\nAll vendors handling Confidential or Restricted data must undergo security review and execute a DPA prior to engagement.\n",
+        "suggested_classification": "Internal",
+    },
+    {
+        "slug": "whistleblower-protection-policy",
+        "title": "Whistleblower Reporting & Non-Retaliation Policy",
+        "category": "Compliance",
+        "description": "Guarantees safe, confidential, and anonymous reporting channels for ethical, financial, or compliance misconduct with strict non-retaliation protection.",
+        "content_template": "# Whistleblower Reporting & Non-Retaliation Policy\n\n## 1. Commitment\nThe organization guarantees that reports made in good faith may be submitted anonymously through our secure reporting channel...\n\n## 2. Non-Retaliation\nRetaliation of any kind against an individual reporting misconduct is strictly prohibited and subject to immediate disciplinary action.\n",
+        "suggested_classification": "Public",
+    },
+]
 
 
 class ComplianceService:
@@ -164,6 +239,8 @@ class ComplianceService:
             )
             evidence.restricted_notes_encrypted = self._codec.encrypt_text(restricted_notes, ctx)
             self._session.flush()
+
+        self._record_evidence_revision(evidence, principal.user_id, "Initial evidence creation")
 
         record_audit_event(
             self._session,
@@ -316,6 +393,8 @@ class ComplianceService:
         evidence.version += 1
         self._session.flush()
 
+        self._record_evidence_revision(evidence, principal.user_id, "Evidence details updated")
+
         record_audit_event(
             self._session,
             tenant_id=tenant_context.tenant_id,
@@ -375,6 +454,9 @@ class ComplianceService:
             EvidenceStatus.ARCHIVED: {EvidenceStatus.DRAFT},
         }
 
+        if target_status == EvidenceStatus.ARCHIVED and evidence.legal_hold:
+            raise ComplianceLegalHoldActiveError("Cannot archive evidence item while under active legal hold")
+
         if target_status not in valid_transitions.get(evidence.status, set()):
             raise InvalidStateTransitionError(
                 f"Cannot transition evidence from {evidence.status} to {target_status}"
@@ -393,6 +475,10 @@ class ComplianceService:
         }
         if reason:
             metadata["reason"] = reason[:255]
+
+        self._record_evidence_revision(
+            evidence, principal.user_id, f"Transitioned to {target_status}: {reason or ''}".strip()
+        )
 
         record_audit_event(
             self._session,
@@ -621,6 +707,109 @@ class ComplianceService:
                 },
             )
 
+    def _record_evidence_revision(
+        self,
+        evidence: EvidenceItem,
+        created_by_user_id: UUID,
+        change_summary: str | None = None,
+    ) -> EvidenceRevision:
+        max_rev = self._session.scalar(
+            select(func.max(EvidenceRevision.revision_number)).where(
+                EvidenceRevision.tenant_id == evidence.tenant_id,
+                EvidenceRevision.evidence_id == evidence.id,
+            )
+        )
+        next_rev = (max_rev or 0) + 1
+
+        file_ids = [str(fl.file_id) for fl in evidence.file_links] if evidence.file_links else []
+        control_ids = [str(cl.control_id) for cl in evidence.control_links] if evidence.control_links else []
+
+        rev = EvidenceRevision(
+            tenant_id=evidence.tenant_id,
+            evidence_id=evidence.id,
+            revision_number=next_rev,
+            title=evidence.title,
+            description=evidence.description,
+            classification=evidence.classification,
+            status=evidence.status,
+            valid_from=evidence.valid_from,
+            valid_until=evidence.valid_until,
+            file_ids=file_ids,
+            control_ids=control_ids,
+            created_by_user_id=created_by_user_id,
+            change_summary=change_summary,
+        )
+        self._session.add(rev)
+        self._session.flush()
+        return rev
+
+    def list_evidence_revisions(
+        self,
+        principal: Principal,
+        tenant_context: TenantContext,
+        evidence_id: UUID,
+    ) -> list[EvidenceRevision]:
+        authorize(principal, tenant_context, Capability.EVIDENCE_READ)
+        self._set_rls(principal, tenant_context)
+        return list(
+            self._session.scalars(
+                select(EvidenceRevision)
+                .where(
+                    EvidenceRevision.tenant_id == tenant_context.tenant_id,
+                    EvidenceRevision.evidence_id == evidence_id,
+                )
+                .order_by(EvidenceRevision.revision_number.desc())
+            ).all()
+        )
+
+    def set_evidence_legal_hold(
+        self,
+        principal: Principal,
+        tenant_context: TenantContext,
+        evidence_id: UUID,
+        *,
+        legal_hold: bool,
+        reason: str,
+    ) -> EvidenceItem:
+        authorize(principal, tenant_context, Capability.EVIDENCE_MANAGE)
+        self._set_rls(principal, tenant_context)
+        evidence = self._session.scalar(
+            select(EvidenceItem).where(
+                EvidenceItem.id == evidence_id,
+                EvidenceItem.tenant_id == tenant_context.tenant_id,
+            )
+        )
+        if evidence is None:
+            raise EvidenceNotFoundError(f"Evidence item {evidence_id} not found")
+
+        evidence.legal_hold = legal_hold
+        evidence.version += 1
+        self._session.flush()
+
+        self._record_evidence_revision(
+            evidence,
+            principal.user_id,
+            f"Legal hold {'enabled' if legal_hold else 'released'}: {reason}",
+        )
+
+        record_audit_event(
+            self._session,
+            tenant_id=tenant_context.tenant_id,
+            actor_type=AuditActorType.USER,
+            actor_id=principal.user_id,
+            action="evidence.legal_hold.set" if legal_hold else "evidence.legal_hold.released",
+            resource_type="evidence_item",
+            resource_id=str(evidence.id),
+            request_id=f"evidence:legal_hold:{evidence.id}:{evidence.version}",
+            outcome=AuditOutcome.SUCCESS,
+            metadata={
+                "evidence_id": str(evidence.id),
+                "legal_hold": legal_hold,
+                "reason": reason[:255],
+            },
+        )
+        return evidence
+
     # =========================================================================
     # POLICY LIFECYCLE
     # =========================================================================
@@ -667,6 +856,8 @@ class ComplianceService:
             )
             policy.restricted_content_encrypted = self._codec.encrypt_text(restricted_content, ctx)
             self._session.flush()
+
+        self._record_policy_revision(policy, principal.user_id, "Initial policy creation")
 
         record_audit_event(
             self._session,
@@ -801,6 +992,8 @@ class ComplianceService:
         policy.version += 1
         self._session.flush()
 
+        self._record_policy_revision(policy, principal.user_id, "Policy details updated")
+
         record_audit_event(
             self._session,
             tenant_id=tenant_context.tenant_id,
@@ -851,6 +1044,8 @@ class ComplianceService:
         policy.status = PolicyStatus.IN_REVIEW
         policy.version += 1
         self._session.flush()
+
+        self._record_policy_revision(policy, principal.user_id, "Submitted for review")
 
         record_audit_event(
             self._session,
@@ -911,6 +1106,8 @@ class ComplianceService:
         policy.version += 1
         self._session.flush()
 
+        self._record_policy_revision(policy, principal.user_id, "Policy approved")
+
         record_audit_event(
             self._session,
             tenant_id=tenant_context.tenant_id,
@@ -963,6 +1160,8 @@ class ComplianceService:
         policy.version += 1
         self._session.flush()
 
+        self._record_policy_revision(policy, principal.user_id, "Policy published")
+
         record_audit_event(
             self._session,
             tenant_id=tenant_context.tenant_id,
@@ -1008,6 +1207,8 @@ class ComplianceService:
         policy.status = PolicyStatus.ARCHIVED
         policy.version += 1
         self._session.flush()
+
+        self._record_policy_revision(policy, principal.user_id, "Policy archived")
 
         record_audit_event(
             self._session,
@@ -1131,6 +1332,366 @@ class ComplianceService:
                     "link_id": str(link.id),
                 },
             )
+
+    def _record_policy_revision(
+        self,
+        policy: Policy,
+        created_by_user_id: UUID,
+        change_summary: str | None = None,
+    ) -> PolicyRevision:
+        max_rev = self._session.scalar(
+            select(func.max(PolicyRevision.revision_number)).where(
+                PolicyRevision.tenant_id == policy.tenant_id,
+                PolicyRevision.policy_id == policy.id,
+            )
+        )
+        next_rev = (max_rev or 0) + 1
+
+        rev = PolicyRevision(
+            tenant_id=policy.tenant_id,
+            policy_id=policy.id,
+            revision_number=next_rev,
+            version_string=policy.version_string,
+            title=policy.title,
+            description=policy.description,
+            content=policy.content,
+            classification=policy.classification,
+            status=policy.status,
+            restricted_content_encrypted=policy.restricted_content_encrypted,
+            created_by_user_id=created_by_user_id,
+            approved_by_user_id=policy.approved_by_user_id,
+            approved_at=policy.approved_at,
+            change_summary=change_summary,
+        )
+        self._session.add(rev)
+        self._session.flush()
+        return rev
+
+    def list_policy_revisions(
+        self,
+        principal: Principal,
+        tenant_context: TenantContext,
+        policy_id: UUID,
+    ) -> list[PolicyRevision]:
+        authorize(principal, tenant_context, Capability.POLICY_READ)
+        self._set_rls(principal, tenant_context)
+        return list(
+            self._session.scalars(
+                select(PolicyRevision)
+                .where(
+                    PolicyRevision.tenant_id == tenant_context.tenant_id,
+                    PolicyRevision.policy_id == policy_id,
+                )
+                .order_by(PolicyRevision.revision_number.desc())
+            ).all()
+        )
+
+    def get_policy_revision(
+        self,
+        principal: Principal,
+        tenant_context: TenantContext,
+        policy_id: UUID,
+        revision_number: int,
+    ) -> tuple[PolicyRevision, str | None]:
+        authorize(principal, tenant_context, Capability.POLICY_READ)
+        self._set_rls(principal, tenant_context)
+        rev = self._session.scalar(
+            select(PolicyRevision).where(
+                PolicyRevision.tenant_id == tenant_context.tenant_id,
+                PolicyRevision.policy_id == policy_id,
+                PolicyRevision.revision_number == revision_number,
+            )
+        )
+        if rev is None:
+            raise PolicyRevisionNotFoundError(
+                f"Policy revision {revision_number} for policy {policy_id} not found"
+            )
+
+        decrypted: str | None = None
+        if rev.restricted_content_encrypted:
+            ctx = EncryptionContext(
+                tenant_id=tenant_context.tenant_id,
+                resource_type="policy",
+                resource_id=str(policy_id),
+                field_name="restricted_content",
+            )
+            decrypted = self._codec.decrypt_text(rev.restricted_content_encrypted, ctx)
+        return rev, decrypted
+
+    # =========================================================================
+    # POLICY TEMPLATES
+    # =========================================================================
+
+    def seed_canonical_policy_templates(self) -> int:
+        """Seed global canonical policy templates if they do not already exist."""
+        count = 0
+        for item in CANONICAL_POLICY_TEMPLATES:
+            existing = self._session.scalar(
+                select(PolicyTemplate).where(
+                    PolicyTemplate.tenant_id.is_(None),
+                    PolicyTemplate.slug == item["slug"],
+                )
+            )
+            if existing is None:
+                tmpl = PolicyTemplate(
+                    tenant_id=None,
+                    slug=item["slug"],
+                    title=item["title"],
+                    category=item["category"],
+                    description=item["description"],
+                    content_template=item["content_template"],
+                    suggested_classification=item.get("suggested_classification", "Internal"),
+                    is_canonical=True,
+                )
+                self._session.add(tmpl)
+                count += 1
+        if count > 0:
+            self._session.flush()
+        return count
+
+    def list_policy_templates(
+        self,
+        principal: Principal,
+        tenant_context: TenantContext,
+        category: str | None = None,
+    ) -> list[PolicyTemplate]:
+        authorize(principal, tenant_context, Capability.POLICY_READ)
+        self._set_rls(principal, tenant_context)
+
+        query = select(PolicyTemplate).where(
+            or_(
+                PolicyTemplate.tenant_id.is_(None),
+                PolicyTemplate.tenant_id == tenant_context.tenant_id,
+            )
+        )
+        if category:
+            query = query.where(PolicyTemplate.category == category)
+        query = query.order_by(PolicyTemplate.is_canonical.desc(), PolicyTemplate.title.asc())
+        return list(self._session.scalars(query).all())
+
+    def get_policy_template(
+        self,
+        principal: Principal,
+        tenant_context: TenantContext,
+        template_id: UUID,
+    ) -> PolicyTemplate:
+        authorize(principal, tenant_context, Capability.POLICY_READ)
+        self._set_rls(principal, tenant_context)
+        tmpl = self._session.scalar(
+            select(PolicyTemplate).where(
+                PolicyTemplate.id == template_id,
+                or_(
+                    PolicyTemplate.tenant_id.is_(None),
+                    PolicyTemplate.tenant_id == tenant_context.tenant_id,
+                ),
+            )
+        )
+        if tmpl is None:
+            raise PolicyTemplateNotFoundError(f"Policy template {template_id} not found")
+        return tmpl
+
+    def instantiate_policy_from_template(
+        self,
+        principal: Principal,
+        tenant_context: TenantContext,
+        template_id: UUID,
+        *,
+        title: str | None = None,
+        description: str | None = None,
+        classification: str | None = None,
+    ) -> Policy:
+        authorize(principal, tenant_context, Capability.POLICY_MANAGE)
+        tmpl = self.get_policy_template(principal, tenant_context, template_id)
+
+        policy = self.create_policy(
+            principal,
+            tenant_context,
+            title=title or tmpl.title,
+            description=description or tmpl.description,
+            content=tmpl.content_template,
+            classification=classification or tmpl.suggested_classification,
+            version_string="1.0",
+        )
+        record_audit_event(
+            self._session,
+            tenant_id=tenant_context.tenant_id,
+            actor_type=AuditActorType.USER,
+            actor_id=principal.user_id,
+            action="policy.instantiate_from_template",
+            resource_type="policy",
+            resource_id=str(policy.id),
+            request_id=f"policy:instantiate:{policy.id}",
+            outcome=AuditOutcome.SUCCESS,
+            metadata={
+                "template_id": str(tmpl.id),
+                "template_slug": tmpl.slug,
+                "policy_id": str(policy.id),
+            },
+        )
+        return policy
+
+    def create_custom_policy_template(
+        self,
+        principal: Principal,
+        tenant_context: TenantContext,
+        *,
+        slug: str,
+        title: str,
+        category: str,
+        description: str,
+        content_template: str,
+        suggested_classification: str = "Internal",
+    ) -> PolicyTemplate:
+        authorize(principal, tenant_context, Capability.POLICY_MANAGE)
+        self._set_rls(principal, tenant_context)
+
+        tmpl = PolicyTemplate(
+            tenant_id=tenant_context.tenant_id,
+            slug=slug,
+            title=title,
+            category=category,
+            description=description,
+            content_template=content_template,
+            suggested_classification=suggested_classification,
+            is_canonical=False,
+        )
+        self._session.add(tmpl)
+        self._session.flush()
+
+        record_audit_event(
+            self._session,
+            tenant_id=tenant_context.tenant_id,
+            actor_type=AuditActorType.USER,
+            actor_id=principal.user_id,
+            action="policy_template.create",
+            resource_type="policy_template",
+            resource_id=str(tmpl.id),
+            request_id=f"policy_template:create:{tmpl.id}",
+            outcome=AuditOutcome.SUCCESS,
+            metadata={"template_id": str(tmpl.id), "slug": slug},
+        )
+        return tmpl
+
+    # =========================================================================
+    # POLICY ACKNOWLEDGEMENTS
+    # =========================================================================
+
+    def acknowledge_policy(
+        self,
+        principal: Principal,
+        tenant_context: TenantContext,
+        policy_id: UUID,
+        *,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+    ) -> PolicyAcknowledgement:
+        self._set_rls(principal, tenant_context)
+
+        policy = self._session.scalar(
+            select(Policy).where(
+                Policy.id == policy_id,
+                Policy.tenant_id == tenant_context.tenant_id,
+            )
+        )
+        if policy is None:
+            raise PolicyNotFoundError(f"Policy {policy_id} not found")
+
+        if policy.status != PolicyStatus.PUBLISHED:
+            raise InvalidStateTransitionError(
+                f"Cannot acknowledge policy {policy_id} in state {policy.status}; must be published"
+            )
+
+        latest_rev = self._session.scalar(
+            select(PolicyRevision)
+            .where(
+                PolicyRevision.tenant_id == tenant_context.tenant_id,
+                PolicyRevision.policy_id == policy_id,
+            )
+            .order_by(PolicyRevision.revision_number.desc())
+        )
+
+        existing = self._session.scalar(
+            select(PolicyAcknowledgement).where(
+                PolicyAcknowledgement.tenant_id == tenant_context.tenant_id,
+                PolicyAcknowledgement.policy_id == policy_id,
+                PolicyAcknowledgement.user_id == principal.user_id,
+                PolicyAcknowledgement.policy_revision_id == (latest_rev.id if latest_rev else None),
+            )
+        )
+        if existing:
+            return existing
+
+        now = datetime.now(UTC)
+        ack = PolicyAcknowledgement(
+            tenant_id=tenant_context.tenant_id,
+            policy_id=policy.id,
+            policy_revision_id=latest_rev.id if latest_rev else None,
+            user_id=principal.user_id,
+            acknowledged_at=now,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+        self._session.add(ack)
+        self._session.flush()
+
+        record_audit_event(
+            self._session,
+            tenant_id=tenant_context.tenant_id,
+            actor_type=AuditActorType.USER,
+            actor_id=principal.user_id,
+            action="policy.acknowledge",
+            resource_type="policy_acknowledgement",
+            resource_id=str(ack.id),
+            request_id=f"policy:ack:{ack.id}",
+            outcome=AuditOutcome.SUCCESS,
+            metadata={
+                "policy_id": str(policy.id),
+                "policy_revision_id": str(latest_rev.id) if latest_rev else None,
+                "revision_number": latest_rev.revision_number if latest_rev else None,
+            },
+            occurred_at=now,
+        )
+        return ack
+
+    def list_policy_acknowledgements(
+        self,
+        principal: Principal,
+        tenant_context: TenantContext,
+        policy_id: UUID,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[PolicyAcknowledgement]:
+        authorize(principal, tenant_context, Capability.POLICY_READ)
+        self._set_rls(principal, tenant_context)
+        return list(
+            self._session.scalars(
+                select(PolicyAcknowledgement)
+                .where(
+                    PolicyAcknowledgement.tenant_id == tenant_context.tenant_id,
+                    PolicyAcknowledgement.policy_id == policy_id,
+                )
+                .order_by(PolicyAcknowledgement.acknowledged_at.desc())
+                .limit(limit)
+                .offset(offset)
+            ).all()
+        )
+
+    def get_my_acknowledgements(
+        self,
+        principal: Principal,
+        tenant_context: TenantContext,
+    ) -> list[PolicyAcknowledgement]:
+        self._set_rls(principal, tenant_context)
+        return list(
+            self._session.scalars(
+                select(PolicyAcknowledgement)
+                .where(
+                    PolicyAcknowledgement.tenant_id == tenant_context.tenant_id,
+                    PolicyAcknowledgement.user_id == principal.user_id,
+                )
+                .order_by(PolicyAcknowledgement.acknowledged_at.desc())
+            ).all()
+        )
 
     # =========================================================================
     # COMPLIANCE TASKS
@@ -1443,6 +2004,15 @@ class ComplianceService:
         self._session.add(finding)
         self._session.flush()
 
+        if severity in (FindingSeverity.HIGH, FindingSeverity.CRITICAL) and control_id:
+            from conformly.preaudit.service import auto_suspend_active_certificates
+            auto_suspend_active_certificates(
+                self._session,
+                tenant_context.tenant_id,
+                control_id=control_id,
+                reason=f"{severity.value} finding raised on control {control_id}",
+            )
+
         record_audit_event(
             self._session,
             tenant_id=tenant_context.tenant_id,
@@ -1555,6 +2125,15 @@ class ComplianceService:
 
         finding.version += 1
         self._session.flush()
+
+        if severity in (FindingSeverity.HIGH, FindingSeverity.CRITICAL) and finding.control_id:
+            from conformly.preaudit.service import auto_suspend_active_certificates
+            auto_suspend_active_certificates(
+                self._session,
+                tenant_context.tenant_id,
+                control_id=finding.control_id,
+                reason=f"Finding on control {finding.control_id} escalated to {severity.value}",
+            )
 
         record_audit_event(
             self._session,
@@ -1687,6 +2266,15 @@ class ComplianceService:
             record.version += 1
 
         self._session.flush()
+
+        if status == ControlImplementationStatus.NOT_STARTED:
+            from conformly.preaudit.service import auto_suspend_active_certificates
+            auto_suspend_active_certificates(
+                self._session,
+                tenant_context.tenant_id,
+                control_id=control_id,
+                reason=f"Control {control_id} status regressed to NOT_STARTED",
+            )
 
         record_audit_event(
             self._session,

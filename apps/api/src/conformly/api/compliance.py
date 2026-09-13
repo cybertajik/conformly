@@ -26,8 +26,10 @@ from conformly.compliance.models import (
     TaskStatus,
 )
 from conformly.compliance.service import (
+    ComplianceLegalHoldActiveError,
     ComplianceService,
     EvidenceNotFoundError,
+    EvidenceRevisionNotFoundError,
     FindingNotFoundError,
     IndependentPolicyApprovalRequiredError,
     InvalidControlReferenceError,
@@ -35,6 +37,8 @@ from conformly.compliance.service import (
     InvalidStateTransitionError,
     OptimisticLockConflictError,
     PolicyNotFoundError,
+    PolicyRevisionNotFoundError,
+    PolicyTemplateNotFoundError,
     TaskNotFoundError,
 )
 from conformly.crypto.fields import EncryptedFieldCodec, get_encrypted_field_codec
@@ -94,10 +98,98 @@ class EvidenceResponse(BaseModel):
     valid_until: datetime | None
     version: int
     restricted_notes: str | None = None
+    legal_hold: bool = False
+    retention_until: datetime | None = None
     file_links: list[EvidenceFileLinkResponse] = []
     control_links: list[EvidenceControlLinkResponse] = []
     created_at: datetime
     updated_at: datetime
+
+
+class SetLegalHoldRequest(BaseModel):
+    legal_hold: bool
+    reason: str = Field(..., min_length=1, max_length=255)
+
+
+class EvidenceRevisionResponse(BaseModel):
+    id: UUID
+    tenant_id: UUID
+    evidence_id: UUID
+    revision_number: int
+    title: str
+    description: str
+    classification: str
+    status: EvidenceStatus
+    valid_from: datetime | None
+    valid_until: datetime | None
+    file_ids: list[str] = []
+    control_ids: list[str] = []
+    created_by_user_id: UUID
+    change_summary: str | None = None
+    created_at: datetime
+
+
+class PolicyRevisionResponse(BaseModel):
+    id: UUID
+    tenant_id: UUID
+    policy_id: UUID
+    revision_number: int
+    version_string: str
+    title: str
+    description: str
+    content: str | None
+    classification: str
+    status: PolicyStatus
+    restricted_content: str | None = None
+    created_by_user_id: UUID
+    approved_by_user_id: UUID | None = None
+    approved_at: datetime | None = None
+    change_summary: str | None = None
+    created_at: datetime
+
+
+class PolicyTemplateResponse(BaseModel):
+    id: UUID
+    tenant_id: UUID | None = None
+    slug: str
+    title: str
+    category: str
+    description: str
+    content_template: str
+    suggested_classification: str
+    is_canonical: bool
+    created_at: datetime
+
+
+class InstantiatePolicyTemplateRequest(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    classification: str | None = None
+
+
+class CreatePolicyTemplateRequest(BaseModel):
+    slug: str = Field(..., min_length=1, max_length=100)
+    title: str = Field(..., min_length=1, max_length=255)
+    category: str = Field(..., min_length=1, max_length=100)
+    description: str = Field(..., min_length=1)
+    content_template: str = Field(..., min_length=1)
+    suggested_classification: str = Field("Internal", max_length=32)
+
+
+class PolicyAcknowledgementResponse(BaseModel):
+    id: UUID
+    tenant_id: UUID
+    policy_id: UUID
+    policy_revision_id: UUID | None = None
+    user_id: UUID
+    acknowledged_at: datetime
+    ip_address: str | None = None
+    user_agent: str | None = None
+
+
+class AcknowledgePolicyRequest(BaseModel):
+    ip_address: str | None = None
+    user_agent: str | None = None
 
 
 class CreateEvidenceRequest(BaseModel):
@@ -722,6 +814,104 @@ def unlink_control_from_evidence(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
+@compliance_router.get(
+    "/evidence/{evidence_id}/revisions",
+    response_model=list[EvidenceRevisionResponse],
+    dependencies=[require_evidence],
+)
+def list_evidence_revisions(
+    evidence_id: UUID,
+    principal: CurrentPrincipal,
+    tenant: CurrentTenant,
+    service: Annotated[ComplianceService, Depends(get_compliance_service)],
+) -> Any:
+    try:
+        revs = service.list_evidence_revisions(principal, tenant, evidence_id)
+        return [
+            EvidenceRevisionResponse(
+                id=r.id,
+                tenant_id=r.tenant_id,
+                evidence_id=r.evidence_id,
+                revision_number=r.revision_number,
+                title=r.title,
+                description=r.description,
+                classification=r.classification,
+                status=r.status,
+                valid_from=r.valid_from,
+                valid_until=r.valid_until,
+                file_ids=r.file_ids or [],
+                control_ids=r.control_ids or [],
+                created_by_user_id=r.created_by_user_id,
+                change_summary=r.change_summary,
+                created_at=r.created_at,
+            )
+            for r in revs
+        ]
+    except AuthorizationDeniedError as error:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
+
+
+@compliance_router.post(
+    "/evidence/{evidence_id}/legal-hold",
+    response_model=EvidenceResponse,
+    dependencies=[require_evidence],
+)
+def set_evidence_legal_hold(
+    evidence_id: UUID,
+    principal: CurrentPrincipal,
+    tenant: CurrentTenant,
+    request: SetLegalHoldRequest,
+    service: Annotated[ComplianceService, Depends(get_compliance_service)],
+) -> Any:
+    try:
+        item = service.set_evidence_legal_hold(
+            principal, tenant, evidence_id, legal_hold=request.legal_hold, reason=request.reason
+        )
+        _, notes = service.get_evidence(principal, tenant, evidence_id)
+        return EvidenceResponse(
+            id=item.id,
+            tenant_id=item.tenant_id,
+            title=item.title,
+            description=item.description,
+            classification=item.classification,
+            status=item.status,
+            owner_user_id=item.owner_user_id,
+            valid_from=item.valid_from,
+            valid_until=item.valid_until,
+            version=item.version,
+            restricted_notes=notes,
+            legal_hold=item.legal_hold,
+            retention_until=item.retention_until,
+            file_links=[
+                EvidenceFileLinkResponse(
+                    id=fl.id,
+                    evidence_id=fl.evidence_id,
+                    file_id=fl.file_id,
+                    attached_by_user_id=fl.attached_by_user_id,
+                    created_at=fl.created_at,
+                )
+                for fl in item.file_links
+            ],
+            control_links=[
+                EvidenceControlLinkResponse(
+                    id=cl.id,
+                    evidence_id=cl.evidence_id,
+                    control_type=cl.control_type,
+                    control_id=cl.control_id,
+                    linked_by_user_id=cl.linked_by_user_id,
+                    created_at=cl.created_at,
+                )
+                for cl in item.control_links
+            ],
+            created_at=item.created_at,
+            updated_at=item.updated_at,
+        )
+    except EvidenceNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    except AuthorizationDeniedError as error:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
+
+
 # -----------------------------------------------------------------------------
 # Policy Endpoints
 # -----------------------------------------------------------------------------
@@ -1143,6 +1333,335 @@ def unlink_control_from_policy(
             control_type=control_type,
             control_id=control_id,
         )
+    except AuthorizationDeniedError as error:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
+
+
+@compliance_router.get(
+    "/policies/{policy_id}/revisions",
+    response_model=list[PolicyRevisionResponse],
+    dependencies=[require_policies],
+)
+def list_policy_revisions(
+    policy_id: UUID,
+    principal: CurrentPrincipal,
+    tenant: CurrentTenant,
+    service: Annotated[ComplianceService, Depends(get_compliance_service)],
+) -> Any:
+    try:
+        revs = service.list_policy_revisions(principal, tenant, policy_id)
+        return [
+            PolicyRevisionResponse(
+                id=r.id,
+                tenant_id=r.tenant_id,
+                policy_id=r.policy_id,
+                revision_number=r.revision_number,
+                version_string=r.version_string,
+                title=r.title,
+                description=r.description,
+                content=r.content,
+                classification=r.classification,
+                status=r.status,
+                restricted_content=None,
+                created_by_user_id=r.created_by_user_id,
+                approved_by_user_id=r.approved_by_user_id,
+                approved_at=r.approved_at,
+                change_summary=r.change_summary,
+                created_at=r.created_at,
+            )
+            for r in revs
+        ]
+    except AuthorizationDeniedError as error:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
+
+
+@compliance_router.get(
+    "/policies/{policy_id}/revisions/{revision_number}",
+    response_model=PolicyRevisionResponse,
+    dependencies=[require_policies],
+)
+def get_policy_revision(
+    policy_id: UUID,
+    revision_number: int,
+    principal: CurrentPrincipal,
+    tenant: CurrentTenant,
+    service: Annotated[ComplianceService, Depends(get_compliance_service)],
+) -> Any:
+    try:
+        rev, decrypted = service.get_policy_revision(principal, tenant, policy_id, revision_number)
+        return PolicyRevisionResponse(
+            id=rev.id,
+            tenant_id=rev.tenant_id,
+            policy_id=rev.policy_id,
+            revision_number=rev.revision_number,
+            version_string=rev.version_string,
+            title=rev.title,
+            description=rev.description,
+            content=rev.content,
+            classification=rev.classification,
+            status=rev.status,
+            restricted_content=decrypted,
+            created_by_user_id=rev.created_by_user_id,
+            approved_by_user_id=rev.approved_by_user_id,
+            approved_at=rev.approved_at,
+            change_summary=rev.change_summary,
+            created_at=rev.created_at,
+        )
+    except PolicyRevisionNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    except AuthorizationDeniedError as error:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
+
+
+@compliance_router.get(
+    "/policy-templates",
+    response_model=list[PolicyTemplateResponse],
+    dependencies=[require_policies],
+)
+def list_policy_templates(
+    principal: CurrentPrincipal,
+    tenant: CurrentTenant,
+    service: Annotated[ComplianceService, Depends(get_compliance_service)],
+    category: Annotated[str | None, Query()] = None,
+) -> Any:
+    try:
+        service.seed_canonical_policy_templates()
+        tmpls = service.list_policy_templates(principal, tenant, category=category)
+        return [
+            PolicyTemplateResponse(
+                id=t.id,
+                tenant_id=t.tenant_id,
+                slug=t.slug,
+                title=t.title,
+                category=t.category,
+                description=t.description,
+                content_template=t.content_template,
+                suggested_classification=t.suggested_classification,
+                is_canonical=t.is_canonical,
+                created_at=t.created_at,
+            )
+            for t in tmpls
+        ]
+    except AuthorizationDeniedError as error:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
+
+
+@compliance_router.get(
+    "/policy-templates/{template_id}",
+    response_model=PolicyTemplateResponse,
+    dependencies=[require_policies],
+)
+def get_policy_template(
+    template_id: UUID,
+    principal: CurrentPrincipal,
+    tenant: CurrentTenant,
+    service: Annotated[ComplianceService, Depends(get_compliance_service)],
+) -> Any:
+    try:
+        t = service.get_policy_template(principal, tenant, template_id)
+        return PolicyTemplateResponse(
+            id=t.id,
+            tenant_id=t.tenant_id,
+            slug=t.slug,
+            title=t.title,
+            category=t.category,
+            description=t.description,
+            content_template=t.content_template,
+            suggested_classification=t.suggested_classification,
+            is_canonical=t.is_canonical,
+            created_at=t.created_at,
+        )
+    except PolicyTemplateNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    except AuthorizationDeniedError as error:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
+
+
+@compliance_router.post(
+    "/policy-templates/{template_id}/instantiate",
+    response_model=PolicyResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[require_policies],
+)
+def instantiate_policy_template(
+    template_id: UUID,
+    principal: CurrentPrincipal,
+    tenant: CurrentTenant,
+    request: InstantiatePolicyTemplateRequest,
+    service: Annotated[ComplianceService, Depends(get_compliance_service)],
+) -> Any:
+    try:
+        policy = service.instantiate_policy_from_template(
+            principal,
+            tenant,
+            template_id,
+            title=request.title,
+            description=request.description,
+            classification=request.classification,
+        )
+        return PolicyResponse(
+            id=policy.id,
+            tenant_id=policy.tenant_id,
+            title=policy.title,
+            description=policy.description,
+            version_string=policy.version_string,
+            status=policy.status,
+            owner_user_id=policy.owner_user_id,
+            approved_by_user_id=policy.approved_by_user_id,
+            approved_at=policy.approved_at,
+            review_cycle_days=policy.review_cycle_days,
+            next_review_due=policy.next_review_due,
+            version=policy.version,
+            content=policy.content,
+            classification=policy.classification,
+            restricted_content=None,
+            control_links=[],
+            created_at=policy.created_at,
+            updated_at=policy.updated_at,
+        )
+    except PolicyTemplateNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    except AuthorizationDeniedError as error:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
+
+
+@compliance_router.post(
+    "/policy-templates",
+    response_model=PolicyTemplateResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[require_policies],
+)
+def create_custom_policy_template(
+    principal: CurrentPrincipal,
+    tenant: CurrentTenant,
+    request: CreatePolicyTemplateRequest,
+    service: Annotated[ComplianceService, Depends(get_compliance_service)],
+) -> Any:
+    try:
+        t = service.create_custom_policy_template(
+            principal,
+            tenant,
+            slug=request.slug,
+            title=request.title,
+            category=request.category,
+            description=request.description,
+            content_template=request.content_template,
+            suggested_classification=request.suggested_classification,
+        )
+        return PolicyTemplateResponse(
+            id=t.id,
+            tenant_id=t.tenant_id,
+            slug=t.slug,
+            title=t.title,
+            category=t.category,
+            description=t.description,
+            content_template=t.content_template,
+            suggested_classification=t.suggested_classification,
+            is_canonical=t.is_canonical,
+            created_at=t.created_at,
+        )
+    except AuthorizationDeniedError as error:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
+
+
+@compliance_router.post(
+    "/policies/{policy_id}/acknowledge",
+    response_model=PolicyAcknowledgementResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[require_policies],
+)
+def acknowledge_policy(
+    policy_id: UUID,
+    principal: CurrentPrincipal,
+    tenant: CurrentTenant,
+    request: AcknowledgePolicyRequest,
+    service: Annotated[ComplianceService, Depends(get_compliance_service)],
+) -> Any:
+    try:
+        ack = service.acknowledge_policy(
+            principal,
+            tenant,
+            policy_id,
+            ip_address=request.ip_address,
+            user_agent=request.user_agent,
+        )
+        return PolicyAcknowledgementResponse(
+            id=ack.id,
+            tenant_id=ack.tenant_id,
+            policy_id=ack.policy_id,
+            policy_revision_id=ack.policy_revision_id,
+            user_id=ack.user_id,
+            acknowledged_at=ack.acknowledged_at,
+            ip_address=ack.ip_address,
+            user_agent=ack.user_agent,
+        )
+    except PolicyNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    except InvalidStateTransitionError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    except AuthorizationDeniedError as error:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
+
+
+@compliance_router.get(
+    "/policies/{policy_id}/acknowledgements",
+    response_model=list[PolicyAcknowledgementResponse],
+    dependencies=[require_policies],
+)
+def list_policy_acknowledgements(
+    policy_id: UUID,
+    principal: CurrentPrincipal,
+    tenant: CurrentTenant,
+    service: Annotated[ComplianceService, Depends(get_compliance_service)],
+    limit: Annotated[int, Query(ge=1, le=200)] = 100,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> Any:
+    try:
+        acks = service.list_policy_acknowledgements(
+            principal, tenant, policy_id, limit=limit, offset=offset
+        )
+        return [
+            PolicyAcknowledgementResponse(
+                id=a.id,
+                tenant_id=a.tenant_id,
+                policy_id=a.policy_id,
+                policy_revision_id=a.policy_revision_id,
+                user_id=a.user_id,
+                acknowledged_at=a.acknowledged_at,
+                ip_address=a.ip_address,
+                user_agent=a.user_agent,
+            )
+            for a in acks
+        ]
+    except AuthorizationDeniedError as error:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
+
+
+@compliance_router.get(
+    "/my-policy-acknowledgements",
+    response_model=list[PolicyAcknowledgementResponse],
+    dependencies=[require_policies],
+)
+def get_my_policy_acknowledgements(
+    principal: CurrentPrincipal,
+    tenant: CurrentTenant,
+    service: Annotated[ComplianceService, Depends(get_compliance_service)],
+) -> Any:
+    try:
+        acks = service.get_my_acknowledgements(principal, tenant)
+        return [
+            PolicyAcknowledgementResponse(
+                id=a.id,
+                tenant_id=a.tenant_id,
+                policy_id=a.policy_id,
+                policy_revision_id=a.policy_revision_id,
+                user_id=a.user_id,
+                acknowledged_at=a.acknowledged_at,
+                ip_address=a.ip_address,
+                user_agent=a.user_agent,
+            )
+            for a in acks
+        ]
     except AuthorizationDeniedError as error:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 

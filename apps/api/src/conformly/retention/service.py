@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 from uuid import UUID, uuid4
 
-from sqlalchemy import CursorResult, delete, select
+from sqlalchemy import CursorResult, delete, func, select
 from sqlalchemy.orm import Session
 
 from conformly.assets.models import Asset
@@ -18,9 +18,13 @@ from conformly.compliance.models import (
     EvidenceControlLink,
     EvidenceFileLink,
     EvidenceItem,
+    EvidenceRevision,
     Finding,
     Policy,
+    PolicyAcknowledgement,
     PolicyControlLink,
+    PolicyRevision,
+    PolicyTemplate,
     UserNotificationPreference,
 )
 from conformly.entitlements.models import TenantEntitlement
@@ -61,7 +65,7 @@ from conformly.retention.models import (
 )
 from conformly.risks.models import Risk, RiskTreatment
 from conformly.storage.models import StoredFile
-from conformly.storage.service import StorageService
+from conformly.storage.service import LegalHoldActiveError, StorageService
 from conformly.vendors.models import Vendor
 from conformly.tenancy.rls import set_rls_context
 from conformly.whistleblower.models import (
@@ -75,10 +79,6 @@ from conformly.whistleblower.models import (
 
 class CancellationError(Exception):
     """Raised when tenant cancellation validation or execution fails."""
-
-
-class LegalHoldActiveError(Exception):
-    """Raised when an operation is blocked due to an active legal hold."""
 
 
 class DeletionJobNotFoundError(Exception):
@@ -408,6 +408,21 @@ class RetentionService:
         try:
             tid = tenant.id
 
+            # Verify legal hold before deleting any data
+            has_legal_hold = (
+                self.session.scalar(
+                    select(func.count(EvidenceItem.id)).where(
+                        EvidenceItem.tenant_id == tid,
+                        EvidenceItem.legal_hold.is_(True),
+                    )
+                )
+                or 0
+            ) > 0
+            if has_legal_hold:
+                raise LegalHoldActiveError(
+                    f"Cannot purge tenant {tid}: active legal hold on evidence items"
+                )
+
             # Delete external objects first while their retry metadata still exists.
             # Provider deletion is idempotent. Any failure leaves all database rows
             # intact so a scheduled retry can use the remaining object keys.
@@ -483,11 +498,24 @@ class RetentionService:
             tables_purged["findings"] = _exec_delete(
                 self.session, delete(Finding).where(Finding.tenant_id == tid)
             )
+            tables_purged["policy_acknowledgements"] = _exec_delete(
+                self.session,
+                delete(PolicyAcknowledgement).where(PolicyAcknowledgement.tenant_id == tid),
+            )
+            tables_purged["policy_revisions"] = _exec_delete(
+                self.session, delete(PolicyRevision).where(PolicyRevision.tenant_id == tid)
+            )
+            tables_purged["policy_templates"] = _exec_delete(
+                self.session, delete(PolicyTemplate).where(PolicyTemplate.tenant_id == tid)
+            )
             tables_purged["policy_control_links"] = _exec_delete(
                 self.session, delete(PolicyControlLink).where(PolicyControlLink.tenant_id == tid)
             )
             tables_purged["policies"] = _exec_delete(
                 self.session, delete(Policy).where(Policy.tenant_id == tid)
+            )
+            tables_purged["evidence_revisions"] = _exec_delete(
+                self.session, delete(EvidenceRevision).where(EvidenceRevision.tenant_id == tid)
             )
             tables_purged["evidence_file_links"] = _exec_delete(
                 self.session, delete(EvidenceFileLink).where(EvidenceFileLink.tenant_id == tid)

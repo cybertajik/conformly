@@ -45,6 +45,8 @@ class CertificateStatus(StrEnum):
     ACTIVE = "active"
     EXPIRED = "expired"
     REVOKED = "revoked"
+    SUSPENDED = "suspended"
+    SUPERSEDED = "superseded"
 
 
 # ── Valid state transitions ───────────────────────────────────────────────
@@ -94,6 +96,10 @@ class PreAudit(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         Uuid, ForeignKey("users.id", ondelete="SET NULL")
     )
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    tenant_approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    tenant_approved_by_user_id: Mapped[UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="SET NULL")
+    )
     rule_version: Mapped[str] = mapped_column(String(50), nullable=False)
     overall_score: Mapped[float | None] = mapped_column(Float)
     version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
@@ -339,5 +345,11 @@ class PreAuditCertificate(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     revoked_reason: Mapped[str | None] = mapped_column(Text)
+    suspended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    suspended_reason: Mapped[str | None] = mapped_column(Text)
+    superseded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    superseded_by_certificate_id: Mapped[UUID | None] = mapped_column(
+        Uuid, ForeignKey("pre_audit_certificates.id", ondelete="SET NULL")
+    )
 
     pre_audit: Mapped["PreAudit"] = relationship(back_populates="certificates")

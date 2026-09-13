@@ -121,6 +121,10 @@ class PreAuditCertificateResponse(BaseModel):
     expires_at: datetime
     revoked_at: datetime | None = None
     revoked_reason: str | None = None
+    suspended_at: datetime | None = None
+    suspended_reason: str | None = None
+    superseded_at: datetime | None = None
+    superseded_by_certificate_id: UUID | None = None
     created_at: datetime
 
 
@@ -144,6 +148,8 @@ class PreAuditResponse(BaseModel):
     lead_user_id: UUID
     reviewer_user_id: UUID | None = None
     reviewed_at: datetime | None = None
+    tenant_approved_at: datetime | None = None
+    tenant_approved_by_user_id: UUID | None = None
     rule_version: str
     overall_score: float | None = None
     version: int
@@ -190,6 +196,10 @@ class CompleteReviewRequest(BaseModel):
     expected_version: int
 
 
+class TenantApproveRequest(BaseModel):
+    expected_version: int
+
+
 class CancelRequest(BaseModel):
     expected_version: int
 
@@ -210,6 +220,14 @@ class IssueCertificateRequest(BaseModel):
 
 class RevokeCertificateRequest(BaseModel):
     reason: str = Field(min_length=1, max_length=1000)
+
+
+class SuspendCertificateRequest(BaseModel):
+    reason: str = Field(min_length=1, max_length=1000)
+
+
+class ReinstateCertificateRequest(BaseModel):
+    reason: str | None = Field(default=None, max_length=1000)
 
 
 # ── Serialisers ───────────────────────────────────────────────────────────
@@ -302,6 +320,10 @@ def _cert_response(c: object) -> PreAuditCertificateResponse:
         expires_at=c.expires_at,  # type: ignore[attr-defined]
         revoked_at=c.revoked_at,  # type: ignore[attr-defined]
         revoked_reason=c.revoked_reason,  # type: ignore[attr-defined]
+        suspended_at=getattr(c, "suspended_at", None),
+        suspended_reason=getattr(c, "suspended_reason", None),
+        superseded_at=getattr(c, "superseded_at", None),
+        superseded_by_certificate_id=getattr(c, "superseded_by_certificate_id", None),
         created_at=c.created_at,  # type: ignore[attr-defined]
     )
 
@@ -341,6 +363,8 @@ def _pa_response(pa: object, *, detail: bool = False) -> PreAuditResponse:
         lead_user_id=pa.lead_user_id,  # type: ignore[attr-defined]
         reviewer_user_id=pa.reviewer_user_id,  # type: ignore[attr-defined]
         reviewed_at=pa.reviewed_at,  # type: ignore[attr-defined]
+        tenant_approved_at=getattr(pa, "tenant_approved_at", None),
+        tenant_approved_by_user_id=getattr(pa, "tenant_approved_by_user_id", None),
         rule_version=pa.rule_version,  # type: ignore[attr-defined]
         overall_score=pa.overall_score,  # type: ignore[attr-defined]
         version=pa.version,  # type: ignore[attr-defined]
@@ -558,6 +582,34 @@ def complete_review(
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
 
 
+@preaudit_router.post("/{pre_audit_id}/tenant-approve", response_model=PreAuditResponse)
+def tenant_approve(
+    pre_audit_id: UUID,
+    body: TenantApproveRequest,
+    principal: CurrentPrincipal,
+    tenant_ctx: CurrentTenant,
+    svc: Annotated[PreAuditService, Depends(get_preaudit_service)],
+) -> PreAuditResponse:
+    try:
+        pa = svc.tenant_approve(
+            principal,
+            tenant_ctx,
+            pre_audit_id,
+            expected_version=body.expected_version,
+        )
+        return _pa_response(pa)
+    except AuthorizationDeniedError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
+    except PreAuditNotFoundError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+    except (
+        InvalidPreAuditTransitionError,
+        PreAuditOptimisticLockError,
+        ReviewerConflictError,
+    ) as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+
+
 @preaudit_router.post("/{pre_audit_id}/cancel", response_model=PreAuditResponse)
 def cancel_pre_audit(
     pre_audit_id: UUID,
@@ -693,4 +745,62 @@ def revoke_certificate(
     except (PreAuditNotFoundError, CertificateNotFoundError) as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
     except InvalidPreAuditTransitionError as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+
+
+@preaudit_router.post(
+    "/{pre_audit_id}/certificates/{certificate_id}/suspend",
+    response_model=PreAuditCertificateResponse,
+)
+def suspend_certificate(
+    pre_audit_id: UUID,
+    certificate_id: UUID,
+    body: SuspendCertificateRequest,
+    principal: CurrentPrincipal,
+    tenant_ctx: CurrentTenant,
+    svc: Annotated[PreAuditService, Depends(get_preaudit_service)],
+) -> PreAuditCertificateResponse:
+    try:
+        cert = svc.suspend_certificate(
+            principal,
+            tenant_ctx,
+            pre_audit_id,
+            certificate_id,
+            reason=body.reason,
+        )
+        return _cert_response(cert)
+    except AuthorizationDeniedError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
+    except (PreAuditNotFoundError, CertificateNotFoundError) as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+    except InvalidPreAuditTransitionError as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+
+
+@preaudit_router.post(
+    "/{pre_audit_id}/certificates/{certificate_id}/reinstate",
+    response_model=PreAuditCertificateResponse,
+)
+def reinstate_certificate(
+    pre_audit_id: UUID,
+    certificate_id: UUID,
+    body: ReinstateCertificateRequest,
+    principal: CurrentPrincipal,
+    tenant_ctx: CurrentTenant,
+    svc: Annotated[PreAuditService, Depends(get_preaudit_service)],
+) -> PreAuditCertificateResponse:
+    try:
+        cert = svc.reinstate_certificate(
+            principal,
+            tenant_ctx,
+            pre_audit_id,
+            certificate_id,
+            reason=body.reason,
+        )
+        return _cert_response(cert)
+    except AuthorizationDeniedError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
+    except (PreAuditNotFoundError, CertificateNotFoundError) as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+    except (InvalidPreAuditTransitionError, CertificateIssuanceBlockedError) as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
