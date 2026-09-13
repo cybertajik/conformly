@@ -22,6 +22,7 @@ from conformly.compliance.models import (
     RemediationStatus,
 )
 from conformly.entitlements.models import TenantEntitlement
+from conformly.entitlements.service import get_or_create_tenant_entitlement
 from conformly.frameworks.models import (
     AdoptionStatus,
     ControlEntityType,
@@ -55,6 +56,7 @@ from tests.test_preaudit_service import _setup_tenant
 @pytest.fixture
 def scenario(session, test_codec):
     tenant, lead, reviewer, fw, version, controls, adoption = _setup_tenant(session)
+    get_or_create_tenant_entitlement(session, tenant.id)
     spec = EvidenceSpecification(
         framework_version_id=version.id,
         canonical_control_id=controls[0].id,
@@ -1210,4 +1212,3 @@ def test_concurrent_evidence_request_generation_serialization(scenario, test_cod
         )
     )
     assert len(all_requests) == len(reqs_first)
-

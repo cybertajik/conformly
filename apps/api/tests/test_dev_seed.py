@@ -10,9 +10,9 @@ def test_development_seed_is_idempotent_and_contains_no_credentials(session: Ses
     seed_development_fixtures(session, environment="development")
     seed_development_fixtures(session, environment="development")
 
-    assert session.scalar(select(func.count()).select_from(User)) == 1
+    assert session.scalar(select(func.count()).select_from(User)) == 7
     assert session.scalar(select(func.count()).select_from(Tenant)) == 1
-    assert session.scalar(select(func.count()).select_from(Membership)) == 1
+    assert session.scalar(select(func.count()).select_from(Membership)) == 4
     assert session.scalar(select(func.count()).select_from(AuthSession)) == 0
 
 

@@ -644,7 +644,7 @@ for _idx, (_subclause, _title, _desc, _category, _cadence) in enumerate(QMS_CLAU
     _src_ref = f"ISO 9001:2015 Clause {_subclause}"
 
     # ── applicability_criteria ────────────────────────────────────────────
-    _criteria: dict = {}
+    _criteria: dict[str, object] = {}
     if _subclause in DESIGN_AND_DEVELOPMENT_SUBCLAUSES:
         _criteria["requires_design_and_development"] = True
     if _subclause in EXTERNAL_PROVIDER_SUBCLAUSES:

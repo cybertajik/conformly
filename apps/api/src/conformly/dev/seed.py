@@ -1,6 +1,4 @@
 from datetime import UTC, datetime, timedelta
-from typing import Any
-from uuid import uuid4
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -26,7 +24,13 @@ from conformly.frameworks.models import (
 )
 from conformly.frameworks.seed_packs import seed_tier_a_test_fixtures
 from conformly.identity.models import Membership, MembershipStatus, Tenant, User, UserStatus
-from conformly.risks.models import Risk, RiskCategory, RiskStatus, RiskTreatmentStrategy
+from conformly.risks.models import (
+    Risk,
+    RiskCategory,
+    RiskStatus,
+    RiskTreatment,
+    RiskTreatmentStrategy,
+)
 from conformly.tenancy.rls import set_rls_context
 from conformly.vendors.models import Vendor, VendorCriticality, VendorStatus
 
@@ -171,11 +175,9 @@ def seed_development_fixtures(database: Session, *, environment: str) -> None:
             version=1,
             status=PolicyStatus.PUBLISHED,
             classification="Internal",
-            author_user_id=compliance_mgr.id,
+            owner_user_id=compliance_mgr.id,
             approved_by_user_id=primary_owner.id,
-            published_by_user_id=primary_owner.id,
             approved_at=now - timedelta(days=45),
-            published_at=now - timedelta(days=45),
             next_review_due=now + timedelta(days=320),
         )
         p2 = Policy(
@@ -186,8 +188,7 @@ def seed_development_fixtures(database: Session, *, environment: str) -> None:
             version=1,
             status=PolicyStatus.IN_REVIEW,
             classification="Confidential",
-            author_user_id=compliance_mgr.id,
-            submitted_for_review_at=now - timedelta(days=5),
+            owner_user_id=compliance_mgr.id,
             next_review_due=now + timedelta(days=90),
         )
         database.add_all([p1, p2])
@@ -234,8 +235,6 @@ def seed_development_fixtures(database: Session, *, environment: str) -> None:
             inherent_score=12,
             residual_score=4,
             status=RiskStatus.TREATING,
-            treatment_strategy=RiskTreatmentStrategy.MITIGATE,
-            treatment_plan="Enforce mutual TLS (mTLS) with automated certificate rotation across all service mesh nodes.",
             owner_user_id=compliance_mgr.id,
         )
         r2 = Risk(
@@ -248,11 +247,30 @@ def seed_development_fixtures(database: Session, *, environment: str) -> None:
             inherent_score=6,
             residual_score=3,
             status=RiskStatus.MONITORED,
-            treatment_strategy=RiskTreatmentStrategy.MITIGATE,
-            treatment_plan="Implement multi-person threshold quorum recovery protocol.",
             owner_user_id=primary_owner.id,
         )
         database.add_all([r1, r2])
+        database.flush()
+        database.add(
+            RiskTreatment(
+                tenant_id=tenant.id,
+                risk_id=r1.id,
+                strategy=RiskTreatmentStrategy.MITIGATE,
+                treatment_plan="Enforce mutual TLS (mTLS) with automated certificate rotation across all service mesh nodes.",
+                owner_user_id=compliance_mgr.id,
+                status="in_progress",
+            )
+        )
+        database.add(
+            RiskTreatment(
+                tenant_id=tenant.id,
+                risk_id=r2.id,
+                strategy=RiskTreatmentStrategy.MITIGATE,
+                treatment_plan="Implement multi-person threshold quorum recovery protocol.",
+                owner_user_id=primary_owner.id,
+                status="planned",
+            )
+        )
         database.flush()
 
     # 8. Seed Third-Party Vendors
@@ -288,7 +306,9 @@ def seed_development_fixtures(database: Session, *, environment: str) -> None:
         database.flush()
 
     # 9. Seed Compliance Tasks
-    existing_task = database.scalar(select(ComplianceTask).where(ComplianceTask.tenant_id == tenant.id))
+    existing_task = database.scalar(
+        select(ComplianceTask).where(ComplianceTask.tenant_id == tenant.id)
+    )
     if existing_task is None:
         t1 = ComplianceTask(
             tenant_id=tenant.id,
@@ -298,7 +318,6 @@ def seed_development_fixtures(database: Session, *, environment: str) -> None:
             status=TaskStatus.PENDING,
             due_date=now + timedelta(days=14),
             assignee_user_id=compliance_mgr.id,
-            created_by_user_id=primary_owner.id,
         )
         t2 = ComplianceTask(
             tenant_id=tenant.id,
@@ -308,7 +327,6 @@ def seed_development_fixtures(database: Session, *, environment: str) -> None:
             status=TaskStatus.IN_PROGRESS,
             due_date=now + timedelta(days=7),
             assignee_user_id=primary_owner.id,
-            created_by_user_id=primary_owner.id,
         )
         database.add_all([t1, t2])
         database.flush()

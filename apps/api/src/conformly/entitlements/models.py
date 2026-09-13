@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import JSON, BigInteger, DateTime, ForeignKey, Index, String, func
+from sqlalchemy import JSON, BigInteger, DateTime, ForeignKey, Index, String, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from conformly.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -29,7 +29,7 @@ class TenantEntitlement(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __table_args__ = (Index("ix_tenant_entitlements_tenant_id", "tenant_id", unique=True),)
 
     tenant_id: Mapped[UUID] = mapped_column(
-        ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, unique=True
+        Uuid, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, unique=True
     )
     plan_code: Mapped[str] = mapped_column(String(50), default="tier_a", nullable=False)
     enabled_modules: Mapped[list[str]] = mapped_column(

@@ -101,6 +101,7 @@ export function MembersWorkspace({
   }, [token, tenantId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadMembers();
   }, [loadMembers]);
 

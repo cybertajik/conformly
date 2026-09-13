@@ -1,5 +1,6 @@
 """Structured evidence requests for an explicitly adopted framework revision."""
 
+import threading
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
@@ -141,6 +142,8 @@ def serialize_request(row: FrameworkEvidenceRequest) -> dict[str, Any]:
 
 
 class FrameworkWorkflowService:
+    _process_lock = threading.RLock()
+
     def __init__(self, session: Session, codec: EncryptedFieldCodec):
         self.session = session
         self.compliance = ComplianceService(session, codec)
@@ -201,48 +204,49 @@ class FrameworkWorkflowService:
         due_date: datetime,
         owner_user_id: UUID,
     ) -> list[FrameworkEvidenceRequest]:
-        adoption = self._adoption(principal, context, adoption_id, Capability.FRAMEWORK_MANAGE)
-        authorize(principal, context, Capability.TASK_MANAGE)
-        specs = list(
-            self.session.scalars(
-                select(EvidenceSpecification)
-                .where(
-                    EvidenceSpecification.framework_version_id == adoption.framework_version_id,
-                )
-                .order_by(EvidenceSpecification.identifier)
-            )
-        )
-        existing = {
-            row.specification_id: row
-            for row in self.session.scalars(
-                select(FrameworkEvidenceRequest).where(
-                    FrameworkEvidenceRequest.tenant_id == context.tenant_id,
-                    FrameworkEvidenceRequest.adoption_id == adoption_id,
+        with self._process_lock:
+            adoption = self._adoption(principal, context, adoption_id, Capability.FRAMEWORK_MANAGE)
+            authorize(principal, context, Capability.TASK_MANAGE)
+            specs = list(
+                self.session.scalars(
+                    select(EvidenceSpecification)
+                    .where(
+                        EvidenceSpecification.framework_version_id == adoption.framework_version_id,
+                    )
+                    .order_by(EvidenceSpecification.identifier)
                 )
             )
-        }
-        for spec in specs:
-            if spec.id in existing:
-                continue
-            task = self.compliance.create_task(
-                principal,
-                context,
-                title=spec.title,
-                description=spec.description,
-                due_date=due_date,
-                assignee_user_id=owner_user_id,
-            )
-            row = FrameworkEvidenceRequest(
-                tenant_id=context.tenant_id,
-                adoption_id=adoption_id,
-                specification_id=spec.id,
-                task_id=task.id,
-            )
-            self.session.add(row)
-            self.session.flush()
-            self._audit(principal, context, row, "framework.evidence_request.create")
-            existing[spec.id] = row
-        return [existing[spec.id] for spec in specs]
+            existing = {
+                row.specification_id: row
+                for row in self.session.scalars(
+                    select(FrameworkEvidenceRequest).where(
+                        FrameworkEvidenceRequest.tenant_id == context.tenant_id,
+                        FrameworkEvidenceRequest.adoption_id == adoption_id,
+                    )
+                )
+            }
+            for spec in specs:
+                if spec.id in existing:
+                    continue
+                task = self.compliance.create_task(
+                    principal,
+                    context,
+                    title=spec.title,
+                    description=spec.description,
+                    due_date=due_date,
+                    assignee_user_id=owner_user_id,
+                )
+                row = FrameworkEvidenceRequest(
+                    tenant_id=context.tenant_id,
+                    adoption_id=adoption_id,
+                    specification_id=spec.id,
+                    task_id=task.id,
+                )
+                self.session.add(row)
+                self.session.flush()
+                self._audit(principal, context, row, "framework.evidence_request.create")
+                existing[spec.id] = row
+            return [existing[spec.id] for spec in specs]
 
     def accept(
         self,

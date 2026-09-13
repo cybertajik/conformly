@@ -87,6 +87,7 @@ export function FrameworkEvidenceWorkflow({
   }, [token, tenantId, adoptionId, selectedOwnerId, selectedEvidenceId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadWorkflowData();
   }, [loadWorkflowData]);
 
