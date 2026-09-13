@@ -22,6 +22,7 @@ from conformly.db.session import get_db
 from conformly.storage.models import StoredFile
 from conformly.storage.providers import StorageError
 from conformly.storage.service import (
+    FileQuarantinedError,
     StorageFileNotFoundError,
     StorageIntegrityError,
     StorageService,
@@ -93,6 +94,12 @@ async def upload_file(
         database.commit()
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="file write capability denied"
+        ) from err
+    except FileQuarantinedError as err:
+        database.commit()
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Malware detected; file quarantined: {err}",
         ) from err
     except FileValidationError as err:
         database.rollback()
