@@ -96,6 +96,7 @@ class Membership(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         UniqueConstraint("tenant_id", "user_id", name="uq_memberships_tenant_user"),
         Index("ix_memberships_user_status", "user_id", "status"),
         Index("ix_memberships_tenant_status", "tenant_id", "status"),
+        Index("ix_memberships_tenant_expires", "tenant_id", "expires_at"),
     )
 
     tenant_id: Mapped[UUID] = mapped_column(
@@ -116,6 +117,9 @@ class Membership(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     business_unit_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("business_units.id", ondelete="SET NULL"), nullable=True
     )
+    is_external_advisor: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    is_workforce: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     tenant: Mapped[Tenant] = relationship(back_populates="memberships")
     user: Mapped[User] = relationship(back_populates="memberships")

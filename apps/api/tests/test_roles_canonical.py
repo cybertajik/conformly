@@ -46,6 +46,8 @@ def test_tenant_administrator_denied_compliance_content():
         Capability.RISK_MANAGE,
         Capability.ASSET_MANAGE,
         Capability.VENDOR_MANAGE,
+        Capability.EXPORT_CREATE,
+        Capability.EXPORT_READ,
     ]
     for cap in compliance_capabilities:
         with pytest.raises(AuthorizationDeniedError):

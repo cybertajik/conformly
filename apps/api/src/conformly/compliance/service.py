@@ -2,13 +2,13 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from conformly.audit.models import AuditActorType, AuditOutcome
 from conformly.audit.service import record_audit_event
-from conformly.authz.policy import Principal, TenantContext, authorize
-from conformly.authz.roles import Capability
+from conformly.authz.policy import Principal, TenantContext, authorize, authorize_resource
+from conformly.authz.roles import Capability, Role
 from conformly.compliance.models import (
     ComplianceTask,
     ControlImplementationStatus,
@@ -207,6 +207,13 @@ class ComplianceService:
         if evidence is None:
             raise EvidenceNotFoundError(f"Evidence item {evidence_id} not found")
 
+        authorize_resource(
+            principal,
+            tenant_context,
+            Capability.EVIDENCE_READ,
+            owner_user_id=evidence.owner_user_id,
+        )
+
         decrypted_notes: str | None = None
         if evidence.restricted_notes_encrypted:
             ctx = EncryptionContext(
@@ -233,6 +240,8 @@ class ComplianceService:
         self._set_rls(principal, tenant_context)
 
         query = select(EvidenceItem).where(EvidenceItem.tenant_id == tenant_context.tenant_id)
+        if tenant_context.role in (Role.REVIEWER, Role.AUDITOR):
+            query = query.where(EvidenceItem.owner_user_id == principal.user_id)
         if status:
             query = query.where(EvidenceItem.status == status)
         if classification:
@@ -1218,6 +1227,12 @@ class ComplianceService:
         )
         if task is None:
             raise TaskNotFoundError(f"Task {task_id} not found")
+        authorize_resource(
+            principal,
+            tenant_context,
+            Capability.TASK_READ,
+            assigned_user_ids=[task.assignee_user_id] if task.assignee_user_id else None,
+        )
         return task
 
     def list_tasks(
@@ -1234,6 +1249,8 @@ class ComplianceService:
         self._set_rls(principal, tenant_context)
 
         query = select(ComplianceTask).where(ComplianceTask.tenant_id == tenant_context.tenant_id)
+        if tenant_context.role in (Role.REVIEWER, Role.AUDITOR):
+            query = query.where(ComplianceTask.assignee_user_id == principal.user_id)
         if status:
             query = query.where(ComplianceTask.status == status)
         if priority:
@@ -1461,6 +1478,12 @@ class ComplianceService:
         )
         if finding is None:
             raise FindingNotFoundError(f"Finding {finding_id} not found")
+        authorize_resource(
+            principal,
+            tenant_context,
+            Capability.FINDING_READ,
+            owner_user_id=finding.owner_user_id,
+        )
         return finding
 
     def list_findings(
@@ -1477,6 +1500,8 @@ class ComplianceService:
         self._set_rls(principal, tenant_context)
 
         query = select(Finding).where(Finding.tenant_id == tenant_context.tenant_id)
+        if tenant_context.role in (Role.REVIEWER, Role.AUDITOR):
+            query = query.where(Finding.owner_user_id == principal.user_id)
         if severity:
             query = query.where(Finding.severity == severity)
         if remediation_status:
@@ -1690,11 +1715,20 @@ class ComplianceService:
         authorize(principal, tenant_context, Capability.EVIDENCE_READ)
         self._set_rls(principal, tenant_context)
 
+        query = (
+            select(ControlStatusRecord)
+            .where(ControlStatusRecord.tenant_id == tenant_context.tenant_id)
+        )
+        if tenant_context.role in (Role.REVIEWER, Role.AUDITOR):
+            query = query.where(
+                or_(
+                    ControlStatusRecord.assigned_owner_user_id == principal.user_id,
+                    ControlStatusRecord.assessed_by_user_id == principal.user_id,
+                )
+            )
         return list(
             self._session.scalars(
-                select(ControlStatusRecord)
-                .where(ControlStatusRecord.tenant_id == tenant_context.tenant_id)
-                .order_by(ControlStatusRecord.updated_at.desc())
+                query.order_by(ControlStatusRecord.updated_at.desc())
             )
         )
 

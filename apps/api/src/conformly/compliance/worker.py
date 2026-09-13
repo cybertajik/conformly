@@ -8,7 +8,7 @@ from uuid import UUID
 
 import structlog
 from sqlalchemy import select
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from conformly.compliance.automation import (
     ContinuousComplianceResult,
@@ -19,7 +19,7 @@ from conformly.db.session import SessionLocal
 from conformly.identity.models import Tenant, TenantStatus
 from conformly.notifications.worker import NotificationProvider, process_notification_batch
 
-logger = structlog.get_logger()
+logger = structlog.get_logger(__name__)
 
 _RUNNING = True
 
@@ -31,7 +31,7 @@ def _handle_signal(signum: int, frame: Any) -> None:
 
 
 def run_compliance_worker_tick(
-    session_factory: sessionmaker,
+    session_factory: sessionmaker[Session],
     codec: EncryptedFieldCodec,
     *,
     notification_provider: NotificationProvider | None = None,

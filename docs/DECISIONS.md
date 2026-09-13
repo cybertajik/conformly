@@ -296,6 +296,25 @@ Pre-audits are tenant-scoped readiness assessments that evaluate compliance work
 6. **Entitlements Engine:** Implement data-driven module enablement, storage limits, and member limits enforced server-side.
 7. **Tier A Operational Registers:** Implement the **Risk Register** (with treatments and control links), **Asset Register**, and **Vendor / Third-Party Register** in Core Tier A.
 
+## D-048 — Organizational Authorization, Scoped Reviewer Access, Assessor Engagements, and Export Separation
+
+1. **Administrator Export Revocation:**
+   - Withholding normal compliance content access (evidence, policies, findings, controls) from `Role.ADMINISTRATOR` while permitting full exports would bypass that core separation, as full exports contain decrypted evidence archives, policies, and findings.
+   - `Capability.EXPORT_CREATE` and `Capability.EXPORT_READ` are permanently revoked from `Role.ADMINISTRATOR`. Full tenant compliance archives can only be initiated and retrieved by `Role.OWNER` and `Role.COMPLIANCE_MANAGER`.
+   - `Capability.EXPORT_READ` is also revoked from `Role.REVIEWER` to prevent bypassing assigned-material scoping through tenant-wide export archives.
+2. **Central Organizational Scope Enforcement:**
+   - Central authorization policy (`authorize_resource`) explicitly validates `legal_entity_id` and `business_unit_id` boundaries on resources against the caller's active `TenantContext`.
+   - Organizational services (`list_legal_entities`, `list_business_units`, `list_locations`, `create_business_unit`, `create_location`) strictly filter and constrain operations to the caller's organizational scope.
+3. **Reviewer Assigned-Material Scoping:**
+   - `Role.REVIEWER` (and legacy `AUDITOR`) access is restricted to material specifically assigned to or owned by that user (`owner_user_id == user_id` or `user_id in assigned_user_ids`).
+   - Direct retrieval of unassigned compliance resources raises `AuthorizationDeniedError`.
+   - Listings (`list_evidence`, `list_tasks`, `list_findings`, `get_control_status_matrix`) automatically scope results to the assigned user.
+4. **Temporary Assessor Engagements & Workforce Boundaries:**
+   - External Advisors / Assessors (`is_external_advisor=True`) must have a time-limited engagement (`expires_at` is required).
+   - Assessors and Reviewers can NEVER mutate customer evidence (`EVIDENCE_MANAGE`, `FILE_WRITE`, `FILE_DELETE`, `CONTROL_STATUS_MANAGE`, `POLICY_MANAGE`). Any such attempt is immediately denied at authorization.
+   - Staff / Workforce users (`is_workforce=True`) have **no standing access** to customer tenant data. Access requires an active, unexpired engagement (`expires_at > now`).
+   - Expired engagements immediately fail closed during tenant context resolution (`TenantContextError`) and central authorization (`AuthorizationDeniedError`).
+
 ## Decision Process
 
 When Codex encounters a missing architectural choice:

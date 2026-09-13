@@ -53,6 +53,26 @@ def resolve_tenant_context(
     )
     if membership is None:
         raise TenantContextError("active tenant membership not found")
+
+    # Enforce engagement expiration
+    exp: datetime | None = None
+    if membership.expires_at is not None:
+        exp = (
+            membership.expires_at
+            if membership.expires_at.tzinfo is not None
+            else membership.expires_at.replace(tzinfo=UTC)
+        )
+        if current_time >= exp:
+            raise TenantContextError("membership engagement has expired")
+
+    # Workforce members have no standing access: require active expiring engagement
+    if membership.is_workforce and membership.expires_at is None:
+        raise TenantContextError("workforce members must have an active expiring engagement")
+
+    # External advisors must have a time-limited engagement
+    if membership.is_external_advisor and membership.expires_at is None:
+        raise TenantContextError("external advisors must have a time-limited engagement")
+
     set_rls_context(
         session,
         user_id=principal.user_id,
@@ -63,4 +83,9 @@ def resolve_tenant_context(
         tenant_id=membership.tenant_id,
         user_id=membership.user_id,
         role=membership.role,
+        legal_entity_id=membership.legal_entity_id,
+        business_unit_id=membership.business_unit_id,
+        is_external_advisor=membership.is_external_advisor,
+        expires_at=exp,
+        is_workforce=membership.is_workforce,
     )

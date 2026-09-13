@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -222,6 +223,82 @@ def revoke_membership(
         request_id=request_id,
         outcome=AuditOutcome.SUCCESS,
         metadata={"previous_status": previous_status.value},
+    )
+    database.flush()
+    return membership
+
+
+def update_membership_scopes(
+    database: Session,
+    principal: Principal,
+    tenant_context: TenantContext,
+    membership_id: UUID,
+    request_id: str,
+    *,
+    legal_entity_id: UUID | None = None,
+    business_unit_id: UUID | None = None,
+    is_external_advisor: bool | None = None,
+    expires_at: datetime | None = None,
+    is_workforce: bool | None = None,
+) -> Membership:
+    try:
+        authorize(principal, tenant_context, Capability.MEMBERSHIP_MANAGE)
+    except AuthorizationDeniedError:
+        record_audit_event(
+            database,
+            tenant_id=tenant_context.tenant_id,
+            actor_type=AuditActorType.USER,
+            actor_id=principal.user_id,
+            action="membership.scopes_update",
+            resource_type="membership",
+            resource_id=str(membership_id),
+            request_id=request_id,
+            outcome=AuditOutcome.DENIED,
+        )
+        raise
+
+    repository = MembershipRepository(database, tenant_context.tenant_id)
+    membership = repository.get_membership(membership_id)
+    if membership is None:
+        record_audit_event(
+            database,
+            tenant_id=tenant_context.tenant_id,
+            actor_type=AuditActorType.USER,
+            actor_id=principal.user_id,
+            action="membership.scopes_update",
+            resource_type="membership",
+            resource_id=str(membership_id),
+            request_id=request_id,
+            outcome=AuditOutcome.DENIED,
+            metadata={"reason": "not_found_in_tenant"},
+        )
+        raise MembershipNotFoundError
+
+    membership.legal_entity_id = legal_entity_id
+    membership.business_unit_id = business_unit_id
+    if is_external_advisor is not None:
+        membership.is_external_advisor = is_external_advisor
+    membership.expires_at = expires_at
+    if is_workforce is not None:
+        membership.is_workforce = is_workforce
+
+    record_audit_event(
+        database,
+        tenant_id=tenant_context.tenant_id,
+        actor_type=AuditActorType.USER,
+        actor_id=principal.user_id,
+        action="membership.scopes_update",
+        resource_type="membership",
+        resource_id=str(membership.id),
+        request_id=request_id,
+        outcome=AuditOutcome.SUCCESS,
+        metadata={
+            "legal_entity_id": str(legal_entity_id) if legal_entity_id else None,
+            "business_unit_id": str(business_unit_id) if business_unit_id else None,
+            "is_external_advisor": membership.is_external_advisor,
+            "expires_at": expires_at.isoformat() if expires_at else None,
+            "is_workforce": membership.is_workforce,
+        },
     )
     database.flush()
     return membership

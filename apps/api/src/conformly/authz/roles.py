@@ -74,8 +74,6 @@ ROLE_CAPABILITIES: dict[Role, frozenset[Capability]] = {
             Capability.ENTITLEMENT_READ,
             Capability.ENTITLEMENT_MANAGE,
             Capability.PUBLIC_PROFILE_READ,
-            Capability.EXPORT_CREATE,
-            Capability.EXPORT_READ,
             Capability.RETENTION_MANAGE,
         }
     ),
@@ -155,7 +153,6 @@ ROLE_CAPABILITIES: dict[Role, frozenset[Capability]] = {
             Capability.FINDING_READ,
             Capability.PREAUDIT_READ,
             Capability.PUBLIC_PROFILE_READ,
-            Capability.EXPORT_READ,
             Capability.RISK_READ,
             Capability.ASSET_READ,
             Capability.VENDOR_READ,

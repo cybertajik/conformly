@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from conformly.audit.models import AuditActorType, AuditOutcome
 from conformly.audit.service import record_audit_event
-from conformly.authz.policy import Principal, TenantContext, authorize
+from conformly.authz.policy import Principal, TenantContext, authorize, authorize_resource
 from conformly.authz.roles import Capability
 from conformly.organization.models import BusinessUnit, LegalEntity, Location
 
@@ -24,8 +24,10 @@ def list_legal_entities(
     stmt = (
         select(LegalEntity)
         .where(LegalEntity.tenant_id == tenant_context.tenant_id)
-        .order_by(LegalEntity.created_at.asc())
     )
+    if tenant_context.legal_entity_id is not None:
+        stmt = stmt.where(LegalEntity.id == tenant_context.legal_entity_id)
+    stmt = stmt.order_by(LegalEntity.created_at.asc())
     entities = list(database.scalars(stmt).all())
     record_audit_event(
         database,
@@ -85,9 +87,18 @@ def list_business_units(
     legal_entity_id: UUID | None = None,
 ) -> list[BusinessUnit]:
     authorize(principal, tenant_context, Capability.ORGANIZATION_READ)
+    effective_legal_entity_id = tenant_context.legal_entity_id or legal_entity_id
+    if (
+        tenant_context.legal_entity_id is not None
+        and legal_entity_id is not None
+        and legal_entity_id != tenant_context.legal_entity_id
+    ):
+        return []
     stmt = select(BusinessUnit).where(BusinessUnit.tenant_id == tenant_context.tenant_id)
-    if legal_entity_id:
-        stmt = stmt.where(BusinessUnit.legal_entity_id == legal_entity_id)
+    if effective_legal_entity_id:
+        stmt = stmt.where(BusinessUnit.legal_entity_id == effective_legal_entity_id)
+    if tenant_context.business_unit_id:
+        stmt = stmt.where(BusinessUnit.id == tenant_context.business_unit_id)
     stmt = stmt.order_by(BusinessUnit.created_at.asc())
     units = list(database.scalars(stmt).all())
     record_audit_event(
@@ -114,7 +125,12 @@ def create_business_unit(
     code: str | None,
     request_id: str,
 ) -> BusinessUnit:
-    authorize(principal, tenant_context, Capability.ORGANIZATION_MANAGE)
+    authorize_resource(
+        principal,
+        tenant_context,
+        Capability.ORGANIZATION_MANAGE,
+        legal_entity_id=legal_entity_id,
+    )
     entity = database.scalar(
         select(LegalEntity).where(
             LegalEntity.id == legal_entity_id,
@@ -154,9 +170,16 @@ def list_locations(
     legal_entity_id: UUID | None = None,
 ) -> list[Location]:
     authorize(principal, tenant_context, Capability.ORGANIZATION_READ)
+    effective_legal_entity_id = tenant_context.legal_entity_id or legal_entity_id
+    if (
+        tenant_context.legal_entity_id is not None
+        and legal_entity_id is not None
+        and legal_entity_id != tenant_context.legal_entity_id
+    ):
+        return []
     stmt = select(Location).where(Location.tenant_id == tenant_context.tenant_id)
-    if legal_entity_id:
-        stmt = stmt.where(Location.legal_entity_id == legal_entity_id)
+    if effective_legal_entity_id:
+        stmt = stmt.where(Location.legal_entity_id == effective_legal_entity_id)
     stmt = stmt.order_by(Location.created_at.asc())
     locations = list(database.scalars(stmt).all())
     record_audit_event(
@@ -185,7 +208,12 @@ def create_location(
     address: str | None,
     request_id: str,
 ) -> Location:
-    authorize(principal, tenant_context, Capability.ORGANIZATION_MANAGE)
+    authorize_resource(
+        principal,
+        tenant_context,
+        Capability.ORGANIZATION_MANAGE,
+        legal_entity_id=legal_entity_id,
+    )
     entity = database.scalar(
         select(LegalEntity).where(
             LegalEntity.id == legal_entity_id,
