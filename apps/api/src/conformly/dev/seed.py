@@ -89,8 +89,11 @@ def seed_development_fixtures(database: Session, *, environment: str) -> None:
     for acc in demo_accounts:
         user = database.scalar(
             select(User).where(
-                User.oidc_issuer == "https://development.invalid",
-                User.oidc_subject == acc["oidc_subject"],
+                (User.email == acc["email"])
+                | (
+                    (User.oidc_issuer == "https://development.invalid")
+                    & (User.oidc_subject == acc["oidc_subject"])
+                )
             )
         )
         if user is None:
