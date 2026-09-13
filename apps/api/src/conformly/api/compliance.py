@@ -40,6 +40,13 @@ from conformly.compliance.service import (
 from conformly.crypto.fields import EncryptedFieldCodec, get_encrypted_field_codec
 from conformly.db.session import get_db
 from conformly.frameworks.models import ControlEntityType
+from conformly.entitlements.dependencies import require_module
+
+require_evidence = Depends(require_module("evidence"))
+require_policies = Depends(require_module("policies"))
+require_tasks = Depends(require_module("tasks"))
+require_findings = Depends(require_module("findings"))
+require_frameworks = Depends(require_module("frameworks"))
 
 compliance_router = APIRouter(
     prefix="/v1/tenants/{tenant_id}/compliance", tags=["compliance_workspace"]
@@ -345,7 +352,7 @@ class ContinuousComplianceCycleResponse(BaseModel):
 
 
 @compliance_router.post(
-    "/evidence", response_model=EvidenceResponse, status_code=status.HTTP_201_CREATED
+    "/evidence", response_model=EvidenceResponse, status_code=status.HTTP_201_CREATED, dependencies=[require_evidence]
 )
 def create_evidence(
     principal: CurrentPrincipal,
@@ -386,7 +393,7 @@ def create_evidence(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.get("/evidence", response_model=list[EvidenceResponse])
+@compliance_router.get("/evidence", response_model=list[EvidenceResponse], dependencies=[require_evidence])
 def list_evidence(
     principal: CurrentPrincipal,
     tenant: CurrentTenant,
@@ -448,7 +455,7 @@ def list_evidence(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.get("/evidence/{evidence_id}", response_model=EvidenceResponse)
+@compliance_router.get("/evidence/{evidence_id}", response_model=EvidenceResponse, dependencies=[require_evidence])
 def get_evidence(
     evidence_id: UUID,
     principal: CurrentPrincipal,
@@ -499,7 +506,7 @@ def get_evidence(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.patch("/evidence/{evidence_id}", response_model=EvidenceResponse)
+@compliance_router.patch("/evidence/{evidence_id}", response_model=EvidenceResponse, dependencies=[require_evidence])
 def update_evidence(
     evidence_id: UUID,
     principal: CurrentPrincipal,
@@ -566,7 +573,7 @@ def update_evidence(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.post("/evidence/{evidence_id}/transition", response_model=EvidenceResponse)
+@compliance_router.post("/evidence/{evidence_id}/transition", response_model=EvidenceResponse, dependencies=[require_evidence])
 def transition_evidence(
     evidence_id: UUID,
     principal: CurrentPrincipal,
@@ -611,7 +618,7 @@ def transition_evidence(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.post("/evidence/{evidence_id}/files", response_model=EvidenceFileLinkResponse)
+@compliance_router.post("/evidence/{evidence_id}/files", response_model=EvidenceFileLinkResponse, dependencies=[require_evidence])
 def attach_file(
     evidence_id: UUID,
     principal: CurrentPrincipal,
@@ -639,7 +646,7 @@ def attach_file(
 
 
 @compliance_router.delete(
-    "/evidence/{evidence_id}/files/{file_id}", status_code=status.HTTP_204_NO_CONTENT
+    "/evidence/{evidence_id}/files/{file_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[require_evidence]
 )
 def remove_file(
     evidence_id: UUID,
@@ -657,7 +664,7 @@ def remove_file(
 
 
 @compliance_router.post(
-    "/evidence/{evidence_id}/controls", response_model=EvidenceControlLinkResponse
+    "/evidence/{evidence_id}/controls", response_model=EvidenceControlLinkResponse, dependencies=[require_evidence]
 )
 def link_control_to_evidence(
     evidence_id: UUID,
@@ -693,6 +700,7 @@ def link_control_to_evidence(
 @compliance_router.delete(
     "/evidence/{evidence_id}/controls/{control_type}/{control_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[require_evidence],
 )
 def unlink_control_from_evidence(
     evidence_id: UUID,
@@ -720,7 +728,7 @@ def unlink_control_from_evidence(
 
 
 @compliance_router.post(
-    "/policies", response_model=PolicyResponse, status_code=status.HTTP_201_CREATED
+    "/policies", response_model=PolicyResponse, status_code=status.HTTP_201_CREATED, dependencies=[require_policies]
 )
 def create_policy(
     principal: CurrentPrincipal,
@@ -764,7 +772,7 @@ def create_policy(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.get("/policies", response_model=list[PolicyResponse])
+@compliance_router.get("/policies", response_model=list[PolicyResponse], dependencies=[require_policies])
 def list_policies(
     principal: CurrentPrincipal,
     tenant: CurrentTenant,
@@ -814,7 +822,7 @@ def list_policies(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.get("/policies/{policy_id}", response_model=PolicyResponse)
+@compliance_router.get("/policies/{policy_id}", response_model=PolicyResponse, dependencies=[require_policies])
 def get_policy(
     policy_id: UUID,
     principal: CurrentPrincipal,
@@ -859,7 +867,7 @@ def get_policy(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.patch("/policies/{policy_id}", response_model=PolicyResponse)
+@compliance_router.patch("/policies/{policy_id}", response_model=PolicyResponse, dependencies=[require_policies])
 def update_policy(
     policy_id: UUID,
     principal: CurrentPrincipal,
@@ -910,7 +918,7 @@ def update_policy(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.post("/policies/{policy_id}/submit-review", response_model=PolicyResponse)
+@compliance_router.post("/policies/{policy_id}/submit-review", response_model=PolicyResponse, dependencies=[require_policies])
 def submit_policy_review(
     policy_id: UUID,
     principal: CurrentPrincipal,
@@ -953,7 +961,7 @@ def submit_policy_review(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.post("/policies/{policy_id}/approve", response_model=PolicyResponse)
+@compliance_router.post("/policies/{policy_id}/approve", response_model=PolicyResponse, dependencies=[require_policies])
 def approve_policy(
     policy_id: UUID,
     principal: CurrentPrincipal,
@@ -998,7 +1006,7 @@ def approve_policy(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.post("/policies/{policy_id}/publish", response_model=PolicyResponse)
+@compliance_router.post("/policies/{policy_id}/publish", response_model=PolicyResponse, dependencies=[require_policies])
 def publish_policy(
     policy_id: UUID,
     principal: CurrentPrincipal,
@@ -1041,7 +1049,7 @@ def publish_policy(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.post("/policies/{policy_id}/archive", response_model=PolicyResponse)
+@compliance_router.post("/policies/{policy_id}/archive", response_model=PolicyResponse, dependencies=[require_policies])
 def archive_policy(
     policy_id: UUID,
     principal: CurrentPrincipal,
@@ -1082,7 +1090,7 @@ def archive_policy(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.post("/policies/{policy_id}/controls", response_model=PolicyControlLinkResponse)
+@compliance_router.post("/policies/{policy_id}/controls", response_model=PolicyControlLinkResponse, dependencies=[require_policies])
 def link_control_to_policy(
     policy_id: UUID,
     principal: CurrentPrincipal,
@@ -1117,6 +1125,7 @@ def link_control_to_policy(
 @compliance_router.delete(
     "/policies/{policy_id}/controls/{control_type}/{control_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[require_policies],
 )
 def unlink_control_from_policy(
     policy_id: UUID,
@@ -1144,7 +1153,7 @@ def unlink_control_from_policy(
 
 
 @compliance_router.post(
-    "/tasks", response_model=ComplianceTaskResponse, status_code=status.HTTP_201_CREATED
+    "/tasks", response_model=ComplianceTaskResponse, status_code=status.HTTP_201_CREATED, dependencies=[require_tasks]
 )
 def create_task(
     principal: CurrentPrincipal,
@@ -1172,7 +1181,7 @@ def create_task(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.get("/tasks", response_model=list[ComplianceTaskResponse])
+@compliance_router.get("/tasks", response_model=list[ComplianceTaskResponse], dependencies=[require_tasks])
 def list_tasks(
     principal: CurrentPrincipal,
     tenant: CurrentTenant,
@@ -1190,7 +1199,7 @@ def list_tasks(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.get("/tasks/{task_id}", response_model=ComplianceTaskResponse)
+@compliance_router.get("/tasks/{task_id}", response_model=ComplianceTaskResponse, dependencies=[require_tasks])
 def get_task(
     task_id: UUID,
     principal: CurrentPrincipal,
@@ -1205,7 +1214,7 @@ def get_task(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.patch("/tasks/{task_id}", response_model=ComplianceTaskResponse)
+@compliance_router.patch("/tasks/{task_id}", response_model=ComplianceTaskResponse, dependencies=[require_tasks])
 def update_task(
     task_id: UUID,
     principal: CurrentPrincipal,
@@ -1234,7 +1243,7 @@ def update_task(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.post("/tasks/{task_id}/complete", response_model=ComplianceTaskResponse)
+@compliance_router.post("/tasks/{task_id}/complete", response_model=ComplianceTaskResponse, dependencies=[require_tasks])
 def complete_task(
     task_id: UUID,
     principal: CurrentPrincipal,
@@ -1260,7 +1269,7 @@ def complete_task(
 
 
 @compliance_router.post(
-    "/findings", response_model=FindingResponse, status_code=status.HTTP_201_CREATED
+    "/findings", response_model=FindingResponse, status_code=status.HTTP_201_CREATED, dependencies=[require_findings]
 )
 def create_finding(
     principal: CurrentPrincipal,
@@ -1287,7 +1296,7 @@ def create_finding(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.get("/findings", response_model=list[FindingResponse])
+@compliance_router.get("/findings", response_model=list[FindingResponse], dependencies=[require_findings])
 def list_findings(
     principal: CurrentPrincipal,
     tenant: CurrentTenant,
@@ -1310,7 +1319,7 @@ def list_findings(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.get("/findings/{finding_id}", response_model=FindingResponse)
+@compliance_router.get("/findings/{finding_id}", response_model=FindingResponse, dependencies=[require_findings])
 def get_finding(
     finding_id: UUID,
     principal: CurrentPrincipal,
@@ -1325,7 +1334,7 @@ def get_finding(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.patch("/findings/{finding_id}", response_model=FindingResponse)
+@compliance_router.patch("/findings/{finding_id}", response_model=FindingResponse, dependencies=[require_findings])
 def update_finding(
     finding_id: UUID,
     principal: CurrentPrincipal,
@@ -1354,7 +1363,7 @@ def update_finding(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
 
-@compliance_router.post("/findings/{finding_id}/remediation", response_model=FindingResponse)
+@compliance_router.post("/findings/{finding_id}/remediation", response_model=FindingResponse, dependencies=[require_findings])
 def update_remediation(
     finding_id: UUID,
     principal: CurrentPrincipal,
@@ -1384,7 +1393,7 @@ def update_remediation(
 # -----------------------------------------------------------------------------
 
 
-@compliance_router.get("/control-statuses", response_model=list[ControlStatusRecordResponse])
+@compliance_router.get("/control-statuses", response_model=list[ControlStatusRecordResponse], dependencies=[require_frameworks])
 def get_control_statuses(
     principal: CurrentPrincipal,
     tenant: CurrentTenant,
@@ -1397,7 +1406,7 @@ def get_control_statuses(
 
 
 @compliance_router.put(
-    "/control-statuses/{control_type}/{control_id}", response_model=ControlStatusRecordResponse
+    "/control-statuses/{control_type}/{control_id}", response_model=ControlStatusRecordResponse, dependencies=[require_frameworks]
 )
 def upsert_control_status(
     control_type: ControlEntityType,
@@ -1471,7 +1480,7 @@ def update_preferences(
 # -----------------------------------------------------------------------------
 
 
-@compliance_router.post("/jobs/run-expirations", response_model=JobExecutionResponse)
+@compliance_router.post("/jobs/run-expirations", response_model=JobExecutionResponse, dependencies=[require_frameworks])
 def run_jobs(
     principal: CurrentPrincipal,
     tenant: CurrentTenant,
@@ -1495,7 +1504,7 @@ def run_jobs(
     )
 
 
-@compliance_router.post("/cycle", response_model=ContinuousComplianceCycleResponse)
+@compliance_router.post("/cycle", response_model=ContinuousComplianceCycleResponse, dependencies=[require_frameworks])
 def trigger_continuous_compliance_cycle(
     principal: CurrentPrincipal,
     tenant: CurrentTenant,

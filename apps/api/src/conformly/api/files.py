@@ -97,6 +97,13 @@ async def upload_file(
     except FileValidationError as err:
         database.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err)) from err
+    except Exception as err:
+        from conformly.entitlements.service import StorageQuotaExceededError
+
+        if isinstance(err, StorageQuotaExceededError):
+            database.rollback()
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(err)) from err
+        raise
 
 
 @router.get("", response_model=list[StoredFileResponse])

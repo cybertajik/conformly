@@ -107,6 +107,10 @@ class StorageService:
         payload = self.encryption.encrypt(content, context)
         ciphertext_sha256 = hashlib.sha256(payload.ciphertext).hexdigest()
 
+        from conformly.entitlements.service import check_storage_limit
+
+        check_storage_limit(self.session, tenant_context.tenant_id, additional_bytes=len(payload.ciphertext))
+
         random_token = secrets.token_hex(16)
         object_key = f"tenants/{tenant_context.tenant_id}/files/{file_id}/{random_token}.enc"
 

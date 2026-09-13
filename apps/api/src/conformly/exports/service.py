@@ -11,6 +11,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from conformly.assets.models import Asset
 from conformly.audit.models import AuditActorType, AuditEvent, AuditOutcome
 from conformly.audit.service import record_audit_event
 from conformly.authz.policy import AuthorizationDeniedError, Principal, TenantContext, authorize
@@ -28,6 +29,7 @@ from conformly.compliance.models import (
 )
 from conformly.crypto.fields import EncryptedFieldCodec
 from conformly.crypto.types import EncryptionContext
+from conformly.entitlements.models import TenantEntitlement
 from conformly.exports.models import (
     ExportJob,
     ExportJobStatus,
@@ -41,6 +43,7 @@ from conformly.frameworks.models import (
     TenantFrameworkAdoption,
 )
 from conformly.identity.models import Membership, MembershipInvitation, Tenant, TenantStatus, User
+from conformly.organization.models import BusinessUnit, LegalEntity, Location
 from conformly.preaudit.models import (
     PreAudit,
     PreAuditCertificate,
@@ -55,9 +58,11 @@ from conformly.profiles.models import (
     PublicProfile,
     PublicStatement,
 )
+from conformly.risks.models import Risk, RiskTreatment
 from conformly.storage.models import StoredFile, StoredFileStatus
 from conformly.storage.service import StorageService
 from conformly.tenancy.rls import set_rls_context
+from conformly.vendors.models import Vendor
 from conformly.whistleblower.models import WhistleblowerCase, WhistleblowerPortal
 
 
@@ -735,6 +740,86 @@ class ExportService:
                 dataset_record_counts["whistleblower_cases"] = len(wb_cases)
                 total_records += len(wb_cases)
 
+                # Tenant entitlements
+                entitlements = self.session.scalars(
+                    select(TenantEntitlement).where(TenantEntitlement.tenant_id == tenant.id)
+                ).all()
+                entitlements_data = [_row_data(e) for e in entitlements]
+                zf.writestr(
+                    "data/tenant_entitlements.json", json.dumps(entitlements_data, indent=2)
+                )
+                dataset_record_counts["tenant_entitlements"] = len(entitlements_data)
+                total_records += len(entitlements_data)
+
+                # Organization structure (legal entities, business units, locations)
+                legal_entities = self.session.scalars(
+                    select(LegalEntity).where(LegalEntity.tenant_id == tenant.id)
+                ).all()
+                legal_entities_data = [_row_data(le) for le in legal_entities]
+                zf.writestr("data/legal_entities.json", json.dumps(legal_entities_data, indent=2))
+                dataset_record_counts["legal_entities"] = len(legal_entities_data)
+                total_records += len(legal_entities_data)
+
+                business_units = self.session.scalars(
+                    select(BusinessUnit).where(BusinessUnit.tenant_id == tenant.id)
+                ).all()
+                business_units_data = [_row_data(bu) for bu in business_units]
+                zf.writestr("data/business_units.json", json.dumps(business_units_data, indent=2))
+                dataset_record_counts["business_units"] = len(business_units_data)
+                total_records += len(business_units_data)
+
+                locations = self.session.scalars(
+                    select(Location).where(Location.tenant_id == tenant.id)
+                ).all()
+                locations_data = [_row_data(loc) for loc in locations]
+                zf.writestr("data/locations.json", json.dumps(locations_data, indent=2))
+                dataset_record_counts["locations"] = len(locations_data)
+                total_records += len(locations_data)
+
+                # Risks & treatments
+                risks = self.session.scalars(
+                    select(Risk).where(Risk.tenant_id == tenant.id)
+                ).all()
+                risks_data = [_row_data(r) for r in risks]
+                zf.writestr("data/risks.json", json.dumps(risks_data, indent=2))
+                dataset_record_counts["risks"] = len(risks_data)
+                total_records += len(risks_data)
+
+                risk_treatments = self.session.scalars(
+                    select(RiskTreatment).where(RiskTreatment.tenant_id == tenant.id)
+                ).all()
+                risk_treatments_data = [_row_data(rt) for rt in risk_treatments]
+                zf.writestr("data/risk_treatments.json", json.dumps(risk_treatments_data, indent=2))
+                dataset_record_counts["risk_treatments"] = len(risk_treatments_data)
+                total_records += len(risk_treatments_data)
+
+                # Assets (with decrypted descriptions)
+                assets = self.session.scalars(
+                    select(Asset).where(Asset.tenant_id == tenant.id)
+                ).all()
+                assets_data: list[dict[str, Any]] = []
+                for a in assets:
+                    row = _row_data(a, exclude=frozenset({"encrypted_description"}))
+                    if a.encrypted_description is not None:
+                        row["description"] = self._decrypt_field(
+                            tenant.id, "asset", a.id, "description", a.encrypted_description
+                        )
+                    else:
+                        row["description"] = a.description
+                    assets_data.append(row)
+                zf.writestr("data/assets.json", json.dumps(assets_data, indent=2))
+                dataset_record_counts["assets"] = len(assets_data)
+                total_records += len(assets_data)
+
+                # Vendors
+                vendors = self.session.scalars(
+                    select(Vendor).where(Vendor.tenant_id == tenant.id)
+                ).all()
+                vendors_data = [_row_data(v) for v in vendors]
+                zf.writestr("data/vendors.json", json.dumps(vendors_data, indent=2))
+                dataset_record_counts["vendors"] = len(vendors_data)
+                total_records += len(vendors_data)
+
                 audit_events = self.session.scalars(
                     select(AuditEvent)
                     .where(AuditEvent.tenant_id == tenant.id)
@@ -801,6 +886,13 @@ class ExportService:
                     f"- **Export Date:** {now.isoformat()}\n"
                     f"- **Tenant Slug:** {tenant.slug}\n"
                     f"- **Tenant Status:** {tenant.status}\n"
+                    f"- **Legal Entities:** {len(legal_entities_data)}\n"
+                    f"- **Business Units:** {len(business_units_data)}\n"
+                    f"- **Locations:** {len(locations_data)}\n"
+                    f"- **Identified Risks:** {len(risks_data)}\n"
+                    f"- **Risk Treatments:** {len(risk_treatments_data)}\n"
+                    f"- **Tracked Assets:** {len(assets_data)}\n"
+                    f"- **Third-Party Vendors:** {len(vendors_data)}\n"
                     f"- **Adopted Frameworks:** {len(adoptions_data)}\n"
                     f"- **Active Policies:** {len(policies_data)}\n"
                     f"- **Compliance Tasks:** {len(tasks_data)}\n"

@@ -245,3 +245,274 @@ def create_location(
         metadata={"name": location.name, "city": location.city},
     )
     return location
+
+
+def get_legal_entity(
+    database: Session,
+    principal: Principal,
+    tenant_context: TenantContext,
+    entity_id: UUID,
+    request_id: str,
+) -> LegalEntity:
+    authorize(principal, tenant_context, Capability.ORGANIZATION_READ)
+    authorize_resource(principal, tenant_context, Capability.ORGANIZATION_READ, legal_entity_id=entity_id)
+    entity = database.scalar(
+        select(LegalEntity).where(
+            LegalEntity.id == entity_id,
+            LegalEntity.tenant_id == tenant_context.tenant_id,
+        )
+    )
+    if entity is None:
+        raise OrganizationNotFoundError("Legal entity not found in tenant")
+    return entity
+
+
+def update_legal_entity(
+    database: Session,
+    principal: Principal,
+    tenant_context: TenantContext,
+    entity_id: UUID,
+    name: str,
+    registration_number: str | None,
+    country: str,
+    is_primary: bool,
+    request_id: str,
+) -> LegalEntity:
+    authorize(principal, tenant_context, Capability.ORGANIZATION_MANAGE)
+    authorize_resource(principal, tenant_context, Capability.ORGANIZATION_MANAGE, legal_entity_id=entity_id)
+    entity = get_legal_entity(database, principal, tenant_context, entity_id, request_id)
+    entity.name = name.strip()
+    entity.registration_number = registration_number.strip() if registration_number else None
+    entity.country = country.upper()[:2]
+    entity.is_primary = is_primary
+    database.flush()
+    record_audit_event(
+        database,
+        tenant_id=tenant_context.tenant_id,
+        actor_type=AuditActorType.USER,
+        actor_id=principal.user_id,
+        action="organization.legal_entity.update",
+        resource_type="legal_entity",
+        resource_id=str(entity.id),
+        request_id=request_id,
+        outcome=AuditOutcome.SUCCESS,
+        metadata={"name": entity.name, "is_primary": is_primary},
+    )
+    return entity
+
+
+def delete_legal_entity(
+    database: Session,
+    principal: Principal,
+    tenant_context: TenantContext,
+    entity_id: UUID,
+    request_id: str,
+) -> None:
+    authorize(principal, tenant_context, Capability.ORGANIZATION_MANAGE)
+    authorize_resource(principal, tenant_context, Capability.ORGANIZATION_MANAGE, legal_entity_id=entity_id)
+    entity = get_legal_entity(database, principal, tenant_context, entity_id, request_id)
+    if entity.is_primary:
+        raise ValueError("Cannot delete primary legal entity")
+    database.delete(entity)
+    database.flush()
+    record_audit_event(
+        database,
+        tenant_id=tenant_context.tenant_id,
+        actor_type=AuditActorType.USER,
+        actor_id=principal.user_id,
+        action="organization.legal_entity.delete",
+        resource_type="legal_entity",
+        resource_id=str(entity_id),
+        request_id=request_id,
+        outcome=AuditOutcome.SUCCESS,
+        metadata={"name": entity.name},
+    )
+
+
+def get_business_unit(
+    database: Session,
+    principal: Principal,
+    tenant_context: TenantContext,
+    unit_id: UUID,
+    request_id: str,
+) -> BusinessUnit:
+    authorize(principal, tenant_context, Capability.ORGANIZATION_READ)
+    unit = database.scalar(
+        select(BusinessUnit).where(
+            BusinessUnit.id == unit_id,
+            BusinessUnit.tenant_id == tenant_context.tenant_id,
+        )
+    )
+    if unit is None:
+        raise OrganizationNotFoundError("Business unit not found in tenant")
+    authorize_resource(
+        principal,
+        tenant_context,
+        Capability.ORGANIZATION_READ,
+        legal_entity_id=unit.legal_entity_id,
+        business_unit_id=unit.id,
+    )
+    return unit
+
+
+def update_business_unit(
+    database: Session,
+    principal: Principal,
+    tenant_context: TenantContext,
+    unit_id: UUID,
+    name: str,
+    code: str | None,
+    request_id: str,
+) -> BusinessUnit:
+    authorize(principal, tenant_context, Capability.ORGANIZATION_MANAGE)
+    unit = get_business_unit(database, principal, tenant_context, unit_id, request_id)
+    authorize_resource(
+        principal,
+        tenant_context,
+        Capability.ORGANIZATION_MANAGE,
+        legal_entity_id=unit.legal_entity_id,
+        business_unit_id=unit.id,
+    )
+    unit.name = name.strip()
+    unit.code = code.strip().upper() if code else None
+    database.flush()
+    record_audit_event(
+        database,
+        tenant_id=tenant_context.tenant_id,
+        actor_type=AuditActorType.USER,
+        actor_id=principal.user_id,
+        action="organization.business_unit.update",
+        resource_type="business_unit",
+        resource_id=str(unit.id),
+        request_id=request_id,
+        outcome=AuditOutcome.SUCCESS,
+        metadata={"name": unit.name, "code": unit.code},
+    )
+    return unit
+
+
+def delete_business_unit(
+    database: Session,
+    principal: Principal,
+    tenant_context: TenantContext,
+    unit_id: UUID,
+    request_id: str,
+) -> None:
+    authorize(principal, tenant_context, Capability.ORGANIZATION_MANAGE)
+    unit = get_business_unit(database, principal, tenant_context, unit_id, request_id)
+    authorize_resource(
+        principal,
+        tenant_context,
+        Capability.ORGANIZATION_MANAGE,
+        legal_entity_id=unit.legal_entity_id,
+        business_unit_id=unit.id,
+    )
+    database.delete(unit)
+    database.flush()
+    record_audit_event(
+        database,
+        tenant_id=tenant_context.tenant_id,
+        actor_type=AuditActorType.USER,
+        actor_id=principal.user_id,
+        action="organization.business_unit.delete",
+        resource_type="business_unit",
+        resource_id=str(unit_id),
+        request_id=request_id,
+        outcome=AuditOutcome.SUCCESS,
+        metadata={"name": unit.name},
+    )
+
+
+def get_location(
+    database: Session,
+    principal: Principal,
+    tenant_context: TenantContext,
+    location_id: UUID,
+    request_id: str,
+) -> Location:
+    authorize(principal, tenant_context, Capability.ORGANIZATION_READ)
+    location = database.scalar(
+        select(Location).where(
+            Location.id == location_id,
+            Location.tenant_id == tenant_context.tenant_id,
+        )
+    )
+    if location is None:
+        raise OrganizationNotFoundError("Location not found in tenant")
+    authorize_resource(
+        principal,
+        tenant_context,
+        Capability.ORGANIZATION_READ,
+        legal_entity_id=location.legal_entity_id,
+    )
+    return location
+
+
+def update_location(
+    database: Session,
+    principal: Principal,
+    tenant_context: TenantContext,
+    location_id: UUID,
+    name: str,
+    country: str,
+    city: str,
+    address: str | None,
+    request_id: str,
+) -> Location:
+    authorize(principal, tenant_context, Capability.ORGANIZATION_MANAGE)
+    location = get_location(database, principal, tenant_context, location_id, request_id)
+    authorize_resource(
+        principal,
+        tenant_context,
+        Capability.ORGANIZATION_MANAGE,
+        legal_entity_id=location.legal_entity_id,
+    )
+    location.name = name.strip()
+    location.country = country.upper()[:2]
+    location.city = city.strip()
+    location.address = address.strip() if address else None
+    database.flush()
+    record_audit_event(
+        database,
+        tenant_id=tenant_context.tenant_id,
+        actor_type=AuditActorType.USER,
+        actor_id=principal.user_id,
+        action="organization.location.update",
+        resource_type="location",
+        resource_id=str(location.id),
+        request_id=request_id,
+        outcome=AuditOutcome.SUCCESS,
+        metadata={"name": location.name, "city": location.city},
+    )
+    return location
+
+
+def delete_location(
+    database: Session,
+    principal: Principal,
+    tenant_context: TenantContext,
+    location_id: UUID,
+    request_id: str,
+) -> None:
+    authorize(principal, tenant_context, Capability.ORGANIZATION_MANAGE)
+    location = get_location(database, principal, tenant_context, location_id, request_id)
+    authorize_resource(
+        principal,
+        tenant_context,
+        Capability.ORGANIZATION_MANAGE,
+        legal_entity_id=location.legal_entity_id,
+    )
+    database.delete(location)
+    database.flush()
+    record_audit_event(
+        database,
+        tenant_id=tenant_context.tenant_id,
+        actor_type=AuditActorType.USER,
+        actor_id=principal.user_id,
+        action="organization.location.delete",
+        resource_type="location",
+        resource_id=str(location_id),
+        request_id=request_id,
+        outcome=AuditOutcome.SUCCESS,
+        metadata={"name": location.name},
+    )

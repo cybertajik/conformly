@@ -7,11 +7,13 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from conformly.assets.models import Asset, AssetClassification, AssetType
 from conformly.authz.policy import AuthorizationDeniedError, Principal, TenantContext
 from conformly.authz.roles import Role
 from conformly.compliance.models import ComplianceTask, Policy, UserNotificationPreference
 from conformly.crypto.envelope import EnvelopeEncryptionService
 from conformly.crypto.providers import AES256GCMProvider, LocalKeyManagementProvider
+from conformly.entitlements.models import TenantEntitlement
 from conformly.exports.service import ExportService
 from conformly.identity.models import (
     Membership,
@@ -22,6 +24,7 @@ from conformly.identity.models import (
     User,
 )
 from conformly.notifications.models import NotificationOutbox
+from conformly.organization.models import BusinessUnit, LegalEntity, Location
 from conformly.preaudit.models import PreAudit, PreAuditStatus
 from conformly.profiles.models import PublicProfile
 from conformly.retention.jobs import run_retention_lifecycle
@@ -32,9 +35,11 @@ from conformly.retention.service import (
     LegalHoldActiveError,
     RetentionService,
 )
+from conformly.risks.models import Risk, RiskCategory, RiskStatus, RiskTreatment, RiskTreatmentStrategy
 from conformly.storage.models import StoredFile
 from conformly.storage.providers import MemoryStorageProvider
 from conformly.storage.service import StorageService
+from conformly.vendors.models import Vendor, VendorCriticality
 
 
 def make_storage_service(session: Session) -> StorageService:
@@ -261,7 +266,105 @@ def test_execute_deletion_job_purges_all_tables_and_generates_proof(session: Ses
         idempotency_key="retention-purge-test",
         available_at=datetime.now(UTC),
     )
-    session.add_all([policy, task, pre_audit, pub_profile, invitation, preference, notification])
+    # Organization
+    legal_entity = LegalEntity(
+        id=uuid4(),
+        tenant_id=tenant.id,
+        name="Purge Legal Entity",
+        country="DE",
+        is_primary=True,
+    )
+    business_unit = BusinessUnit(
+        id=uuid4(),
+        tenant_id=tenant.id,
+        legal_entity_id=legal_entity.id,
+        name="Purge Unit",
+        code="PURGE",
+    )
+    location = Location(
+        id=uuid4(),
+        tenant_id=tenant.id,
+        legal_entity_id=legal_entity.id,
+        name="Purge Location",
+        country="DE",
+        city="Munich",
+    )
+    # Risk & Treatment
+    risk = Risk(
+        id=uuid4(),
+        tenant_id=tenant.id,
+        title="Purge Risk",
+        description="Risk to be purged",
+        category=RiskCategory.SECURITY,
+        likelihood=3,
+        impact=3,
+        inherent_score=9,
+        status=RiskStatus.IDENTIFIED,
+        owner_user_id=user.id,
+        legal_entity_id=legal_entity.id,
+        business_unit_id=business_unit.id,
+    )
+    treatment = RiskTreatment(
+        id=uuid4(),
+        tenant_id=tenant.id,
+        risk_id=risk.id,
+        strategy=RiskTreatmentStrategy.MITIGATE,
+        treatment_plan="Mitigate before purge",
+        status="planned",
+        owner_user_id=user.id,
+    )
+    # Asset & Vendor
+    asset = Asset(
+        id=uuid4(),
+        tenant_id=tenant.id,
+        name="Purge Database Asset",
+        asset_type=AssetType.DATA,
+        classification=AssetClassification.RESTRICTED,
+        encrypted_description={"algorithm": "AES-256-GCM", "ciphertext": "dummy"},
+        owner_user_id=user.id,
+        legal_entity_id=legal_entity.id,
+        business_unit_id=business_unit.id,
+    )
+    vendor = Vendor(
+        id=uuid4(),
+        tenant_id=tenant.id,
+        name="Purge Vendor Inc.",
+        service_description="Purge service provider",
+        criticality=VendorCriticality.LOW,
+        data_classification_accessed="Internal",
+        country_residency="DE",
+        dpa_signed=True,
+        owner_user_id=user.id,
+        legal_entity_id=legal_entity.id,
+        business_unit_id=business_unit.id,
+    )
+    entitlement = session.scalar(
+        select(TenantEntitlement).where(TenantEntitlement.tenant_id == tenant.id)
+    )
+    if entitlement is None:
+        entitlement = TenantEntitlement(
+            tenant_id=tenant.id,
+            enabled_modules=["compliance"],
+            allowed_framework_slugs=["*"],
+        )
+        session.add(entitlement)
+
+    session.add_all([
+        policy,
+        task,
+        pre_audit,
+        pub_profile,
+        invitation,
+        preference,
+        notification,
+        legal_entity,
+        business_unit,
+        location,
+        risk,
+        treatment,
+        asset,
+        vendor,
+    ])
     session.flush()
 
     job = DeletionJob(
@@ -290,6 +393,16 @@ def test_execute_deletion_job_purges_all_tables_and_generates_proof(session: Ses
     assert job.state == DeletionJobState.COMPLETED
     assert tenant.status == TenantStatus.DELETED
 
+    # Verify proof receipts for all register, org, and entitlement tables
+    assert proof.tables_purged["risk_treatments"] == 1
+    assert proof.tables_purged["risks"] == 1
+    assert proof.tables_purged["assets"] == 1
+    assert proof.tables_purged["vendors"] == 1
+    assert proof.tables_purged["locations"] == 1
+    assert proof.tables_purged["business_units"] == 1
+    assert proof.tables_purged["legal_entities"] == 1
+    assert proof.tables_purged["tenant_entitlements"] >= 1
+
     # Verify operational records are completely purged
     assert session.scalar(select(Policy).where(Policy.tenant_id == tenant.id)) is None
     assert (
@@ -316,6 +429,14 @@ def test_execute_deletion_job_purges_all_tables_and_generates_proof(session: Ses
         session.scalar(select(NotificationOutbox).where(NotificationOutbox.tenant_id == tenant.id))
         is None
     )
+    assert session.scalar(select(RiskTreatment).where(RiskTreatment.tenant_id == tenant.id)) is None
+    assert session.scalar(select(Risk).where(Risk.tenant_id == tenant.id)) is None
+    assert session.scalar(select(Asset).where(Asset.tenant_id == tenant.id)) is None
+    assert session.scalar(select(Vendor).where(Vendor.tenant_id == tenant.id)) is None
+    assert session.scalar(select(Location).where(Location.tenant_id == tenant.id)) is None
+    assert session.scalar(select(BusinessUnit).where(BusinessUnit.tenant_id == tenant.id)) is None
+    assert session.scalar(select(LegalEntity).where(LegalEntity.tenant_id == tenant.id)) is None
+    assert session.scalar(select(TenantEntitlement).where(TenantEntitlement.tenant_id == tenant.id)) is None
     assert session.scalar(select(Membership).where(Membership.tenant_id == tenant.id)) is None
 
 

@@ -8,9 +8,14 @@ from sqlalchemy.orm import Session
 from conformly.auth.dependencies import CurrentPrincipal, CurrentTenant
 from conformly.authz.policy import AuthorizationDeniedError
 from conformly.db.session import get_db
+from conformly.entitlements.dependencies import require_module
 from conformly.organization import service
 
-router = APIRouter(prefix="/v1/tenants/{tenant_id}/organization", tags=["organization"])
+router = APIRouter(
+    prefix="/v1/tenants/{tenant_id}/organization",
+    tags=["organization"],
+    dependencies=[Depends(require_module("organization"))],
+)
 
 
 class LegalEntityCreateRequest(BaseModel):
@@ -253,5 +258,245 @@ def create_location_endpoint(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing organization:manage capability"
         )
+    except service.OrganizationNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.get("/legal-entities/{entity_id}", response_model=LegalEntityResponse)
+def get_legal_entity_endpoint(
+    entity_id: UUID,
+    request: Request,
+    principal: CurrentPrincipal,
+    tenant_context: CurrentTenant,
+    database: Annotated[Session, Depends(get_db)],
+) -> LegalEntityResponse:
+    request_id = getattr(request.state, "request_id", "req-le-get")
+    try:
+        entity = service.get_legal_entity(database, principal, tenant_context, entity_id, request_id)
+        return LegalEntityResponse(
+            id=entity.id,
+            tenant_id=entity.tenant_id,
+            name=entity.name,
+            registration_number=entity.registration_number,
+            country=entity.country,
+            is_primary=entity.is_primary,
+        )
+    except AuthorizationDeniedError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    except service.OrganizationNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.put("/legal-entities/{entity_id}", response_model=LegalEntityResponse)
+def update_legal_entity_endpoint(
+    entity_id: UUID,
+    payload: LegalEntityCreateRequest,
+    request: Request,
+    principal: CurrentPrincipal,
+    tenant_context: CurrentTenant,
+    database: Annotated[Session, Depends(get_db)],
+) -> LegalEntityResponse:
+    request_id = getattr(request.state, "request_id", "req-le-update")
+    try:
+        entity = service.update_legal_entity(
+            database,
+            principal,
+            tenant_context,
+            entity_id=entity_id,
+            name=payload.name,
+            registration_number=payload.registration_number,
+            country=payload.country,
+            is_primary=payload.is_primary,
+            request_id=request_id,
+        )
+        database.commit()
+        return LegalEntityResponse(
+            id=entity.id,
+            tenant_id=entity.tenant_id,
+            name=entity.name,
+            registration_number=entity.registration_number,
+            country=entity.country,
+            is_primary=entity.is_primary,
+        )
+    except AuthorizationDeniedError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    except service.OrganizationNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.delete("/legal-entities/{entity_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_legal_entity_endpoint(
+    entity_id: UUID,
+    request: Request,
+    principal: CurrentPrincipal,
+    tenant_context: CurrentTenant,
+    database: Annotated[Session, Depends(get_db)],
+) -> None:
+    request_id = getattr(request.state, "request_id", "req-le-delete")
+    try:
+        service.delete_legal_entity(database, principal, tenant_context, entity_id, request_id)
+        database.commit()
+    except AuthorizationDeniedError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    except service.OrganizationNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
+@router.get("/business-units/{unit_id}", response_model=BusinessUnitResponse)
+def get_business_unit_endpoint(
+    unit_id: UUID,
+    request: Request,
+    principal: CurrentPrincipal,
+    tenant_context: CurrentTenant,
+    database: Annotated[Session, Depends(get_db)],
+) -> BusinessUnitResponse:
+    request_id = getattr(request.state, "request_id", "req-bu-get")
+    try:
+        unit = service.get_business_unit(database, principal, tenant_context, unit_id, request_id)
+        return BusinessUnitResponse(
+            id=unit.id,
+            tenant_id=unit.tenant_id,
+            legal_entity_id=unit.legal_entity_id,
+            name=unit.name,
+            code=unit.code,
+        )
+    except AuthorizationDeniedError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    except service.OrganizationNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.put("/business-units/{unit_id}", response_model=BusinessUnitResponse)
+def update_business_unit_endpoint(
+    unit_id: UUID,
+    payload: BusinessUnitCreateRequest,
+    request: Request,
+    principal: CurrentPrincipal,
+    tenant_context: CurrentTenant,
+    database: Annotated[Session, Depends(get_db)],
+) -> BusinessUnitResponse:
+    request_id = getattr(request.state, "request_id", "req-bu-update")
+    try:
+        unit = service.update_business_unit(
+            database,
+            principal,
+            tenant_context,
+            unit_id=unit_id,
+            name=payload.name,
+            code=payload.code,
+            request_id=request_id,
+        )
+        database.commit()
+        return BusinessUnitResponse(
+            id=unit.id,
+            tenant_id=unit.tenant_id,
+            legal_entity_id=unit.legal_entity_id,
+            name=unit.name,
+            code=unit.code,
+        )
+    except AuthorizationDeniedError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    except service.OrganizationNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.delete("/business-units/{unit_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_business_unit_endpoint(
+    unit_id: UUID,
+    request: Request,
+    principal: CurrentPrincipal,
+    tenant_context: CurrentTenant,
+    database: Annotated[Session, Depends(get_db)],
+) -> None:
+    request_id = getattr(request.state, "request_id", "req-bu-delete")
+    try:
+        service.delete_business_unit(database, principal, tenant_context, unit_id, request_id)
+        database.commit()
+    except AuthorizationDeniedError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    except service.OrganizationNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.get("/locations/{location_id}", response_model=LocationResponse)
+def get_location_endpoint(
+    location_id: UUID,
+    request: Request,
+    principal: CurrentPrincipal,
+    tenant_context: CurrentTenant,
+    database: Annotated[Session, Depends(get_db)],
+) -> LocationResponse:
+    request_id = getattr(request.state, "request_id", "req-loc-get")
+    try:
+        loc = service.get_location(database, principal, tenant_context, location_id, request_id)
+        return LocationResponse(
+            id=loc.id,
+            tenant_id=loc.tenant_id,
+            legal_entity_id=loc.legal_entity_id,
+            name=loc.name,
+            country=loc.country,
+            city=loc.city,
+            address=loc.address,
+        )
+    except AuthorizationDeniedError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    except service.OrganizationNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.put("/locations/{location_id}", response_model=LocationResponse)
+def update_location_endpoint(
+    location_id: UUID,
+    payload: LocationCreateRequest,
+    request: Request,
+    principal: CurrentPrincipal,
+    tenant_context: CurrentTenant,
+    database: Annotated[Session, Depends(get_db)],
+) -> LocationResponse:
+    request_id = getattr(request.state, "request_id", "req-loc-update")
+    try:
+        loc = service.update_location(
+            database,
+            principal,
+            tenant_context,
+            location_id=location_id,
+            name=payload.name,
+            country=payload.country,
+            city=payload.city,
+            address=payload.address,
+            request_id=request_id,
+        )
+        database.commit()
+        return LocationResponse(
+            id=loc.id,
+            tenant_id=loc.tenant_id,
+            legal_entity_id=loc.legal_entity_id,
+            name=loc.name,
+            country=loc.country,
+            city=loc.city,
+            address=loc.address,
+        )
+    except AuthorizationDeniedError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    except service.OrganizationNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.delete("/locations/{location_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_location_endpoint(
+    location_id: UUID,
+    request: Request,
+    principal: CurrentPrincipal,
+    tenant_context: CurrentTenant,
+    database: Annotated[Session, Depends(get_db)],
+) -> None:
+    request_id = getattr(request.state, "request_id", "req-loc-delete")
+    try:
+        service.delete_location(database, principal, tenant_context, location_id, request_id)
+        database.commit()
+    except AuthorizationDeniedError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     except service.OrganizationNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))

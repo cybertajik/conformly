@@ -41,6 +41,9 @@ class TenantEntitlement(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     max_storage_bytes: Mapped[int] = mapped_column(
         BigInteger, default=10 * 1024 * 1024 * 1024, nullable=False
     )  # 10 GB
+    allowed_framework_slugs: Mapped[list[str]] = mapped_column(
+        JSON, default=lambda: list(["*"]), nullable=False
+    )
     effective_from: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

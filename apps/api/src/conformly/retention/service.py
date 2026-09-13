@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import CursorResult, delete, select
 from sqlalchemy.orm import Session
 
+from conformly.assets.models import Asset
 from conformly.audit.models import AuditActorType, AuditOutcome
 from conformly.audit.service import record_audit_event
 from conformly.authz.policy import AuthorizationDeniedError, Principal, TenantContext, authorize
@@ -22,6 +23,7 @@ from conformly.compliance.models import (
     PolicyControlLink,
     UserNotificationPreference,
 )
+from conformly.entitlements.models import TenantEntitlement
 from conformly.exports.models import (
     ExportJob,
     ExportManifest,
@@ -36,6 +38,7 @@ from conformly.frameworks.models import (
 )
 from conformly.identity.models import Membership, MembershipInvitation, Tenant, TenantStatus
 from conformly.notifications.models import NotificationOutbox
+from conformly.organization.models import BusinessUnit, LegalEntity, Location
 from conformly.preaudit.models import (
     PreAudit,
     PreAuditCertificate,
@@ -56,8 +59,10 @@ from conformly.retention.models import (
     DeletionProof,
     DeletionReason,
 )
+from conformly.risks.models import Risk, RiskTreatment
 from conformly.storage.models import StoredFile
 from conformly.storage.service import StorageService
+from conformly.vendors.models import Vendor
 from conformly.tenancy.rls import set_rls_context
 from conformly.whistleblower.models import (
     WhistleblowerAttachment,
@@ -515,7 +520,33 @@ class RetentionService:
                 delete(TenantFrameworkAdoption).where(TenantFrameworkAdoption.tenant_id == tid),
             )
 
-            # 6. Exports
+            # 6. Registers, Organization & Entitlements
+            tables_purged["risk_treatments"] = _exec_delete(
+                self.session, delete(RiskTreatment).where(RiskTreatment.tenant_id == tid)
+            )
+            tables_purged["risks"] = _exec_delete(
+                self.session, delete(Risk).where(Risk.tenant_id == tid)
+            )
+            tables_purged["assets"] = _exec_delete(
+                self.session, delete(Asset).where(Asset.tenant_id == tid)
+            )
+            tables_purged["vendors"] = _exec_delete(
+                self.session, delete(Vendor).where(Vendor.tenant_id == tid)
+            )
+            tables_purged["locations"] = _exec_delete(
+                self.session, delete(Location).where(Location.tenant_id == tid)
+            )
+            tables_purged["business_units"] = _exec_delete(
+                self.session, delete(BusinessUnit).where(BusinessUnit.tenant_id == tid)
+            )
+            tables_purged["legal_entities"] = _exec_delete(
+                self.session, delete(LegalEntity).where(LegalEntity.tenant_id == tid)
+            )
+            tables_purged["tenant_entitlements"] = _exec_delete(
+                self.session, delete(TenantEntitlement).where(TenantEntitlement.tenant_id == tid)
+            )
+
+            # 7. Exports
             tables_purged["export_manifests"] = _exec_delete(
                 self.session, delete(ExportManifest).where(ExportManifest.tenant_id == tid)
             )

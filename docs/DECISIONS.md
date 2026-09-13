@@ -317,11 +317,29 @@ Pre-audits are tenant-scoped readiness assessments that evaluate compliance work
 
 ## Decision Process
 
+### Planning record — 2026-09-13: global framework and add-on expansion
+
+- **Authority:** current explicit Product Owner request; not a new Trello snapshot.
+- **Artifact:** `docs/GLOBAL_FRAMEWORK_CATALOG.md`, linked from the product source of truth.
+- **Authorized direction:** expand regional coverage and plan basic A / progressively advanced
+  B–D framework packages, with whistleblower and LMS add-on planning.
+- **Proposed, not approved:** exact pack allocations, initial launch selection, six additional
+  add-on families, and any new commercial or deployment arrangements.
+- **Preserved baseline:** Tier A Core scope and training-evidence integration, isolated
+  whistleblower architecture, universal security requirements, Germany-only hosting, and
+  human-reviewed deterministic readiness workflows. Geographic coverage is not hosting approval.
+- **Implementation boundary:** no application changes in this planning task. Items 1–4 are being
+  implemented elsewhere according to the Product Owner and must still pass their own verification.
+- **Gate:** reconcile specific packaging changes on Trello DEU; verify authoritative sources,
+  content rights, applicability and versions; obtain legal/compliance and independent approval;
+  test packs before marking them released. A discovery entry is not supported framework content.
+
+### Procedure
+
 When Codex encounters a missing architectural choice:
 1. inspect existing docs,
 2. choose the simplest secure option,
 3. avoid irreversible architecture,
 4. add the decision here if material,
 5. add migration/upgrade notes if applicable.
-
 

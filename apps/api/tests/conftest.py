@@ -7,6 +7,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
+# Ensure test development KEKs are available for all envelope encryption services
+if "CONFORMLY_LOCAL_KEKS" not in os.environ:
+    _test_key = base64.b64encode(os.urandom(32)).decode("ascii")
+    os.environ["CONFORMLY_LOCAL_KEKS"] = f'{{"v1": "{_test_key}"}}'
+if "CONFORMLY_ACTIVE_KEK_VERSION" not in os.environ:
+    os.environ["CONFORMLY_ACTIVE_KEK_VERSION"] = "v1"
+
 from conformly.crypto.envelope import EnvelopeEncryptionService
 from conformly.crypto.fields import EncryptedFieldCodec
 from conformly.crypto.providers import AES256GCMProvider, LocalKeyManagementProvider

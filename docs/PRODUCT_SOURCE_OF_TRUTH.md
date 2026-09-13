@@ -1,5 +1,24 @@
 # Conformly — Complete Product Source of Truth
 
+## Product Owner expansion request — 2026-09-13
+
+Read [Global framework catalog and A–D expansion plan](GLOBAL_FRAMEWORK_CATALOG.md) alongside this
+document when planning framework packs, tiers, or add-ons. The Product Owner has requested coverage
+across the EU, USA, Arab countries, China, Japan, Australia, and specialist cases, with basic packs
+in A, more advanced packs in B–D, and optional products including whistleblower and LMS.
+
+That expansion direction is authorized by the current request. The catalog's specific tier
+allocations, candidate launch packs, and additional add-on proposals are **DRAFT**, not locked
+requirements. They have not been synchronized to or approved on Trello DEU. This request permits
+expansion planning; it does not activate B–D, change the existing Tier A release gates, remove its
+LMS evidence integration, or authorize incompatible hosting arrangements. Reconcile and approve
+specific changes on DEU before implementing changed product packaging.
+
+Sections below retain the V4 snapshot and its original authority/provenance. Statements that no
+further tiers/add-ons are defined describe that snapshot, not a prohibition on the newly requested
+planning. The catalog records implementation items 1–4 as **in progress, reported by the Product
+Owner**; this planning update does not certify their completion.
+
 ## 1. Authority and Coverage
 
 This is the repository execution mirror of the complete
@@ -1560,4 +1579,3 @@ Möglichst rückwärtskompatible Migrationen; destruktive Migrationen benötigen
 
 SICHERHEITSREGEL
 Notfalländerungen sind bei Bedarf erlaubt, müssen aber dokumentiert und nachträglich geprüft werden. Produktionszugriff erfolgt nach Least Privilege, soweit praktikabel zeitlich begrenzt und vollständig auditiert.
-

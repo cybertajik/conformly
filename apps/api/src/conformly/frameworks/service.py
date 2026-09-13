@@ -652,6 +652,15 @@ class FrameworkService:
         if version.release_state != ReleaseState.RELEASED:
             raise ValueError(f"cannot adopt version in non-released state: {version.release_state}")
 
+        framework = self.session.get(Framework, version.framework_id)
+        if framework is not None:
+            from conformly.entitlements.service import FrameworkPackNotEntitledError, is_framework_allowed
+
+            if not is_framework_allowed(self.session, tenant_context.tenant_id, framework.slug):
+                raise FrameworkPackNotEntitledError(
+                    f"Framework '{framework.slug}' is not included in tenant entitlement framework packs"
+                )
+
         # Serialize first adoption as well as replacements on a stable parent row.
         from conformly.identity.models import Tenant
 

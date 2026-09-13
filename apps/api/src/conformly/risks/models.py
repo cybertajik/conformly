@@ -65,6 +65,15 @@ class Risk(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     control_id: Mapped[UUID | None] = mapped_column(nullable=True)
+    finding_id: Mapped[UUID | None] = mapped_column(nullable=True)
+    legal_entity_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("legal_entities.id", ondelete="SET NULL"), nullable=True
+    )
+    business_unit_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("business_units.id", ondelete="SET NULL"), nullable=True
+    )
+    last_reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    next_review_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     treatments: Mapped[list["RiskTreatment"]] = relationship(
         back_populates="risk", cascade="all, delete-orphan"
@@ -85,6 +94,9 @@ class RiskTreatment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     risk_id: Mapped[UUID] = mapped_column(
         ForeignKey("risks.id", ondelete="CASCADE"), nullable=False
+    )
+    owner_user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     strategy: Mapped[RiskTreatmentStrategy] = mapped_column(
         Enum(RiskTreatmentStrategy, native_enum=False, length=32),

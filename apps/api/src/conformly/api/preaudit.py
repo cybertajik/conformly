@@ -17,6 +17,7 @@ from conformly.auth.dependencies import CurrentPrincipal, CurrentTenant
 from conformly.authz.policy import AuthorizationDeniedError
 from conformly.compliance.models import FindingSeverity, RemediationStatus
 from conformly.db.session import get_db
+from conformly.entitlements.dependencies import require_module
 from conformly.preaudit.service import (
     CertificateIssuanceBlockedError,
     CertificateNotFoundError,
@@ -32,6 +33,7 @@ from conformly.preaudit.service import (
 preaudit_router = APIRouter(
     prefix="/v1/tenants/{tenant_id}/pre-audits",
     tags=["pre_audit"],
+    dependencies=[Depends(require_module("preaudit"))],
 )
 
 

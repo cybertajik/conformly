@@ -21,6 +21,7 @@ class TenantEntitlementResponse(BaseModel):
     enabled_modules: list[str]
     max_members: int
     max_storage_bytes: int
+    allowed_framework_slugs: list[str]
     effective_from: datetime
     effective_until: datetime | None
 
@@ -29,6 +30,9 @@ class TenantEntitlementUpdateRequest(BaseModel):
     enabled_modules: list[str] = Field(min_length=1)
     max_members: int = Field(ge=1)
     max_storage_bytes: int = Field(ge=1024 * 1024)
+    allowed_framework_slugs: list[str] | None = None
+    effective_from: datetime | None = None
+    effective_until: datetime | None = None
 
 
 @router.get("", response_model=TenantEntitlementResponse)
@@ -48,6 +52,7 @@ def get_entitlement_endpoint(
             enabled_modules=entitlement.enabled_modules,
             max_members=entitlement.max_members,
             max_storage_bytes=entitlement.max_storage_bytes,
+            allowed_framework_slugs=entitlement.allowed_framework_slugs or ["*"],
             effective_from=entitlement.effective_from,
             effective_until=entitlement.effective_until,
         )
@@ -74,6 +79,9 @@ def update_entitlement_endpoint(
             enabled_modules=payload.enabled_modules,
             max_members=payload.max_members,
             max_storage_bytes=payload.max_storage_bytes,
+            allowed_framework_slugs=payload.allowed_framework_slugs,
+            effective_from=payload.effective_from,
+            effective_until=payload.effective_until,
             request_id=request_id,
         )
         database.commit()
@@ -84,6 +92,7 @@ def update_entitlement_endpoint(
             enabled_modules=entitlement.enabled_modules,
             max_members=entitlement.max_members,
             max_storage_bytes=entitlement.max_storage_bytes,
+            allowed_framework_slugs=entitlement.allowed_framework_slugs or ["*"],
             effective_from=entitlement.effective_from,
             effective_until=entitlement.effective_until,
         )

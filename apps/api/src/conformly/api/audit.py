@@ -18,8 +18,13 @@ from conformly.audit.query import (
 from conformly.auth.dependencies import CurrentPrincipal, CurrentTenant
 from conformly.authz.policy import AuthorizationDeniedError
 from conformly.db.session import get_db
+from conformly.entitlements.dependencies import require_module
 
-router = APIRouter(prefix="/v1/tenants/{tenant_id}/audit-events", tags=["audit"])
+router = APIRouter(
+    prefix="/v1/tenants/{tenant_id}/audit-events",
+    tags=["audit"],
+    dependencies=[Depends(require_module("audit"))],
+)
 
 
 class AuditEventResponse(BaseModel):

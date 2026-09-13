@@ -90,6 +90,15 @@ def create_invitation(
             status_code=status.HTTP_403_FORBIDDEN,
             content={"detail": "capability denied"},
         )
+    except Exception as exc:
+        from conformly.entitlements.service import EntitlementLimitExceededError
+
+        if isinstance(exc, EntitlementLimitExceededError):
+            return JSONResponse(
+                status_code=status.HTTP_403_FORBIDDEN,
+                content={"detail": str(exc)},
+            )
+        raise
     invitation = issued.invitation
     return InvitationResponse(
         id=invitation.id,
@@ -134,6 +143,15 @@ def accept_invitation(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={"detail": "invitation cannot be accepted"},
         )
+    except Exception as exc:
+        from conformly.entitlements.service import EntitlementLimitExceededError
+
+        if isinstance(exc, EntitlementLimitExceededError):
+            return JSONResponse(
+                status_code=status.HTTP_403_FORBIDDEN,
+                content={"detail": str(exc)},
+            )
+        raise
     return AcceptedMembershipResponse(
         tenant_id=membership.tenant_id,
         role=membership.role,

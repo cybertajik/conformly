@@ -10,6 +10,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from conformly.assets.models import Asset, AssetClassification, AssetType
 from conformly.authz.policy import AuthorizationDeniedError, Principal, TenantContext
 from conformly.authz.roles import Role
 from conformly.compliance.models import ComplianceTask, EvidenceFileLink, EvidenceItem, Policy
@@ -17,6 +18,7 @@ from conformly.crypto.envelope import EnvelopeEncryptionService
 from conformly.crypto.fields import EncryptedFieldCodec
 from conformly.crypto.providers import AES256GCMProvider, LocalKeyManagementProvider
 from conformly.crypto.types import EncryptionContext
+from conformly.entitlements.models import TenantEntitlement
 from conformly.exports.models import ExportJob, ExportJobStatus, ExportScope
 from conformly.exports.service import (
     ExportExpiredError,
@@ -31,10 +33,13 @@ from conformly.identity.models import (
     TenantStatus,
     User,
 )
+from conformly.organization.models import BusinessUnit, LegalEntity, Location
 from conformly.preaudit.models import PreAudit, PreAuditStatus
 from conformly.profiles.models import PublicProfile
+from conformly.risks.models import Risk, RiskCategory, RiskStatus, RiskTreatment, RiskTreatmentStrategy
 from conformly.storage.providers import MemoryStorageProvider
 from conformly.storage.service import StorageService
+from conformly.vendors.models import Vendor, VendorCriticality
 
 
 def make_storage_service(session: Session) -> StorageService:
@@ -166,7 +171,120 @@ def test_create_export_packages_tenant_data_and_files(session: Session) -> None:
         display_name="Acme Security Trust Center",
         is_published=True,
     )
-    session.add_all([evidence, link, policy, task, pre_audit, pub_profile])
+    # 6. Tenant Entitlements
+    entitlement = session.scalar(
+        select(TenantEntitlement).where(TenantEntitlement.tenant_id == tenant.id)
+    )
+    if entitlement is not None:
+        entitlement.max_members = 50
+        entitlement.max_storage_bytes = 100000000
+    else:
+        entitlement = TenantEntitlement(
+            tenant_id=tenant.id,
+            enabled_modules=["compliance", "frameworks", "risks", "assets", "vendors", "organization"],
+            max_members=50,
+            max_storage_bytes=100000000,
+            allowed_framework_slugs=["*"],
+        )
+        session.add(entitlement)
+
+    # 7. Organization
+    legal_entity = LegalEntity(
+        id=uuid4(),
+        tenant_id=tenant.id,
+        name="Acme Legal Entity",
+        country="DE",
+        is_primary=True,
+    )
+    business_unit = BusinessUnit(
+        id=uuid4(),
+        tenant_id=tenant.id,
+        legal_entity_id=legal_entity.id,
+        name="Security Engineering",
+        code="SEC",
+    )
+    location = Location(
+        id=uuid4(),
+        tenant_id=tenant.id,
+        legal_entity_id=legal_entity.id,
+        name="Berlin HQ",
+        country="DE",
+        city="Berlin",
+    )
+    # 8. Risk and Treatment
+    risk = Risk(
+        id=uuid4(),
+        tenant_id=tenant.id,
+        title="Ransomware Risk",
+        description="Risk of ransomware across endpoints",
+        category=RiskCategory.SECURITY,
+        likelihood=2,
+        impact=4,
+        inherent_score=8,
+        status=RiskStatus.IDENTIFIED,
+        owner_user_id=user.id,
+        legal_entity_id=legal_entity.id,
+        business_unit_id=business_unit.id,
+    )
+    treatment = RiskTreatment(
+        id=uuid4(),
+        tenant_id=tenant.id,
+        risk_id=risk.id,
+        strategy=RiskTreatmentStrategy.MITIGATE,
+        treatment_plan="EDR deployment across endpoints",
+        status="planned",
+        owner_user_id=user.id,
+    )
+    # 9. Asset with Restricted Encrypted Description
+    asset_id = uuid4()
+    asset = Asset(
+        id=asset_id,
+        tenant_id=tenant.id,
+        name="Core Production Database",
+        asset_type=AssetType.CLOUD_SERVICE,
+        classification=AssetClassification.RESTRICTED,
+        encrypted_description=codec.encrypt_text(
+            "Super confidential database master credentials and schema",
+            EncryptionContext(
+                tenant_id=tenant.id,
+                resource_type="asset",
+                resource_id=str(asset_id),
+                field_name="description",
+            ),
+        ),
+        owner_user_id=user.id,
+        legal_entity_id=legal_entity.id,
+        business_unit_id=business_unit.id,
+    )
+    # 10. Vendor
+    vendor = Vendor(
+        id=uuid4(),
+        tenant_id=tenant.id,
+        name="Cloudflare, Inc.",
+        service_description="Edge CDN and WAF",
+        criticality=VendorCriticality.CRITICAL,
+        data_classification_accessed="Confidential",
+        country_residency="US",
+        dpa_signed=True,
+        owner_user_id=user.id,
+        legal_entity_id=legal_entity.id,
+        business_unit_id=business_unit.id,
+    )
+    session.add_all([
+        evidence,
+        link,
+        policy,
+        task,
+        pre_audit,
+        pub_profile,
+        legal_entity,
+        business_unit,
+        location,
+        risk,
+        treatment,
+        asset,
+        vendor,
+    ])
     session.flush()
 
     # Trigger export
@@ -199,6 +317,14 @@ def test_create_export_packages_tenant_data_and_files(session: Session) -> None:
     # Verify presence of all required artifacts
     assert "manifest.json" in file_list
     assert "data/tenant.json" in file_list
+    assert "data/tenant_entitlements.json" in file_list
+    assert "data/legal_entities.json" in file_list
+    assert "data/business_units.json" in file_list
+    assert "data/locations.json" in file_list
+    assert "data/risks.json" in file_list
+    assert "data/risk_treatments.json" in file_list
+    assert "data/assets.json" in file_list
+    assert "data/vendors.json" in file_list
     assert "data/policies.json" in file_list
     assert "data/control_statuses.json" in file_list
     assert "data/evidence_control_links.json" in file_list
@@ -222,16 +348,27 @@ def test_create_export_packages_tenant_data_and_files(session: Session) -> None:
     assert manifest_data["total_records"] > 0
     assert manifest_data["total_files"] == 1
     assert manifest_data["audit_event_ids"]
+    assert manifest_data["dataset_record_counts"]["tenant_entitlements"] == 1
+    assert manifest_data["dataset_record_counts"]["legal_entities"] == 1
+    assert manifest_data["dataset_record_counts"]["business_units"] == 1
+    assert manifest_data["dataset_record_counts"]["locations"] == 1
+    assert manifest_data["dataset_record_counts"]["risks"] == 1
+    assert manifest_data["dataset_record_counts"]["risk_treatments"] == 1
+    assert manifest_data["dataset_record_counts"]["assets"] == 1
+    assert manifest_data["dataset_record_counts"]["vendors"] == 1
 
-    # Verify decrypted file content
+    # Verify decrypted file content and decrypted restricted asset description
     files_in_zip = [f for f in file_list if f.startswith("files/")]
     assert len(files_in_zip) == 1
     decrypted_content = zf.read(files_in_zip[0])
     assert decrypted_content == original_content
     policies = json.loads(zf.read("data/policies.json"))
     evidence_items = json.loads(zf.read("data/evidence_items.json"))
+    assets = json.loads(zf.read("data/assets.json"))
     assert policies[0]["restricted_content"] == "restricted policy body"
     assert evidence_items[0]["restricted_notes"] == "restricted evidence note"
+    assert assets[0]["description"] == "Super confidential database master credentials and schema"
+    assert "encrypted_description" not in assets[0]
 
 
 def test_required_original_failure_marks_export_failed(session: Session) -> None:

@@ -33,13 +33,23 @@ from conformly.frameworks.service import (
     UnapprovedReleaseError,
 )
 
+from conformly.entitlements.dependencies import require_module
+
 canonical_router = APIRouter(prefix="/v1/frameworks", tags=["canonical_frameworks"])
-tenant_router = APIRouter(prefix="/v1/tenants/{tenant_id}/frameworks", tags=["tenant_frameworks"])
+tenant_router = APIRouter(
+    prefix="/v1/tenants/{tenant_id}/frameworks",
+    tags=["tenant_frameworks"],
+    dependencies=[Depends(require_module("frameworks"))],
+)
 tenant_custom_controls_router = APIRouter(
-    prefix="/v1/tenants/{tenant_id}/custom-controls", tags=["custom_controls"]
+    prefix="/v1/tenants/{tenant_id}/custom-controls",
+    tags=["custom_controls"],
+    dependencies=[Depends(require_module("frameworks"))],
 )
 tenant_mappings_router = APIRouter(
-    prefix="/v1/tenants/{tenant_id}/control-mappings", tags=["control_mappings"]
+    prefix="/v1/tenants/{tenant_id}/control-mappings",
+    tags=["control_mappings"],
+    dependencies=[Depends(require_module("frameworks"))],
 )
 
 
@@ -871,8 +881,14 @@ def adopt_framework_version(
         )
     except AuthorizationDeniedError as err:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden") from err
-    except (ValueError, FrameworkVersionNotFoundError) as err:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err)) from err
+    except Exception as err:
+        from conformly.entitlements.service import FrameworkPackNotEntitledError
+
+        if isinstance(err, FrameworkPackNotEntitledError):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(err)) from err
+        if isinstance(err, (ValueError, FrameworkVersionNotFoundError)):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err)) from err
+        raise
 
 
 @tenant_router.get(

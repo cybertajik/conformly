@@ -47,6 +47,17 @@ class Vendor(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     dpa_signed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     security_reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     next_review_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    owner_user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    control_id: Mapped[UUID | None] = mapped_column(nullable=True)
+    finding_id: Mapped[UUID | None] = mapped_column(nullable=True)
+    legal_entity_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("legal_entities.id", ondelete="SET NULL"), nullable=True
+    )
+    business_unit_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("business_units.id", ondelete="SET NULL"), nullable=True
+    )
     status: Mapped[VendorStatus] = mapped_column(
         Enum(VendorStatus, native_enum=False, length=32),
         default=VendorStatus.ACTIVE,

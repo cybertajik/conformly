@@ -68,6 +68,10 @@ def issue_membership_invitation(
         )
         raise
 
+    from conformly.entitlements.service import check_member_limit
+
+    check_member_limit(session, tenant_context.tenant_id)
+
     previous_invitations = session.scalars(
         select(MembershipInvitation).where(
             MembershipInvitation.tenant_id == tenant_context.tenant_id,
@@ -175,6 +179,9 @@ def accept_membership_invitation(
         )
     )
     if membership is None:
+        from conformly.entitlements.service import check_member_limit
+
+        check_member_limit(session, invitation.tenant_id)
         membership = Membership(
             tenant_id=invitation.tenant_id,
             user_id=principal.user_id,

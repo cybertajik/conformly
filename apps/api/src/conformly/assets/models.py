@@ -1,7 +1,9 @@
+from datetime import datetime
 from enum import StrEnum
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Enum, ForeignKey, Index, String, Text
+from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from conformly.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -53,11 +55,22 @@ class Asset(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         nullable=False,
     )
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    encrypted_description: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     owner_user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    control_id: Mapped[UUID | None] = mapped_column(nullable=True)
+    finding_id: Mapped[UUID | None] = mapped_column(nullable=True)
+    legal_entity_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("legal_entities.id", ondelete="SET NULL"), nullable=True
+    )
+    business_unit_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("business_units.id", ondelete="SET NULL"), nullable=True
     )
     status: Mapped[AssetStatus] = mapped_column(
         Enum(AssetStatus, native_enum=False, length=32),
         default=AssetStatus.ACTIVE,
         nullable=False,
     )
+    last_reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    next_review_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
