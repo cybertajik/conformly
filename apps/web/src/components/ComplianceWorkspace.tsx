@@ -17,10 +17,12 @@ import type {
   PolicySummary,
   RemediationStatus,
   TaskPriority,
+  TenantFrameworkAdoptionSummary,
   TenantRole,
   UserNotificationPreferenceSummary,
 } from "@conformly/shared";
 import { useCallback, useEffect, useState } from "react";
+import { FrameworkEvidenceWorkflow } from "./FrameworkEvidenceWorkflow";
 
 import {
   approvePolicy,
@@ -52,6 +54,8 @@ import {
   unlinkControlFromEvidence,
   unlinkControlFromPolicy,
   updateUserPreferences,
+  uploadStoredFile,
+  downloadStoredFile,
   upsertControlStatus,
 } from "../api";
 import { getAccessToken } from "../auth";
@@ -68,6 +72,7 @@ import {
 type WorkspaceTab =
   | "posture"
   | "evidence"
+  | "evidence_requests"
   | "policies"
   | "tasks"
   | "findings"
@@ -101,6 +106,9 @@ export function ComplianceWorkspace({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Core datasets
+  const [frameworks, setFrameworks] = useState<FrameworkSummary[]>([]);
+  const [tenantAdoptions, setTenantAdoptions] = useState<TenantFrameworkAdoptionSummary[]>([]);
+  const [selectedAdoptionId, setSelectedAdoptionId] = useState<string>("");
   const [unifiedControls, setUnifiedControls] = useState<UnifiedControl[]>([]);
   const [controlStatuses, setControlStatuses] = useState<ControlStatusRecordSummary[]>([]);
   const [evidenceItems, setEvidenceItems] = useState<EvidenceItemSummary[]>([]);
@@ -137,6 +145,8 @@ export function ComplianceWorkspace({
   const [selectedEvidenceForDetail, setSelectedEvidenceForDetail] = useState<EvidenceItemSummary | null>(null);
   const [transitionReason, setTransitionReason] = useState("");
   const [newFileIdToAttach, setNewFileIdToAttach] = useState("");
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
   const [linkControlType, setLinkControlType] = useState<ControlEntityType>("canonical");
   const [linkControlId, setLinkControlId] = useState("");
 
@@ -252,6 +262,13 @@ export function ComplianceWorkspace({
           category: cc.category,
           frameworkName: "Custom Overlay",
         });
+      }
+
+      setFrameworks(fws);
+      setTenantAdoptions(adoptions);
+      const activeAdps = adoptions.filter((a: TenantFrameworkAdoptionSummary) => a.status === "active");
+      if (activeAdps.length > 0) {
+        setSelectedAdoptionId((curr) => curr || activeAdps[0].id);
       }
 
       setUnifiedControls(allControls);
@@ -403,7 +420,7 @@ export function ComplianceWorkspace({
     }
   }
 
-  // Attach File to Evidence
+  // Attach File to Evidence (by ID)
   async function handleAttachFile() {
     if (!selectedEvidenceForDetail || !newFileIdToAttach.trim()) return;
     setError(null);
@@ -425,6 +442,61 @@ export function ComplianceWorkspace({
       setNewFileIdToAttach("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to attach file.");
+    }
+  }
+
+  // Upload new file directly and attach to Evidence
+  async function handleUploadAndAttachFile() {
+    if (!selectedEvidenceForDetail || !fileToUpload) return;
+    setError(null);
+    setIsUploadingFile(true);
+    try {
+      const stored = await uploadStoredFile(
+        token,
+        tenantId,
+        fileToUpload,
+        fileToUpload.name,
+        selectedEvidenceForDetail.classification
+      );
+      const link = await attachFileToEvidence(
+        token,
+        tenantId,
+        selectedEvidenceForDetail.id,
+        stored.id
+      );
+      const updatedItem: EvidenceItemSummary = {
+        ...selectedEvidenceForDetail,
+        file_links: [...(selectedEvidenceForDetail.file_links ?? []), link],
+      };
+      setSelectedEvidenceForDetail(updatedItem);
+      setEvidenceItems((prev) =>
+        prev.map((e) => (e.id === updatedItem.id ? updatedItem : e))
+      );
+      setFileToUpload(null);
+      setSuccessMessage(`File "${fileToUpload.name}" encrypted and attached successfully.`);
+      setTimeout(() => setSuccessMessage(null), 4000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload file.");
+    } finally {
+      setIsUploadingFile(false);
+    }
+  }
+
+  // Download File
+  async function handleDownloadFile(fileId: string) {
+    setError(null);
+    try {
+      const blob = await downloadStoredFile(token, tenantId, fileId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `evidence-file-${fileId.slice(0, 8)}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to download file.");
     }
   }
 
@@ -839,6 +911,16 @@ export function ComplianceWorkspace({
             Evidence Repository ({evidenceItems.length})
           </button>
         )}
+        {canReadEvidence(userRole) && (
+          <button
+            className={`subnav-tab ${activeTab === "evidence_requests" ? "active" : ""}`}
+            onClick={() => setActiveTab("evidence_requests")}
+            role="tab"
+            aria-selected={activeTab === "evidence_requests"}
+          >
+            Evidence Requests & Readiness
+          </button>
+        )}
         {canReadPolicies(userRole) && (
           <button
             className={`subnav-tab ${activeTab === "policies" ? "active" : ""}`}
@@ -1095,6 +1177,64 @@ export function ComplianceWorkspace({
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* TAB: FRAMEWORK EVIDENCE REQUESTS & READINESS */}
+      {activeTab === "evidence_requests" && canReadEvidence(userRole) && (
+        <div>
+          {tenantAdoptions.filter((a) => a.status === "active").length === 0 ? (
+            <div className="card" style={{ padding: "2rem", textAlign: "center" }}>
+              <p style={{ fontWeight: 600, color: "var(--text-primary)" }}>
+                No active framework adoptions found.
+              </p>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+                Adopt a framework pack (such as ISO 27001 or ISO 9001) in the Frameworks catalog to generate deterministic evidence requests.
+              </p>
+            </div>
+          ) : (
+            <div>
+              {tenantAdoptions.filter((a) => a.status === "active").length > 1 && (
+                <div style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Active Framework:</label>
+                  <select
+                    value={selectedAdoptionId}
+                    onChange={(e) => setSelectedAdoptionId(e.target.value)}
+                    style={{ padding: "0.4rem 0.75rem", borderRadius: "6px", border: "1px solid var(--border-default)" }}
+                  >
+                    {tenantAdoptions
+                      .filter((a) => a.status === "active")
+                      .map((adp) => {
+                        const fw = frameworks.find((f) => f.id === adp.framework_id);
+                        return (
+                          <option key={adp.id} value={adp.id}>
+                            {fw?.name ?? "Framework"} (Adoption {adp.id.slice(0, 8)})
+                          </option>
+                        );
+                      })}
+                  </select>
+                </div>
+              )}
+              {(() => {
+                const activeAdps = tenantAdoptions.filter((a) => a.status === "active");
+                const currentAdp = activeAdps.find((a) => a.id === selectedAdoptionId) ?? activeAdps[0];
+                if (!currentAdp) return null;
+                const fw = frameworks.find((f) => f.id === currentAdp.framework_id);
+                const version =
+                  fw?.versions?.find((v) => v.id === currentAdp.framework_version_id)?.version ?? "1.0.0";
+                return (
+                  <FrameworkEvidenceWorkflow
+                    token={token}
+                    tenantId={tenantId}
+                    adoptionId={currentAdp.id}
+                    frameworkName={fw?.name ?? "Compliance Framework"}
+                    versionString={version}
+                    canManage={canManageEvidence(userRole)}
+                  />
+                );
+              })()}
+            </div>
+          )}
         </div>
       )}
 
@@ -1811,11 +1951,19 @@ export function ComplianceWorkspace({
               ) : (
                 <ul style={{ fontSize: "0.85rem", paddingLeft: "1.25rem", margin: "0.5rem 0" }}>
                   {(selectedEvidenceForDetail.file_links ?? []).map((f) => (
-                    <li key={f.id} style={{ marginBottom: "0.25rem" }}>
-                      File UUID: <code>{f.file_id}</code> (Linked at: {f.created_at.slice(0, 10)}){" "}
+                    <li key={f.id} style={{ marginBottom: "0.35rem", display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                      <span>File UUID: <code>{f.file_id}</code></span>
+                      <span style={{ fontSize: "0.75rem", color: "#6b7280" }}>({f.created_at.slice(0, 10)})</span>
                       <button
                         className="secondary"
-                        style={{ padding: "0.1rem 0.4rem", fontSize: "0.7rem", minHeight: "auto", color: "#dc2626" }}
+                        style={{ padding: "0.15rem 0.5rem", fontSize: "0.75rem", minHeight: "auto", color: "#2563eb" }}
+                        onClick={() => void handleDownloadFile(f.file_id)}
+                      >
+                        Download
+                      </button>
+                      <button
+                        className="secondary"
+                        style={{ padding: "0.15rem 0.5rem", fontSize: "0.75rem", minHeight: "auto", color: "#dc2626" }}
                         onClick={() => void handleRemoveFile(f.file_id)}
                       >
                         Remove
@@ -1825,20 +1973,42 @@ export function ComplianceWorkspace({
                 </ul>
               )}
 
-              <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+              {/* Direct File Upload Control */}
+              <div style={{ marginTop: "1rem", padding: "0.75rem", background: "var(--bg-muted, #f8fafc)", borderRadius: "6px", border: "1px dashed var(--border-default, #cbd5e1)" }}>
+                <h5 style={{ margin: "0 0 0.5rem", fontSize: "0.875rem" }}>Upload & Encrypt New File</h5>
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                  <input
+                    type="file"
+                    onChange={(e) => setFileToUpload(e.target.files?.[0] ?? null)}
+                    style={{ fontSize: "0.8rem" }}
+                  />
+                  <button
+                    type="button"
+                    disabled={!fileToUpload || isUploadingFile}
+                    onClick={() => void handleUploadAndAttachFile()}
+                    style={{ fontSize: "0.8rem", padding: "0.35rem 0.75rem" }}
+                  >
+                    {isUploadingFile ? "Encrypting & Uploading..." : "Upload & Attach"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Or Attach by Existing ID */}
+              <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem", alignItems: "center" }}>
                 <input
                   type="text"
-                  placeholder="Paste File ID to attach"
+                  placeholder="Or paste existing File UUID to attach"
                   value={newFileIdToAttach}
                   onChange={(e) => setNewFileIdToAttach(e.target.value)}
-                  style={{ width: "24rem" }}
+                  style={{ width: "22rem", fontSize: "0.8rem" }}
                 />
                 <button
                   type="button"
                   className="secondary"
                   onClick={() => void handleAttachFile()}
+                  style={{ fontSize: "0.8rem", padding: "0.35rem 0.75rem" }}
                 >
-                  Attach File
+                  Attach By ID
                 </button>
               </div>
             </div>

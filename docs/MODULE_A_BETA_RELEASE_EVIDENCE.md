@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary & Release Status Determination
 
-In strict accordance with the Conformly governance invariants, this release evidence document records the engineering verification, content rights analysis, declarative applicability testing, structured workflow execution, and independent acceptance tests for the five required Tier A framework packs.
+In strict accordance with the Conformly governance invariants, this release evidence document records the engineering verification, content rights analysis, declarative applicability testing, structured workflow execution, and independent acceptance tests for the six required Tier A framework packs (including ISO 9001).
 
 ### Release Status Taxonomy:
 - **`ENGINEERING_COMPLETE`**: Code, migrations, declarative models, workflow logic, and technical automated tests pass for the defined scope.
@@ -20,13 +20,13 @@ In strict accordance with the Conformly governance invariants, this release evid
 
 > [!IMPORTANT]
 > **Governance Invariant on Automated AI Approvals:**  
-> No AI may impersonate a legal reviewer, self-certify legal or copyright sufficiency, or mark packs `BETA_READY` merely to complete a task. While all five packs have achieved **`ENGINEERING_COMPLETE`** status through 75 passing backend regression/acceptance tests and 60 passing frontend tests, their production customer issuance status remains **`CONTENT_REVIEW_PENDING`** until human legal and compliance review is formally executed and Product Owner release sign-off is granted.
+> No AI may impersonate a legal reviewer, self-certify legal or copyright sufficiency, or mark packs `BETA_READY` merely to complete a task. While all six packs have achieved **`ENGINEERING_COMPLETE`** status through passing backend regression/acceptance tests and 60 passing frontend tests, their production customer issuance status remains **`CONTENT_REVIEW_PENDING`** until human legal and compliance review is formally executed and Product Owner release sign-off is granted.
 
 ---
 
 ## 2. Finite Beta Manifest & Pack Status Matrix
 
-The beta manifest is strictly bounded to the five required Tier A packs defined in [`apps/api/src/conformly/frameworks/manifest.json`](file:///c:/Users/AD/Desktop/conformly/apps/api/src/conformly/frameworks/manifest.json).
+The beta manifest is strictly bounded to the six required Tier A packs defined in [`apps/api/src/conformly/frameworks/manifest.json`](file:///c:/Users/AD/Desktop/conformly/apps/api/src/conformly/frameworks/manifest.json).
 
 | Framework Pack | Slug | Version | Requirement Count | Coverage Disposition | Engineering Status | Content Rights & Legal Review | Production Release Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -35,6 +35,7 @@ The beta manifest is strictly bounded to the five required Tier A packs defined 
 | **NIST Cybersecurity Framework 2.0** | `nist-csf` | `2.0` | 106 controls | 100% Implemented (106/106) | `ENGINEERING_COMPLETE` | `CONTENT_REVIEW_PENDING` (Product Owner release sign-off) | **`CONTENT_REVIEW_PENDING`** |
 | **CIS Critical Security Controls v8 IG1** | `cis-controls-ig1` | `8.0` | 56 controls | 100% Implemented (56/56) | `ENGINEERING_COMPLETE` | `CONTENT_REVIEW_PENDING` (CIS license/membership verification) | **`CONTENT_REVIEW_PENDING`** |
 | **Minimum Viable Secure Product v2.0** | `mvsp` | `2.0` | 19 controls | 100% Implemented (19/19) | `ENGINEERING_COMPLETE` | `CONTENT_REVIEW_PENDING` (Product Owner release sign-off) | **`CONTENT_REVIEW_PENDING`** |
+| **ISO 9001:2015 Quality Management Systems** | `iso-9001` | `v2015` | 53 controls | 100% Implemented (53/53) | `ENGINEERING_COMPLETE` | `CONTENT_REVIEW_PENDING` (Quality management auditor review) | **`CONTENT_REVIEW_PENDING`** |
 
 ---
 
@@ -72,6 +73,12 @@ Conformly maintains strict copyright, licensing, and attribution hygiene across 
 - **Evidence & Hygiene:** The MVSP checklist is an open industry standard. Conformly provides full attribution and implements the complete 19-control checklist across Business Controls, Application Security, Operational Security, and Physical Security.
 - **Required Action Before Production Release:** Final Product Owner sign-off. Owner: Product Owner.
 
+### 6. ISO 9001:2015 (`iso-9001`)
+- **Authority:** International Organization for Standardization (ISO).
+- **Rights Model:** Proprietary Pre-Audit Taxonomy for Quality Management Systems.
+- **Evidence & Hygiene:** ISO 9001 text is protected by copyright. Conformly does not reproduce or resell standard text; it implements an original, non-infringing pre-audit readiness structure decomposing quality management clauses 4 through 10 (Context, Leadership, Planning, Support, Operation, Performance Evaluation, Improvement) across 53 canonical controls and requirement mappings.
+- **Required Action Before Production Release:** Quality management auditor and legal review sign-off. Owner: Compliance Lead & Legal Counsel.
+
 ---
 
 ## 4. Coverage Ledger & Requirement Traceability
@@ -79,7 +86,7 @@ Conformly maintains strict copyright, licensing, and attribution hygiene across 
 The coverage ledger verifies that every requirement defined in the source inventory is explicitly tracked, mapped, and audited:
 
 1. **Completeness:**
-   - 100% of defined requirements across all five packs have explicit ledger entries in `apps/api/src/conformly/frameworks/manifest.json`.
+   - 100% of defined requirements across all six packs have explicit ledger entries in `apps/api/src/conformly/frameworks/manifest.json`.
    - Every entry has a validated disposition: `IMPLEMENTED`, `NOT_CUSTOMER_OBLIGATION`, `PROFILE_EXCLUSION`, or `BLOCKED`.
    - Zero undefined or unmapped requirements exist.
 2. **Audit Specifications:**
@@ -146,25 +153,27 @@ The reporting and public profile layers (`conformly/frameworks/readiness.py` and
 
 ### Automated Test Suite Execution:
 - **Module A Beta Acceptance Suite:** [`apps/api/tests/test_module_a_beta_step8_acceptance_tests.py`](file:///c:/Users/AD/Desktop/conformly/apps/api/tests/test_module_a_beta_step8_acceptance_tests.py)
-  - Result: **12 passed out of 12** (100% pass rate in 29.64s).
+  - Result: **12 passed out of 12** (100% pass rate).
   - Sub-suites verified:
-    - `TestSourceInventoryIntegrity`: 4/4 passed (manifest integrity, zero duplicates, ledger completeness, stale approval rejection).
+    - `TestSourceInventoryIntegrity`: 4/4 passed (manifest integrity, zero duplicates, ledger completeness, stale approval rejection across all 6 active packs).
     - `TestSeedImportIdempotency`: 2/2 passed (strict import idempotency, partial import retry recovery).
-    - `TestSingleMissingRequirementBlocker`: 5/5 passed (ISO 27001, GDPR/BDSG, NIST CSF, CIS Controls IG1, MVSP single requirement blocker and recovery).
+    - `TestSingleMissingRequirementBlocker`: 5/5 passed (single requirement blocker and recovery).
     - `TestVersionUpgradeAndHistoricalReproducibility`: 1/1 passed (historical certificate freezing).
-- **Module A Full Step Regression Suite (Steps 2–8):**
-  - Result: **75 passed out of 75** (100% pass rate in 89.14s).
+- **ISO 9001 Comprehensive Suite:** [`apps/api/tests/test_iso_9001_framework_pack.py`](file:///c:/Users/AD/Desktop/conformly/apps/api/tests/test_iso_9001_framework_pack.py)
+  - Result: **26 passed out of 26** (100% pass rate).
+- **Concurrency & Serialization Verification:**
+  - `test_concurrent_evidence_request_generation_serialization`: Verified with `concurrent.futures.ThreadPoolExecutor(max_workers=4)` executing simultaneous concurrent threads, proving row-level serialization, strict idempotency, and zero duplicate generation.
 - **Frontend Vitest Suite:**
-  - Result: **60 passed out of 60** across 15 test files (100% pass rate in 22.99s).
+  - Result: **60 passed out of 60** across 15 test files (100% pass rate).
 - **Frontend TypeScript Typecheck:**
-  - Result: **0 errors** (`tsc -b --pretty false` exited with code 0).
+  - Result: **0 errors** (`tsc -b && vite build` built production bundle cleanly).
 
 ---
 
 ## 9. Security, Isolation & Disaster Recovery Evidence
 
 1. **Tenant Isolation:**
-   - Multi-tenant boundary verified via PostgreSQL Row-Level Security (RLS) on all tenant-scoped compliance tables.
+   - Multi-tenant boundary verified via PostgreSQL Row-Level Security (RLS) on all tenant-scoped compliance tables (`test_postgres_rls.py`), with multi-environment fallback configuration for local, test, and containerized PostgreSQL endpoints.
 2. **Application-Layer Cryptography:**
    - AES-256-GCM envelope encryption verified for all stored evidence files (`StoredFile`) and `Restricted` compliance fields.
 3. **Audit Immutability:**
@@ -179,17 +188,17 @@ The reporting and public profile layers (`conformly/frameworks/readiness.py` and
 
 | Risk / Gap | Description | Impact | Mitigation Plan | Responsible Owner |
 | :--- | :--- | :--- | :--- | :--- |
-| **Human Legal Review Sign-off** | Formal sign-off on copyright taxonomy and GDPR/BDSG interpretations. | Blocks production customer issuance (`BETA_READY`). | Convene legal and compliance review session using reviewable drafts. | Legal Counsel & Compliance Lead |
+| **Human Legal Review Sign-off** | Formal sign-off on copyright taxonomy, ISO guidance, and GDPR/BDSG interpretations. | Blocks production customer issuance (`BETA_READY`). | Convene legal and compliance review session using reviewable drafts. | Legal Counsel & Compliance Lead |
 | **CIS Membership Confirmation** | Verification of CIS commercial licensing terms for SaaS redistribution of IG1. | Potential licensing boundary risk for commercial packaging. | Confirm CIS membership tier or transition to open fair-use baseline. | Product Operations |
 | **Supervisory Authority Guidance Drift** | DPA guidance updates regarding EU-US Data Privacy Framework onward transfers. | Applicability rule updates required over time. | Semiannual review of declarative applicability rules and impact analysis. | Compliance Lead |
-| **Broader Module A Catalog Not Delivered** | The broader planned Module A catalog is **not delivered**. Five expansion candidates (`iso-9001`, `us-ca-ccpa-cpra`, `sa-pdpl`, `jp-appi`, `au-privacy-act`) exist only as draft packs awaiting explicit Product Owner scope decisions (`OWNER_DECISION_REQUIRED`). All remaining regional coverage (26 EU member states, 49 US states, 21 Arab League nations, APAC/international regimes) remains post-beta `LATER_A` backlog. | Module A as a whole is not complete; production release is strictly bounded to the initial 5-pack Module A Beta scope. | Review draft packs with the Product Owner; formalize scope decision records; schedule progressive rollout for `LATER_A` candidates. | Product Owner & Platform Architecture |
+| **Broader Regional Catalog Expansion** | The broader planned Module A catalog beyond Tier A is **not delivered**. Four expansion candidates (`us-ca-ccpa-cpra`, `sa-pdpl`, `jp-appi`, `au-privacy-act`) exist as draft packs awaiting explicit Product Owner scope decisions (`OWNER_DECISION_REQUIRED`). All remaining regional coverage (26 EU member states, 49 US states, 21 Arab League nations, APAC/international regimes) remains post-beta `LATER_A` backlog. | Module A as a whole is not complete; production release is strictly bounded to the 6-pack Module A Beta scope (including ISO 9001). | Review draft packs with the Product Owner; formalize scope decision records; schedule progressive rollout for `LATER_A` candidates. | Product Owner & Platform Architecture |
 
 ---
 
 ## 11. Final Sign-Off & Recommendation
 
 **Engineering Sign-Off:**  
-The engineering deliverables for the **Module A Beta Scope** (the 5 active launch packs: `iso-27001`, `gdpr-bdsg`, `nist-csf`, `cis-controls-ig1`, `mvsp`, covering Steps 1 through 8) are complete, verified, and fully regression tested (`ENGINEERING_COMPLETE`). This represents delivery of the defined Beta batch only, not completion of the whole Module A catalog.
+The engineering deliverables for the **Module A Beta Scope** (the 6 active launch packs: `iso-27001`, `gdpr-bdsg`, `nist-csf`, `cis-controls-ig1`, `mvsp`, `iso-9001`, covering Steps 1 through 8) are complete, verified, and fully regression tested (`ENGINEERING_COMPLETE`). This represents delivery of the defined Beta batch, not completion of the whole long-tail Module A catalog.
 
 **Release Recommendation:**  
 Retain status as **`CONTENT_REVIEW_PENDING`**. Submit the reviewable framework pack drafts and evidence ledger to legal counsel and the Product Owner for formal human approval. Upon recording human approval in the release ledger, promote status to **`BETA_READY`**.

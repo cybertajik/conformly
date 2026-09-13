@@ -1175,29 +1175,32 @@ def test_frozen_issuance_package_integrity(session: Session) -> None:
 
 def test_concurrent_evidence_request_generation_serialization(scenario, test_codec) -> None:
     """Verify that multiple concurrent generate calls serialize cleanly without duplicates."""
+    import concurrent.futures
+
     session, service, principal, context, adoption, spec, *_ = scenario
 
-    # 1. Run initial generation
-    reqs1 = service.generate(
-        principal,
-        context,
-        adoption.id,
-        due_date=datetime.now(UTC) + timedelta(days=14),
-        owner_user_id=principal.user_id,
-    )
+    # Concurrently execute multiple generation requests across threads
+    def run_generate():
+        return service.generate(
+            principal,
+            context,
+            adoption.id,
+            due_date=datetime.now(UTC) + timedelta(days=14),
+            owner_user_id=principal.user_id,
+        )
 
-    # 2. Re-running generation multiple times is strictly idempotent
-    reqs2 = service.generate(
-        principal,
-        context,
-        adoption.id,
-        due_date=datetime.now(UTC) + timedelta(days=14),
-        owner_user_id=principal.user_id,
-    )
-    assert len(reqs1) == len(reqs2)
-    assert [r.id for r in reqs1] == [r.id for r in reqs2]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [executor.submit(run_generate) for _ in range(4)]
+        results = [f.result() for f in futures]
 
-    # 3. Verify total rows in database matches expected specifications count exactly
+    # All concurrent executions must yield identical, serialized results
+    reqs_first = results[0]
+    assert len(reqs_first) > 0
+    for reqs_other in results[1:]:
+        assert len(reqs_first) == len(reqs_other)
+        assert [r.id for r in reqs_first] == [r.id for r in reqs_other]
+
+    # Verify total rows in database matches expected specifications count exactly
     all_requests = list(
         session.scalars(
             select(FrameworkEvidenceRequest).where(
@@ -1206,4 +1209,5 @@ def test_concurrent_evidence_request_generation_serialization(scenario, test_cod
             )
         )
     )
-    assert len(all_requests) == len(reqs1)
+    assert len(all_requests) == len(reqs_first)
+

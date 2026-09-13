@@ -30,6 +30,7 @@ import {
 } from "../api";
 import { getAccessToken } from "../auth";
 import { canManageFrameworks } from "../permissions";
+import { FrameworkEvidenceWorkflow } from "./FrameworkEvidenceWorkflow";
 
 interface FrameworkCatalogProps {
   tenantId: string;
@@ -529,6 +530,20 @@ export function FrameworkCatalog({ tenantId, userRole }: FrameworkCatalogProps) 
                   </button>
                 </div>
               </div>
+            )}
+
+            {/* Structured Evidence Workflow & Readiness Evaluation */}
+            {activeAdoption && (
+              <FrameworkEvidenceWorkflow
+                token={token}
+                tenantId={tenantId}
+                adoptionId={activeAdoption.id}
+                frameworkName={selectedFramework.name}
+                versionString={
+                  selectedFramework.versions?.find((v) => v.id === activeAdoption.framework_version_id)?.version ?? "1.0.0"
+                }
+                canManage={canManage}
+              />
             )}
 
             {/* Canonical Controls Table with Tenant Overlays */}

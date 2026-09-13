@@ -140,6 +140,29 @@ vi.mock("../api", () => ({
   generatePreAuditManifest: vi.fn().mockResolvedValue({}),
   issuePreAuditCertificate: vi.fn().mockResolvedValue({}),
   revokePreAuditCertificate: vi.fn().mockResolvedValue({}),
+  listTenantMembers: vi.fn().mockResolvedValue([
+    {
+      id: "m-1",
+      user_id: "u-lead",
+      email: "lead@example.com",
+      display_name: "Assessment Lead",
+      role: "compliance_manager",
+      status: "active",
+    },
+    {
+      id: "m-2",
+      user_id: "u-rev",
+      email: "reviewer@example.com",
+      display_name: "Independent Reviewer",
+      role: "reviewer",
+      status: "active",
+    },
+  ]),
+  uploadStoredFile: vi.fn().mockResolvedValue({ id: "mock-file-id" }),
+  downloadStoredFile: vi.fn().mockResolvedValue({
+    blob: new Blob(["{}"], { type: "application/json" }),
+    filename: "mock_report.json",
+  }),
 }));
 
 vi.mock("../auth", () => ({

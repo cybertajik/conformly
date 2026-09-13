@@ -22,6 +22,7 @@ import { DataLifecycleWorkspace } from "./components/DataLifecycleWorkspace";
 import { ExecutiveDashboard } from "./components/ExecutiveDashboard";
 import { FrameworkCatalog } from "./components/FrameworkCatalog";
 import { LanguageSelector } from "./components/LanguageSelector";
+import { MembersWorkspace } from "./components/MembersWorkspace";
 import { OnboardingOverview } from "./components/OnboardingOverview";
 import { OrganizationWorkspace } from "./components/OrganizationWorkspace";
 import { PreAuditWorkspace } from "./components/PreAuditWorkspace";
@@ -372,9 +373,12 @@ function AppContent() {
           />
         )}
         {tab === "members" && (
-          <div className="card" style={{ marginTop: "1rem" }}>
-            <p style={{ color: "var(--text-secondary)" }}>Member management is restricted to tenant administrators.</p>
-          </div>
+          <MembersWorkspace
+            token={effectiveToken}
+            tenantId={selected.tenant_id}
+            currentUserRole={selected.role}
+            currentUserId={userId}
+          />
         )}
       </main>
     </div>

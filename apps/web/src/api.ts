@@ -46,6 +46,7 @@ import type {
   TenantControlOverlaySummary,
   TenantFrameworkAdoptionSummary,
   TenantMembershipSummary,
+  TenantRole,
   UserNotificationPreferenceSummary,
   WhistleblowerCaseAssignmentSummary,
   WhistleblowerCaseStatus,
@@ -71,6 +72,8 @@ import type {
   DashboardSummary,
   ContinuousComplianceResult,
 } from "@conformly/shared";
+
+export type { EvidenceItemSummary, TenantRole };
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
@@ -1937,5 +1940,182 @@ export function runContinuousComplianceCycle(
     { method: "POST" }
   );
 }
+
+// ── Framework Workflow & Evidence Requests ─────────────────────────────────
+
+export interface FrameworkEvidenceRequestSummary {
+  id: string;
+  tenant_id: string;
+  adoption_id: string;
+  specification_id: string;
+  task_id: string;
+  evidence_id: string | null;
+  evidence_version: number | null;
+  observation_start: string | null;
+  observation_end: string | null;
+  accepted_by_user_id: string | null;
+  accepted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FrameworkReadinessSpecificationDetail {
+  specification_id: string;
+  request_id: string | null;
+  evidence_id: string | null;
+  evidence_version: number | null;
+  accepted_by: string | null;
+  accepted_at: string | null;
+  observation_start: string | null;
+  observation_end: string | null;
+  problem: string | null;
+}
+
+export interface FrameworkReadinessSummary {
+  rule_version?: string;
+  framework_version_id: string;
+  adoption_id?: string;
+  content_digest?: string | null;
+  status?: string;
+  specifications_total?: number;
+  specifications_satisfied?: number;
+  specifications?: FrameworkReadinessSpecificationDetail[];
+  applicability?: Array<{
+    control_id: string;
+    status: string;
+    overlay_id: string;
+    updated_at: string;
+  }>;
+  blockers: string[];
+}
+
+export function listFrameworkEvidenceRequests(
+  token: string,
+  tenantId: string,
+  adoptionId: string
+): Promise<FrameworkEvidenceRequestSummary[]> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/framework-workflow/${encodeURIComponent(adoptionId)}/evidence-requests`,
+    token
+  );
+}
+
+export function generateFrameworkEvidenceRequests(
+  token: string,
+  tenantId: string,
+  adoptionId: string,
+  data: {
+    due_date: string;
+    owner_user_id: string;
+  }
+): Promise<FrameworkEvidenceRequestSummary[]> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/framework-workflow/${encodeURIComponent(adoptionId)}/evidence-requests`,
+    token,
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+    }
+  );
+}
+
+export function acceptFrameworkEvidence(
+  token: string,
+  tenantId: string,
+  adoptionId: string,
+  requestId: string,
+  data: {
+    evidence_id: string;
+    observation_start: string;
+    observation_end: string;
+  }
+): Promise<FrameworkEvidenceRequestSummary> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/framework-workflow/${encodeURIComponent(adoptionId)}/evidence-requests/${encodeURIComponent(requestId)}/accept`,
+    token,
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+    }
+  );
+}
+
+export function getFrameworkReadinessEvaluation(
+  token: string,
+  tenantId: string,
+  adoptionId: string
+): Promise<FrameworkReadinessSummary> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/framework-workflow/${encodeURIComponent(adoptionId)}/readiness`,
+    token
+  );
+}
+
+// ── Tenant Memberships ──────────────────────────────────────────────────────
+
+export interface TenantMemberItem {
+  id: string;
+  user_id: string;
+  email: string;
+  display_name: string;
+  role: TenantRole;
+  status: string;
+}
+
+export function listTenantMembers(
+  token: string,
+  tenantId: string
+): Promise<TenantMemberItem[]> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/memberships`,
+    token
+  );
+}
+
+export function updateTenantMemberRole(
+  token: string,
+  tenantId: string,
+  membershipId: string,
+  role: TenantRole
+): Promise<TenantMemberItem> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/memberships/${encodeURIComponent(membershipId)}/role`,
+    token,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ role }),
+    }
+  );
+}
+
+export function revokeTenantMember(
+  token: string,
+  tenantId: string,
+  membershipId: string
+): Promise<TenantMemberItem> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/memberships/${encodeURIComponent(membershipId)}`,
+    token,
+    {
+      method: "DELETE",
+    }
+  );
+}
+
+export function inviteTenantMember(
+  token: string,
+  tenantId: string,
+  data: { email: string; role: TenantRole }
+): Promise<{ id: string; email: string; role: string; status: string }> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/invitations`,
+    token,
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+    }
+  );
+}
+
 
 

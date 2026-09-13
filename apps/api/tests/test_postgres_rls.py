@@ -13,7 +13,11 @@ from conformly.tenancy.rls import set_rls_context, set_user_rls_context
 
 
 def test_postgresql_membership_rls_enforces_discovery_and_selected_tenant() -> None:
-    database_url = os.getenv("CONFORMLY_TEST_APP_DATABASE_URL")
+    database_url = (
+        os.getenv("CONFORMLY_TEST_APP_DATABASE_URL")
+        or os.getenv("CONFORMLY_DATABASE_URL")
+        or os.getenv("TEST_DATABASE_URL")
+    )
     if not database_url:
         pytest.skip("PostgreSQL app-role integration URL is not configured")
 
@@ -139,7 +143,11 @@ def test_postgresql_membership_rls_enforces_discovery_and_selected_tenant() -> N
 
 def test_postgresql_framework_evidence_requests_rls_enforces_tenant_isolation() -> None:
     """PostgreSQL RLS policy framework_requests_tenant strictly isolates framework_evidence_requests across tenants."""
-    database_url = os.getenv("CONFORMLY_TEST_APP_DATABASE_URL")
+    database_url = (
+        os.getenv("CONFORMLY_TEST_APP_DATABASE_URL")
+        or os.getenv("CONFORMLY_DATABASE_URL")
+        or os.getenv("TEST_DATABASE_URL")
+    )
     if not database_url:
         pytest.skip("PostgreSQL app-role integration URL is not configured")
 

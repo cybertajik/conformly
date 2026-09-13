@@ -21,10 +21,14 @@ import {
   issuePreAuditCertificate,
   listPreAudits,
   listTenantAdoptions,
+  listTenantMembers,
   revokePreAuditCertificate,
   runPreAuditChecks,
   submitPreAuditForReview,
   updatePreAuditFinding,
+  uploadStoredFile,
+  downloadStoredFile,
+  type TenantMemberItem,
 } from "../api";
 import { getAccessToken } from "../auth";
 import { canManagePreAudit } from "../permissions";
@@ -57,6 +61,7 @@ export function PreAuditWorkspace({
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [newAdoptionId, setNewAdoptionId] = useState("");
+  const [newLeadUserId, setNewLeadUserId] = useState(currentUserId || "");
 
   const [showFindingModal, setShowFindingModal] = useState(false);
   const [findingTitle, setFindingTitle] = useState("");
@@ -67,6 +72,7 @@ export function PreAuditWorkspace({
 
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewerUserId, setReviewerUserId] = useState("");
+  const [members, setMembers] = useState<TenantMemberItem[]>([]);
 
   const [showRevokeModal, setShowRevokeModal] = useState(false);
   const [revokeCertId, setRevokeCertId] = useState("");
@@ -81,12 +87,14 @@ export function PreAuditWorkspace({
     if (!token) return;
     try {
       setError(null);
-      const [auditList, adoptionList] = await Promise.all([
+      const [auditList, adoptionList, memberList] = await Promise.all([
         listPreAudits(token, tenantId),
         listTenantAdoptions(token, tenantId),
+        listTenantMembers(token, tenantId).catch(() => []),
       ]);
       setPreAudits(auditList);
       setAdoptions(adoptionList.filter((a) => a.status === "active"));
+      setMembers(memberList);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load pre-audits");
     } finally {
@@ -152,11 +160,12 @@ export function PreAuditWorkspace({
     try {
       setActionLoading(true);
       setError(null);
+      const effectiveLeadId = newLeadUserId || currentUserId || (members[0]?.user_id ?? "default-lead");
       const created = await createPreAudit(token, tenantId, {
         title: newTitle,
         description: newDescription,
         framework_adoption_id: newAdoptionId,
-        lead_user_id: currentUserId || "default-lead",
+        lead_user_id: effectiveLeadId,
       });
       setShowCreateModal(false);
       setNewTitle("");
@@ -314,12 +323,43 @@ export function PreAuditWorkspace({
     try {
       setActionLoading(true);
       setError(null);
-      const placeholderFileId = "00000000-0000-0000-0000-000000000001";
+
+      // Construct authentic structured readiness report
+      const reportData = {
+        title: `Pre-Audit Readiness Summary: ${selectedAudit.title}`,
+        pre_audit_id: selectedAudit.id,
+        rule_version: selectedAudit.rule_version,
+        status: selectedAudit.status,
+        generated_at: new Date().toISOString(),
+        checks: selectedAudit.checks ?? [],
+        findings: selectedAudit.findings ?? [],
+        summary: {
+          total_checks: selectedAudit.checks?.length ?? 0,
+          passed_checks: (selectedAudit.checks ?? []).filter((c) => c.result === "pass").length,
+          failed_checks: (selectedAudit.checks ?? []).filter((c) => c.result === "fail").length,
+          open_findings: (selectedAudit.findings ?? []).filter((f) => f.remediation_status !== "resolved").length,
+        },
+        disclaimer: "Conformly is an audit-readiness and compliance operations platform, not an accredited certification body.",
+      };
+
+      const reportBlob = new Blob([JSON.stringify(reportData, null, 2)], {
+        type: "application/json",
+      });
+
+      // Upload and encrypt via file storage service
+      const storedFile = await uploadStoredFile(
+        token,
+        tenantId,
+        reportBlob,
+        `readiness-report-${selectedAudit.id.slice(0, 8)}.json`,
+        "Confidential"
+      );
+
       await generatePreAuditReport(token, tenantId, selectedAudit.id, {
-        file_id: placeholderFileId,
+        file_id: storedFile.id,
         report_type: "readiness_summary",
       });
-      setSuccessMessage("Report artifact generated successfully.");
+      setSuccessMessage("Report artifact generated and encrypted successfully.");
       await loadSelectedAudit(selectedAudit.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate report");
@@ -335,15 +375,34 @@ export function PreAuditWorkspace({
     try {
       setActionLoading(true);
       setError(null);
-      const placeholderFileId = "00000000-0000-0000-0000-000000000002";
       const manifestPayload = JSON.stringify({
         pre_audit_id: selectedAudit.id,
         rule_version: selectedAudit.rule_version,
         generated_at: new Date().toISOString(),
         checks_count: selectedAudit.checks?.length ?? 0,
+        checks: (selectedAudit.checks ?? []).map((c) => ({
+          check_id: c.id,
+          identifier: c.control_id,
+          result: c.result,
+        })),
+        findings_count: (selectedAudit.findings ?? []).length,
+      }, null, 2);
+
+      const manifestBlob = new Blob([manifestPayload], {
+        type: "application/json",
       });
+
+      // Upload and encrypt manifest artifact
+      const storedFile = await uploadStoredFile(
+        token,
+        tenantId,
+        manifestBlob,
+        `audit-manifest-${selectedAudit.id.slice(0, 8)}.json`,
+        "Confidential"
+      );
+
       await generatePreAuditManifest(token, tenantId, selectedAudit.id, {
-        file_id: placeholderFileId,
+        file_id: storedFile.id,
         manifest_content: manifestPayload,
       });
       setSuccessMessage("Audit manifest generated with cryptographic SHA-256 seal.");
@@ -352,6 +411,24 @@ export function PreAuditWorkspace({
       setError(err instanceof Error ? err.message : "Failed to generate manifest");
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleDownloadArtifact = async (fileId: string, defaultName: string) => {
+    const token = getAccessToken();
+    if (!token) return;
+    try {
+      const blob = await downloadStoredFile(token, tenantId, fileId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = defaultName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to download artifact");
     }
   };
 
@@ -876,8 +953,17 @@ export function PreAuditWorkspace({
                 ) : (
                   <ul>
                     {selectedAudit.manifests.map((m) => (
-                      <li key={m.id} style={{ marginBottom: "0.5rem", fontSize: "0.875rem" }}>
-                        <strong>SHA-256:</strong> <code>{m.manifest_hash_sha256}</code> — {m.record_count} items (Engine: {m.rule_version})
+                      <li key={m.id} style={{ marginBottom: "0.5rem", fontSize: "0.875rem", display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                        <span><strong>SHA-256:</strong> <code>{m.manifest_hash_sha256}</code> — {m.record_count} items (Engine: {m.rule_version})</span>
+                        {m.file_id && (
+                          <button
+                            className="secondary"
+                            style={{ padding: "0.15rem 0.5rem", fontSize: "0.75rem", minHeight: "auto", color: "#2563eb" }}
+                            onClick={() => void handleDownloadArtifact(m.file_id, `manifest-${selectedAudit.id.slice(0, 8)}.json`)}
+                          >
+                            Download
+                          </button>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -891,8 +977,17 @@ export function PreAuditWorkspace({
                 ) : (
                   <ul>
                     {selectedAudit.reports.map((r) => (
-                      <li key={r.id} style={{ marginBottom: "0.5rem", fontSize: "0.875rem" }}>
-                        <strong>Type:</strong> {r.report_type} — Generated: {new Date(r.generated_at).toLocaleString()}
+                      <li key={r.id} style={{ marginBottom: "0.5rem", fontSize: "0.875rem", display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                        <span><strong>Type:</strong> {r.report_type} — Generated: {new Date(r.generated_at).toLocaleString()}</span>
+                        {r.file_id && (
+                          <button
+                            className="secondary"
+                            style={{ padding: "0.15rem 0.5rem", fontSize: "0.75rem", minHeight: "auto", color: "#2563eb" }}
+                            onClick={() => void handleDownloadArtifact(r.file_id, `readiness-report-${selectedAudit.id.slice(0, 8)}.json`)}
+                          >
+                            Download
+                          </button>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -1073,6 +1168,24 @@ export function PreAuditWorkspace({
                 ))}
               </select>
 
+              {members.length > 0 && (
+                <>
+                  <label htmlFor="pa-lead">Assessment Lead</label>
+                  <select
+                    id="pa-lead"
+                    value={newLeadUserId}
+                    onChange={(e) => setNewLeadUserId(e.target.value)}
+                  >
+                    <option value="">Current User ({currentUserId ? "Self" : "Default"})</option>
+                    {members.map((m) => (
+                      <option key={m.id} value={m.user_id}>
+                        {m.display_name} ({m.email}) — Role: {m.role}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
+
               <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end", marginTop: "1.5rem" }}>
                 <button
                   type="button"
@@ -1162,15 +1275,34 @@ export function PreAuditWorkspace({
               To ensure independence, the reviewer must be a different tenant member than the assessment lead.
             </p>
             <form onSubmit={(e) => void handleSubmitReview(e)}>
-              <label htmlFor="rev-user">Reviewer User ID</label>
-              <input
-                id="rev-user"
-                type="text"
-                required
-                value={reviewerUserId}
-                onChange={(e) => setReviewerUserId(e.target.value)}
-                placeholder="UUID of reviewer..."
-              />
+              <label htmlFor="rev-user">Select Reviewer</label>
+              {members.length > 0 ? (
+                <select
+                  id="rev-user"
+                  required
+                  value={reviewerUserId}
+                  onChange={(e) => setReviewerUserId(e.target.value)}
+                  style={{ width: "100%", minHeight: "2.25rem", padding: "0.25rem 0.5rem" }}
+                >
+                  <option value="">Select independent reviewer...</option>
+                  {members
+                    .filter((m) => m.user_id !== selectedAudit?.lead_user_id)
+                    .map((m) => (
+                      <option key={m.id} value={m.user_id}>
+                        {m.display_name} ({m.email}) — Role: {m.role}
+                      </option>
+                    ))}
+                </select>
+              ) : (
+                <input
+                  id="rev-user"
+                  type="text"
+                  required
+                  value={reviewerUserId}
+                  onChange={(e) => setReviewerUserId(e.target.value)}
+                  placeholder="UUID of reviewer..."
+                />
+              )}
 
               <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end", marginTop: "1.5rem" }}>
                 <button
