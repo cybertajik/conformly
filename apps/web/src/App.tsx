@@ -170,10 +170,35 @@ function AppContent() {
   if (state === "signed_out") {
     return (
       <Status eyebrow={t("status.eyebrow")} title={t("status.signedOutTitle")} detail={t("status.signedOutDetail")}>
-        <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", marginTop: "1rem" }}>
-          <button onClick={() => void beginOidcLogin()}>{t("status.signInBtn")}</button>
+        <div className="status-actions">
+          <button className="btn-primary" onClick={() => void beginOidcLogin()}>
+            {t("status.signInBtn")}
+          </button>
         </div>
-        <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "center" }}>
+        <div className="status-features">
+          <div className="status-feature">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" />
+            </svg>
+            <strong>Evidence &amp; controls</strong>
+            <span>Track controls, evidence, and readiness in one place.</span>
+          </div>
+          <div className="status-feature">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            <strong>Pre-audit ready</strong>
+            <span>Deterministic checks surface gaps before your audit.</span>
+          </div>
+          <div className="status-feature">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
+            </svg>
+            <strong>Multi-tenant secure</strong>
+            <span>Strict tenant isolation with application-layer encryption.</span>
+          </div>
+        </div>
+        <div className="status-lang">
           <LanguageSelector />
         </div>
       </Status>
@@ -266,7 +291,7 @@ function AppContent() {
         </nav>
 
         <div className="sidebar-footer">
-          <div style={{ padding: "0 0.5rem 0.75rem", display: "flex", justifyContent: "center" }}>
+          <div className="sidebar-lang-row">
             <LanguageSelector compact />
           </div>
           <div className="sidebar-user">
@@ -276,11 +301,10 @@ function AppContent() {
               <div className="user-email">{selected.role.replaceAll("_", " ")}</div>
             </div>
             <button
-              className="ghost"
+              className="ghost icon-only"
               onClick={() => void signOut()}
               title={t("nav.signOut")}
               aria-label={t("nav.signOut")}
-              style={{ padding: "0.3rem", minHeight: "auto" }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />

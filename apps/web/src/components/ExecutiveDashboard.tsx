@@ -437,119 +437,54 @@ export function ExecutiveDashboard({
       </div>
 
       {/* ── Sub-navigation Tabs ── */}
-      <div
-        style={{
-          display: "flex",
-          borderBottom: "1px solid var(--border-default)",
-          marginBottom: "1.5rem",
-          gap: "0.5rem",
-          overflowX: "auto",
-        }}
-      >
+      <div className="subnav" role="tablist" aria-label="Dashboard sections">
         <button
+          role="tab"
+          aria-selected={activeSubTab === "readiness"}
+          className={`subnav-tab${activeSubTab === "readiness" ? " active" : ""}`}
           onClick={() => setActiveSubTab("readiness")}
-          style={{
-            padding: "0.6rem 1rem",
-            background: "transparent",
-            border: "none",
-            borderBottom: activeSubTab === "readiness" ? "2px solid var(--accent)" : "2px solid transparent",
-            color: activeSubTab === "readiness" ? "var(--accent)" : "var(--text-secondary)",
-            fontWeight: 600,
-            cursor: "pointer",
-            fontSize: "0.9rem",
-          }}
         >
           Are We Ready?
         </button>
         <button
+          role="tab"
+          aria-selected={activeSubTab === "expiring"}
+          className={`subnav-tab${activeSubTab === "expiring" ? " active" : ""}`}
           onClick={() => setActiveSubTab("expiring")}
-          style={{
-            padding: "0.6rem 1rem",
-            background: "transparent",
-            border: "none",
-            borderBottom: activeSubTab === "expiring" ? "2px solid var(--accent)" : "2px solid transparent",
-            color: activeSubTab === "expiring" ? "var(--accent)" : "var(--text-secondary)",
-            fontWeight: 600,
-            cursor: "pointer",
-            fontSize: "0.9rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.4rem",
-          }}
         >
           What Expires Next?
           {summary.expiring_evidence.length + summary.review_due_policies.length > 0 && (
-            <span
-              style={{
-                fontSize: "0.7rem",
-                padding: "0.1rem 0.45rem",
-                borderRadius: "var(--radius-full)",
-                background: "var(--color-warning-bg)",
-                color: "var(--color-warning)",
-              }}
-            >
+            <span className="badge badge-warning" style={{ marginLeft: "0.4rem" }}>
               {summary.expiring_evidence.length + summary.review_due_policies.length}
             </span>
           )}
         </button>
         <button
+          role="tab"
+          aria-selected={activeSubTab === "tasks"}
+          className={`subnav-tab${activeSubTab === "tasks" ? " active" : ""}`}
           onClick={() => setActiveSubTab("tasks")}
-          style={{
-            padding: "0.6rem 1rem",
-            background: "transparent",
-            border: "none",
-            borderBottom: activeSubTab === "tasks" ? "2px solid var(--accent)" : "2px solid transparent",
-            color: activeSubTab === "tasks" ? "var(--accent)" : "var(--text-secondary)",
-            fontWeight: 600,
-            cursor: "pointer",
-            fontSize: "0.9rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.4rem",
-          }}
         >
           Who Owns What?
           {summary.open_tasks.length > 0 && (
-            <span
-              style={{
-                fontSize: "0.7rem",
-                padding: "0.1rem 0.45rem",
-                borderRadius: "var(--radius-full)",
-                background: "var(--accent-subtle)",
-                color: "var(--accent)",
-              }}
-            >
+            <span className="badge badge-accent" style={{ marginLeft: "0.4rem" }}>
               {summary.open_tasks.length}
             </span>
           )}
         </button>
         <button
+          role="tab"
+          aria-selected={activeSubTab === "registers"}
+          className={`subnav-tab${activeSubTab === "registers" ? " active" : ""}`}
           onClick={() => setActiveSubTab("registers")}
-          style={{
-            padding: "0.6rem 1rem",
-            background: "transparent",
-            border: "none",
-            borderBottom: activeSubTab === "registers" ? "2px solid var(--accent)" : "2px solid transparent",
-            color: activeSubTab === "registers" ? "var(--accent)" : "var(--text-secondary)",
-            fontWeight: 600,
-            cursor: "pointer",
-            fontSize: "0.9rem",
-          }}
         >
           Operational Health
         </button>
         <button
+          role="tab"
+          aria-selected={activeSubTab === "activity"}
+          className={`subnav-tab${activeSubTab === "activity" ? " active" : ""}`}
           onClick={() => setActiveSubTab("activity")}
-          style={{
-            padding: "0.6rem 1rem",
-            background: "transparent",
-            border: "none",
-            borderBottom: activeSubTab === "activity" ? "2px solid var(--accent)" : "2px solid transparent",
-            color: activeSubTab === "activity" ? "var(--accent)" : "var(--text-secondary)",
-            fontWeight: 600,
-            cursor: "pointer",
-            fontSize: "0.9rem",
-          }}
         >
           What Changed? (Audit)
         </button>
