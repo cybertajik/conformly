@@ -119,21 +119,92 @@ main.status-page {
   min-height: 100vh;
   place-items: center;
   padding: 2rem;
+  background:
+    radial-gradient(circle at 15% 10%, var(--accent-subtle) 0%, transparent 45%),
+    radial-gradient(circle at 85% 90%, rgba(52, 211, 153, 0.08) 0%, transparent 45%),
+    var(--bg-page);
 }
 
 main.status-page section {
-  max-width: 28rem;
+  max-width: 30rem;
+  width: 100%;
   text-align: center;
 }
 
+main.status-page .status-mark {
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 1.25rem;
+  border-radius: var(--radius-lg);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), #3b82f6);
+  box-shadow: var(--shadow-md);
+}
+
 main.status-page h1 {
-  font-size: clamp(2.5rem, 8vw, 4rem);
-  letter-spacing: -0.06em;
+  font-size: clamp(2.25rem, 7vw, 3.25rem);
+  letter-spacing: -0.05em;
   background: linear-gradient(135deg, var(--text-primary), var(--accent));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   margin-bottom: 0.5rem;
+}
+
+main.status-page .status-detail {
+  font-size: 1.05rem;
+  margin-top: 0.75rem;
+}
+
+main.status-page .status-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+main.status-page .status-lang {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+main.status-page .status-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+  text-align: left;
+}
+
+main.status-page .status-feature {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: flex-start;
+}
+
+main.status-page .status-feature svg {
+  color: var(--accent);
+}
+
+main.status-page .status-feature span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+@media (max-width: 30rem) {
+  main.status-page .status-features {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ─── App Shell ─── */
@@ -413,6 +484,21 @@ button.ghost:hover {
   box-shadow: none;
 }
 
+button.ghost.icon-only {
+  padding: 0.3rem;
+  min-height: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+}
+
+.sidebar-lang-row {
+  padding: 0 0.5rem 0.75rem;
+  display: flex;
+  justify-content: center;
+}
+
 button.danger-btn {
   color: #fca5a5;
   background: var(--color-danger-bg);
@@ -594,7 +680,8 @@ label {
 .badge-danger { background: var(--color-danger-bg); color: var(--color-danger); border-color: rgba(239, 68, 68, 0.2); }
 .badge-info { background: var(--color-info-bg); color: var(--color-info); border-color: rgba(59, 130, 246, 0.2); }
 .badge-neutral { background: rgba(100, 116, 139, 0.1); color: var(--text-muted); border-color: var(--border-default); }
-.badge-purple { background: var(--color-purple-bg); color: var(--color-purple); border-color: rgba(167, 139, 250, 0.2); }
+ .badge-purple { background: var(--color-purple-bg); color: var(--color-purple); border-color: rgba(167, 139, 250, 0.2); }
+ .badge-accent { background: var(--accent-subtle); color: var(--accent); border-color: rgba(59, 130, 246, 0.2); }
 
 /* ─── Tables ─── */
 .table-wrapper {
