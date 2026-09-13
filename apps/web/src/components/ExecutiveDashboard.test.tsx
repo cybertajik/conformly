@@ -116,7 +116,7 @@ describe("ExecutiveDashboard", () => {
     expect(handleNavigate).toHaveBeenCalledWith("preaudit");
 
     // Click Expiring tab
-    const expiringTab = screen.getByRole("button", { name: /What Expires Next\?/i });
+    const expiringTab = screen.getByRole("tab", { name: /What Expires Next/i });
     fireEvent.click(expiringTab);
 
     expect(screen.getByText("Annual SOC 2 Type II Report")).toBeInTheDocument();
