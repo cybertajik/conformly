@@ -44,10 +44,7 @@ def list_assets(
     status: AssetStatus | None = None,
 ) -> list[Asset]:
     authorize(principal, tenant_context, Capability.ASSET_READ)
-    stmt = (
-        select(Asset)
-        .where(Asset.tenant_id == tenant_context.tenant_id)
-    )
+    stmt = select(Asset).where(Asset.tenant_id == tenant_context.tenant_id)
     if tenant_context.legal_entity_id is not None:
         stmt = stmt.where(Asset.legal_entity_id == tenant_context.legal_entity_id)
     if tenant_context.business_unit_id is not None:
@@ -170,7 +167,11 @@ def create_asset(
         resource_id=str(asset.id),
         request_id=request_id,
         outcome=AuditOutcome.SUCCESS,
-        metadata={"name": asset.name, "asset_type": asset.asset_type.value, "classification": asset.classification.value},
+        metadata={
+            "name": asset.name,
+            "asset_type": asset.asset_type.value,
+            "classification": asset.classification.value,
+        },
     )
     return asset
 
@@ -316,4 +317,3 @@ def delete_asset(
         outcome=AuditOutcome.SUCCESS,
         metadata={"name": asset.name},
     )
-

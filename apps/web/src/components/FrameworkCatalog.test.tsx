@@ -51,6 +51,8 @@ vi.mock("../api", () => ({
   ]),
   listControlMappings: vi.fn().mockResolvedValue([]),
   listTenantOverlays: vi.fn().mockResolvedValue([]),
+  deleteTenantOverlay: vi.fn().mockResolvedValue(undefined),
+  evaluateAdoptionApplicability: vi.fn().mockResolvedValue([]),
   getCanonicalVersionDetails: vi.fn().mockResolvedValue({
     id: "v-1",
     framework_id: "fw-1",
@@ -104,5 +106,16 @@ describe("FrameworkCatalog", () => {
     expect(canReadFrameworks("viewer")).toBe(true);
     expect(canReadFrameworks("administrator")).toBe(false);
     expect(canReadFrameworks("employee")).toBe(false);
+  });
+
+  it("renders applicability evaluation action and filter tabs", async () => {
+    render(<FrameworkCatalog tenantId="t-1" userRole="compliance_manager" />);
+    expect(
+      await screen.findByRole("button", { name: /Evaluate Applicability Rules/i })
+    ).toBeInTheDocument();
+    expect(screen.getAllByText(/All Controls/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Applicable/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Scoped Out/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Not Applicable/).length).toBeGreaterThan(0);
   });
 });

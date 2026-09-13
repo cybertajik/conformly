@@ -1,17 +1,12 @@
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
-import pytest
 from sqlalchemy.orm import Session
 
-from conformly.assets import service as asset_service
-from conformly.assets.models import AssetClassification, AssetType
 from conformly.authz.policy import Principal, TenantContext
 from conformly.authz.roles import Role
 from conformly.compliance.models import (
     ComplianceTask,
-    ControlImplementationStatus,
-    ControlStatusRecord,
     EvidenceItem,
     EvidenceStatus,
     Policy,
@@ -88,7 +83,7 @@ def test_dashboard_summary_compliance_view(session: Session):
     )
 
     # 5. Add vendor
-    vendor = vendor_service.create_vendor(
+    _ = vendor_service.create_vendor(
         session,
         principal,
         context,
@@ -106,7 +101,9 @@ def test_dashboard_summary_compliance_view(session: Session):
     session.commit()
 
     # Call Dashboard Service
-    summary = dashboard_service.get_dashboard_summary(session, principal, context, request_id="req-dash-1")
+    summary = dashboard_service.get_dashboard_summary(
+        session, principal, context, request_id="req-dash-1"
+    )
 
     assert summary.is_administrator_view is False
     assert summary.admin_metrics is None
@@ -149,7 +146,7 @@ def test_dashboard_summary_administrator_view(session: Session):
     admin_context = TenantContext(tenant_id=tenant_id, user_id=user_id, role=Role.ADMINISTRATOR)
 
     # Create legal entity via organization service
-    legal_entity = org_service.create_legal_entity(
+    _ = org_service.create_legal_entity(
         session,
         principal,
         admin_context,
@@ -160,7 +157,9 @@ def test_dashboard_summary_administrator_view(session: Session):
         request_id="req-dash-admin-le",
     )
 
-    summary = dashboard_service.get_dashboard_summary(session, principal, admin_context, request_id="req-dash-admin-1")
+    summary = dashboard_service.get_dashboard_summary(
+        session, principal, admin_context, request_id="req-dash-admin-1"
+    )
 
     assert summary.is_administrator_view is True
     assert summary.admin_metrics is not None

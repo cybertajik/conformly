@@ -3,18 +3,59 @@ name: conformly
 services:
   postgres:
     image: postgres:17-alpine
+    command: >
+      postgres
+      -c wal_level=replica
+      -c max_wal_senders=10
+      -c max_replication_slots=10
+      -c hot_standby=on
+      -c archive_mode=on
+      -c archive_command='test ! -f /var/lib/postgresql/wal_archive/%f && cp %p /var/lib/postgresql/wal_archive/%f'
     environment:
       POSTGRES_DB: conformly
       POSTGRES_USER: conformly
       POSTGRES_PASSWORD: conformly
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - postgres_wal:/var/lib/postgresql/wal_archive
       - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/001-roles.sql:ro
+    ports:
+      - "${CONFORMLY_POSTGRES_HOST_PORT:-5433}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U conformly -d conformly"]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  postgres-replica:
+    image: postgres:17-alpine
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGDATA: /var/lib/postgresql/data
+      PGPASSWORD: replicator_password
+    volumes:
+      - postgres_replica_data:/var/lib/postgresql/data
+      - ./infra/postgres/replica/init-replica.sh:/init-replica.sh:ro
+    entrypoint: ["/bin/sh", "/init-replica.sh"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U replicator -h localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${CONFORMLY_REDIS_HOST_PORT:-6380}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   minio:
     image: quay.io/minio/minio:latest
@@ -42,8 +83,113 @@ services:
       /bin/sh -c "
       mc alias set local http://minio:9000 $${CONFORMLY_STORAGE_ACCESS_KEY:-conformly_minio} $${CONFORMLY_STORAGE_SECRET_KEY:-conformly_minio_secret};
       mc mb local/$${CONFORMLY_STORAGE_BUCKET:-conformly-files} --ignore-existing;
+      mc version enable local/$${CONFORMLY_STORAGE_BUCKET:-conformly-files};
       exit 0;
       "
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start", "--import-realm"]
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-conformly_admin_pass}
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: "xforwarded"
+      KC_HOSTNAME_STRICT: "false"
+    volumes:
+      - ./infra/keycloak/realms:/opt/keycloak/data/import:ro
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep '200 OK' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  openbao:
+    image: openbao/openbao:latest
+    environment:
+      BAO_DEV_ROOT_TOKEN_ID: ${CONFORMLY_VAULT_TOKEN:-root}
+      BAO_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+    ports:
+      - "8200:8200"
+    healthcheck:
+      test: ["CMD", "bao", "status"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  openbao-init:
+    image: openbao/openbao:latest
+    environment:
+      BAO_ADDR: "http://openbao:8200"
+      BAO_TOKEN: ${CONFORMLY_VAULT_TOKEN:-root}
+    depends_on:
+      openbao:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Configuring OpenBao Transit Secrets Engine...';
+      bao secrets enable -path=transit transit 2>/dev/null || echo 'Transit engine already active';
+      bao write -f transit/keys/conformly-master-key type=aes256-gcm96 2>/dev/null || echo 'Master key already provisioned';
+      echo 'OpenBao Transit Engine ready.';
+      exit 0;
+      "
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://127.0.0.1:8025/api/v1/info || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  clamav:
+    image: clamav/clamav:latest
+    ports:
+      - "3310:3310"
+    healthcheck:
+      test: ["CMD-SHELL", "clamdscan /init || exit 0"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./infra/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - ./infra/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3001:3000"
+    depends_on:
+      prometheus:
+        condition: service_healthy
 
   migrate:
     build: ./apps/api
@@ -58,12 +204,21 @@ services:
     build: ./apps/api
     environment:
       CONFORMLY_DATABASE_URL: postgresql+psycopg://conformly_app:conformly_app@postgres:5432/conformly
-      CONFORMLY_OIDC_ISSUER: ${CONFORMLY_OIDC_ISSUER:-}
-      CONFORMLY_OIDC_AUDIENCE: ${CONFORMLY_OIDC_AUDIENCE:-}
-      CONFORMLY_OIDC_JWKS_URL: ${CONFORMLY_OIDC_JWKS_URL:-}
+      CONFORMLY_OIDC_ISSUER: ${CONFORMLY_OIDC_ISSUER:-http://keycloak:8080/realms/conformly-customer}
+      CONFORMLY_OIDC_AUDIENCE: ${CONFORMLY_OIDC_AUDIENCE:-conformly-api}
+      CONFORMLY_OIDC_JWKS_URL: ${CONFORMLY_OIDC_JWKS_URL:-http://keycloak:8080/realms/conformly-customer/protocol/openid-connect/certs}
       CONFORMLY_CORS_ORIGINS: ${CONFORMLY_CORS_ORIGINS:-["http://localhost:3000","http://192.168.0.5:3000"]}
+      CONFORMLY_KMS_PROVIDER: ${CONFORMLY_KMS_PROVIDER:-openbao}
       CONFORMLY_LOCAL_KEKS: ${CONFORMLY_LOCAL_KEKS:-{}}
-      CONFORMLY_ACTIVE_KEK_VERSION: ${CONFORMLY_ACTIVE_KEK_VERSION:-}
+      CONFORMLY_ACTIVE_KEK_VERSION: ${CONFORMLY_ACTIVE_KEK_VERSION:-1}
+      CONFORMLY_VAULT_ENDPOINT: ${CONFORMLY_VAULT_ENDPOINT:-http://openbao:8200}
+      CONFORMLY_VAULT_TOKEN: ${CONFORMLY_VAULT_TOKEN:-root}
+      CONFORMLY_VAULT_TRANSIT_MOUNT: ${CONFORMLY_VAULT_TRANSIT_MOUNT:-transit}
+      CONFORMLY_VAULT_KEY_NAME: ${CONFORMLY_VAULT_KEY_NAME:-conformly-master-key}
+      CONFORMLY_CLAMAV_HOST: ${CONFORMLY_CLAMAV_HOST:-clamav}
+      CONFORMLY_CLAMAV_PORT: ${CONFORMLY_CLAMAV_PORT:-3310}
+      CLAMAV_HOST: ${CONFORMLY_CLAMAV_HOST:-clamav}
+      CLAMAV_PORT: ${CONFORMLY_CLAMAV_PORT:-3310}
       CONFORMLY_INVITATION_TOKEN_PEPPER: ${CONFORMLY_INVITATION_TOKEN_PEPPER:-}
       CONFORMLY_STORAGE_BACKEND: ${CONFORMLY_STORAGE_BACKEND:-s3}
       CONFORMLY_STORAGE_ENDPOINT: ${CONFORMLY_STORAGE_ENDPOINT:-http://minio:9000}
@@ -71,6 +226,12 @@ services:
       CONFORMLY_STORAGE_ACCESS_KEY: ${CONFORMLY_STORAGE_ACCESS_KEY:-conformly_minio}
       CONFORMLY_STORAGE_SECRET_KEY: ${CONFORMLY_STORAGE_SECRET_KEY:-conformly_minio_secret}
       CONFORMLY_STORAGE_REGION: ${CONFORMLY_STORAGE_REGION:-us-east-1}
+      CONFORMLY_ENABLE_WHISTLEBLOWER_ADDON: ${CONFORMLY_ENABLE_WHISTLEBLOWER_ADDON:-false}
+      CONFORMLY_REDIS_URL: ${CONFORMLY_REDIS_URL:-redis://redis:6379/0}
+      CONFORMLY_NOTIFICATION_PROVIDER: ${CONFORMLY_NOTIFICATION_PROVIDER:-smtp}
+      CONFORMLY_SMTP_HOST: ${CONFORMLY_SMTP_HOST:-mailpit}
+      CONFORMLY_SMTP_PORT: ${CONFORMLY_SMTP_PORT:-1025}
+      CONFORMLY_SMTP_FROM_EMAIL: ${CONFORMLY_SMTP_FROM_EMAIL:-no-reply@conformly.de}
     ports:
       - "${CONFORMLY_API_HOST_PORT:-8001}:8000"
     depends_on:
@@ -80,11 +241,57 @@ services:
         condition: service_healthy
       minio-init:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+      openbao:
+        condition: service_healthy
+      openbao-init:
+        condition: service_completed_successfully
+      clamav:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  worker:
+    build: ./apps/api
+    command: ["python", "-m", "conformly.notifications.worker"]
+    environment:
+      CONFORMLY_DATABASE_URL: postgresql+psycopg://conformly_app:conformly_app@postgres:5432/conformly
+      CONFORMLY_KMS_PROVIDER: ${CONFORMLY_KMS_PROVIDER:-openbao}
+      CONFORMLY_VAULT_ENDPOINT: ${CONFORMLY_VAULT_ENDPOINT:-http://openbao:8200}
+      CONFORMLY_VAULT_TOKEN: ${CONFORMLY_VAULT_TOKEN:-root}
+      CONFORMLY_VAULT_TRANSIT_MOUNT: ${CONFORMLY_VAULT_TRANSIT_MOUNT:-transit}
+      CONFORMLY_VAULT_KEY_NAME: ${CONFORMLY_VAULT_KEY_NAME:-conformly-master-key}
+      CONFORMLY_CLAMAV_HOST: ${CONFORMLY_CLAMAV_HOST:-clamav}
+      CONFORMLY_CLAMAV_PORT: ${CONFORMLY_CLAMAV_PORT:-3310}
+      CLAMAV_HOST: ${CONFORMLY_CLAMAV_HOST:-clamav}
+      CLAMAV_PORT: ${CONFORMLY_CLAMAV_PORT:-3310}
+      CONFORMLY_STORAGE_BACKEND: ${CONFORMLY_STORAGE_BACKEND:-s3}
+      CONFORMLY_STORAGE_ENDPOINT: ${CONFORMLY_STORAGE_ENDPOINT:-http://minio:9000}
+      CONFORMLY_STORAGE_BUCKET: ${CONFORMLY_STORAGE_BUCKET:-conformly-files}
+      CONFORMLY_STORAGE_ACCESS_KEY: ${CONFORMLY_STORAGE_ACCESS_KEY:-conformly_minio}
+      CONFORMLY_STORAGE_SECRET_KEY: ${CONFORMLY_STORAGE_SECRET_KEY:-conformly_minio_secret}
+      CONFORMLY_REDIS_URL: ${CONFORMLY_REDIS_URL:-redis://redis:6379/0}
+      CONFORMLY_NOTIFICATION_PROVIDER: ${CONFORMLY_NOTIFICATION_PROVIDER:-smtp}
+      CONFORMLY_SMTP_HOST: ${CONFORMLY_SMTP_HOST:-mailpit}
+      CONFORMLY_SMTP_PORT: ${CONFORMLY_SMTP_PORT:-1025}
+      CONFORMLY_SMTP_FROM_EMAIL: ${CONFORMLY_SMTP_FROM_EMAIL:-no-reply@conformly.de}
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+      clamav:
+        condition: service_healthy
 
   web:
     build:
@@ -110,4 +317,9 @@ services:
 
 volumes:
   postgres_data:
+  postgres_wal:
+  postgres_replica_data:
   minio_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:

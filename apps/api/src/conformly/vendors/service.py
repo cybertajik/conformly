@@ -24,10 +24,7 @@ def list_vendors(
     status: VendorStatus | None = None,
 ) -> list[Vendor]:
     authorize(principal, tenant_context, Capability.VENDOR_READ)
-    stmt = (
-        select(Vendor)
-        .where(Vendor.tenant_id == tenant_context.tenant_id)
-    )
+    stmt = select(Vendor).where(Vendor.tenant_id == tenant_context.tenant_id)
     if tenant_context.legal_entity_id is not None:
         stmt = stmt.where(Vendor.legal_entity_id == tenant_context.legal_entity_id)
     if tenant_context.business_unit_id is not None:
@@ -265,4 +262,3 @@ def delete_vendor(
         outcome=AuditOutcome.SUCCESS,
         metadata={"name": vendor.name},
     )
-

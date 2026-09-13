@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Protocol
 
@@ -25,6 +25,9 @@ class TokenClaims:
     email: str | None = None
     display_name: str | None = None
     email_verified: bool = False
+    amr: list[str] = field(default_factory=list)
+    acr: str | None = None
+    mfa_verified: bool = True
 
 
 class TokenVerifier(Protocol):
@@ -50,6 +53,18 @@ class OIDCTokenVerifier:
                 issuer=self._issuer,
                 options={"require": ["exp", "iss", "sub", "sid", "email", "email_verified"]},
             )
+            raw_amr = payload.get("amr") or []
+            amr_list = (
+                [str(x) for x in raw_amr]
+                if isinstance(raw_amr, list)
+                else ([str(raw_amr)] if isinstance(raw_amr, str) else [])
+            )
+            acr_val = str(payload["acr"]) if payload.get("acr") else None
+            mfa_ok = (
+                payload.get("mfa_verified") is True
+                or any(m in amr_list for m in ("otp", "mfa", "totp", "webauthn"))
+                or acr_val in ("loa2", "2", "mfa")
+            )
             return TokenClaims(
                 issuer=str(payload["iss"]),
                 subject=str(payload["sub"]),
@@ -58,6 +73,9 @@ class OIDCTokenVerifier:
                 email=str(payload["email"]) if payload.get("email") else None,
                 display_name=str(payload["name"]) if payload.get("name") else None,
                 email_verified=payload.get("email_verified") is True,
+                amr=amr_list,
+                acr=acr_val,
+                mfa_verified=mfa_ok,
             )
         except (jwt.PyJWTError, KeyError, TypeError, ValueError) as error:
             raise AuthenticationError("invalid bearer token") from error
@@ -82,6 +100,18 @@ class DevTokenVerifier:
                 audience=self._audience,
                 options={"require": ["exp", "iss", "sub", "sid", "email", "email_verified"]},
             )
+            raw_amr = payload.get("amr") or []
+            amr_list = (
+                [str(x) for x in raw_amr]
+                if isinstance(raw_amr, list)
+                else ([str(raw_amr)] if isinstance(raw_amr, str) else [])
+            )
+            acr_val = str(payload["acr"]) if payload.get("acr") else None
+            mfa_ok = (
+                payload.get("mfa_verified") is True
+                or any(m in amr_list for m in ("otp", "mfa", "totp", "webauthn"))
+                or acr_val in ("loa2", "2", "mfa")
+            )
             return TokenClaims(
                 issuer=str(payload["iss"]),
                 subject=str(payload["sub"]),
@@ -90,6 +120,9 @@ class DevTokenVerifier:
                 email=str(payload["email"]) if payload.get("email") else None,
                 display_name=str(payload["name"]) if payload.get("name") else None,
                 email_verified=payload.get("email_verified") is True,
+                amr=amr_list,
+                acr=acr_val,
+                mfa_verified=mfa_ok,
             )
         except (jwt.PyJWTError, KeyError, TypeError, ValueError) as error:
             raise AuthenticationError("invalid bearer token") from error
@@ -104,12 +137,16 @@ def mint_dev_token(
     session_id: str | None = None,
     expires_in_seconds: int = 86400 * 7,
     secret: str = DEV_DEFAULT_SECRET,
+    mfa_verified: bool = True,
+    amr: list[str] | None = None,
+    acr: str | None = None,
 ) -> str:
     import uuid
     from datetime import UTC, datetime, timedelta
 
     sid = session_id or str(uuid.uuid4())
     exp = int((datetime.now(UTC) + timedelta(seconds=expires_in_seconds)).timestamp())
+    amr_list = amr if amr is not None else (["otp"] if mfa_verified else [])
     payload = {
         "iss": issuer,
         "sub": subject,
@@ -119,6 +156,9 @@ def mint_dev_token(
         "email": email,
         "email_verified": True,
         "name": display_name,
+        "mfa_verified": mfa_verified,
+        "amr": amr_list,
+        "acr": acr or ("loa2" if mfa_verified else None),
     }
     return jwt.encode(payload, secret, algorithm="HS256")
 
@@ -135,4 +175,3 @@ def get_token_verifier() -> TokenVerifier:
     if settings.environment in ("development", "local", "test"):
         return DevTokenVerifier(secret=settings.invitation_token_pepper or DEV_DEFAULT_SECRET)
     raise AuthenticationConfigurationError("OIDC settings are incomplete")
-

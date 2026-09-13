@@ -118,7 +118,10 @@ def list_vendors_endpoint(
         )
         return [_to_vendor_response(v) for v in vendors]
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing vendor:read capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing vendor:read capability",
+        )
 
 
 @router.get("/{vendor_id}", response_model=VendorResponse)
@@ -134,7 +137,10 @@ def get_vendor_endpoint(
         vendor = service.get_vendor(database, principal, tenant_context, vendor_id, request_id)
         return _to_vendor_response(vendor)
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing vendor:read capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing vendor:read capability",
+        )
     except service.VendorNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
@@ -171,7 +177,10 @@ def create_vendor_endpoint(
         database.commit()
         return _to_vendor_response(vendor)
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing vendor:manage capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing vendor:manage capability",
+        )
 
 
 @router.put("/{vendor_id}", response_model=VendorResponse)
@@ -207,7 +216,10 @@ def update_vendor_endpoint(
         database.commit()
         return _to_vendor_response(vendor)
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing vendor:manage capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing vendor:manage capability",
+        )
     except service.VendorNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
@@ -234,7 +246,10 @@ def complete_vendor_review_endpoint(
         database.commit()
         return _to_vendor_response(vendor)
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing vendor:manage capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing vendor:manage capability",
+        )
     except service.VendorNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
@@ -252,7 +267,9 @@ def delete_vendor_endpoint(
         service.delete_vendor(database, principal, tenant_context, vendor_id, request_id)
         database.commit()
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing vendor:manage capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing vendor:manage capability",
+        )
     except service.VendorNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
-

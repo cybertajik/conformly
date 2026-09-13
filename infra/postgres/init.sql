@@ -7,3 +7,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
   GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO conformly_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
   GRANT USAGE, SELECT ON SEQUENCES TO conformly_app;
+
+-- Streaming replication role for PostgreSQL HA standby replica
+CREATE ROLE replicator WITH REPLICATION LOGIN PASSWORD 'replicator_password';
+

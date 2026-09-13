@@ -59,12 +59,16 @@ This document does not change those implementation files or redefine their accep
 ### A — Core compliance and common foundations
 
 Audience: general businesses building an initial compliance program.
-Includes the full existing Tier A operational platform, plus released foundation packs below.
-Candidate initial launch selection: ISO/IEC 27001 readiness, ISO 9001 readiness, GDPR with the
-German national overlay, NIST CSF, CIS IG1 and MVSP. This is a proposed initial selection, not a
-promise that all six must be ready at once or that six are already approved.
+Includes the full existing Tier A operational platform, plus the **five core Tier A framework packs** (see [FRAMEWORK_PACKS_TIER_A.md](file:///c:/Users/AD/Desktop/conformly/docs/FRAMEWORK_PACKS_TIER_A.md) and [MODULE_A_BETA_RELEASE_EVIDENCE.md](file:///c:/Users/AD/Desktop/conformly/docs/MODULE_A_BETA_RELEASE_EVIDENCE.md)):
+1. **ISO/IEC 27001:2022 Pre-Audit Readiness** (`iso-27001` v`2022`) — `ENGINEERING_COMPLETE` (`CONTENT_REVIEW_PENDING`)
+2. **EU GDPR & German BDSG Privacy Operations** (`gdpr-bdsg` v`2024`) — `ENGINEERING_COMPLETE` (`CONTENT_REVIEW_PENDING`)
+3. **NIST Cybersecurity Framework 2.0** (`nist-csf` v`2.0`) — `ENGINEERING_COMPLETE` (`CONTENT_REVIEW_PENDING`)
+4. **CIS Critical Security Controls v8 IG1** (`cis-controls-ig1` v`8.0`) — `ENGINEERING_COMPLETE` (`CONTENT_REVIEW_PENDING`)
+5. **Minimum Viable Secure Product v2.0** (`mvsp` v`2.0`) — `ENGINEERING_COMPLETE` (`CONTENT_REVIEW_PENDING`)
 
-Workflows: scope/applicability, obligations, evidence, policies, assignments, risk/asset/vendor
+*Note on Status:* All five packs have 100% complete schema, coverage ledgers, declarative applicability engines, structured evidence generation, and acceptance tests (`ENGINEERING_COMPLETE`). However, in accordance with Conformly governance rules, production customer issuance remains gated until genuine human legal/compliance review and explicit Product Owner release approval are recorded. No AI may mark packs `BETA_READY` prematurely.
+
+Workflows: scope/applicability evaluation rules, obligations, evidence requests, policies, assignments, risk/asset/vendor
 registers, findings, pre-audit, independent review, reports and optional public profile.
 Country expansion can add ordinary privacy packs without redesigning this foundation.
 
@@ -412,21 +416,10 @@ DISCOVERED or SOURCE_VERIFIED; none becomes RELEASED merely because it is listed
 
 ## 14. Implementation handoff and rollout
 
-- Continue current tasks 1–4 without duplicating their work. Their entitlement implementation should
-  accept configurable pack IDs, versions and module IDs without hard-coded package-name branches.
-- Add this catalog's proposed allocations to a reviewed DEU decision before adopting B–D labels
-  or changing commercial behavior. Do not overwrite the V4 raw snapshot.
-- Choose and license the initial Tier A content batch; write complete packs and country overlays.
-- Implement any missing Tier A workflow needed by those packs (for example, applicability records
-  and privacy evidence). Content release and application release must both pass.
-- Expand regional A packs and B assurance packs next; C regulated and D specialist packs follow
-  only when their data, workflow, assessor and hosting dependencies are met.
-- Sequence add-ons independently. LMS integration remains in the Tier A finish line; building a
-  new LMS is excluded. Whistleblower remains a separate later release.
-- Track progress separately for platform capabilities, individual released packs, jurisdiction
-  overlays and add-ons. There is no honest single "global 100%" until a finite release catalog is
-  agreed, every chosen pack is released, and all deployment gates pass.
-
-Review decisions still needed: exact A launch pack set; approval of proposed B–D allocations;
-licensing/assessor costs; which optional module proposals to adopt; and region-specific hosting/
-language expansion beyond the existing Germany-only, DE/EN/FR/NL/ES baseline.
+- Initial Tier A launch packs have complete technical specifications, declarative applicability rules, structured evidence collection requests, and acceptance tests (`iso-27001`, `gdpr-bdsg`, `nist-csf`, `cis-controls-ig1`, `mvsp`). As recorded in the canonical manifest (`apps/api/src/conformly/frameworks/manifest.json`), their content status is **DRAFT_REVISION_UNDERWAY** / **CONTENT_REVIEW_PENDING**, awaiting independent human second-person approval and legal/compliance review prior to production release. See `docs/FRAMEWORK_PACKS_TIER_A.md` and ADR D-058.
+- Tier B (SOC 2, ISO 27701, ISO 22301), Tier C (NIS2, DORA, EU AI Act), and Tier D (FedRAMP, CMMC) remain the active planning backlog.
+- Their entitlement implementation accepts configurable pack IDs, versions and module IDs without hard-coded package-name branches.
+- Implement any missing Tier A workflow needed by those packs (for example, applicability records and privacy evidence). Content release and application release must both pass.
+- Expand regional A packs and B assurance packs next; C regulated and D specialist packs follow only when their data, workflow, assessor and hosting dependencies are met.
+- Sequence add-ons independently. LMS integration remains in the Tier A finish line; building a new LMS is excluded. Whistleblower remains a separate later release.
+- Track progress separately for platform capabilities, individual released packs, jurisdiction overlays and add-ons. There is no honest single "global 100%" until a finite release catalog is agreed, every chosen pack is released, and all deployment gates pass.

@@ -11,6 +11,7 @@ from conformly.db.base import Base
 from conformly.entitlements import models as entitlement_models
 from conformly.exports import models as export_models
 from conformly.frameworks import models as framework_models
+from conformly.frameworks import workflow as framework_workflow_models
 from conformly.identity import models as identity_models
 from conformly.notifications import models as notification_models
 from conformly.organization import models as organization_models
@@ -29,6 +30,7 @@ _ = (
     entitlement_models,
     export_models,
     framework_models,
+    framework_workflow_models,
     identity_models,
     notification_models,
     organization_models,

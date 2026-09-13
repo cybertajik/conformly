@@ -36,7 +36,13 @@ from conformly.identity.models import (
 from conformly.organization.models import BusinessUnit, LegalEntity, Location
 from conformly.preaudit.models import PreAudit, PreAuditStatus
 from conformly.profiles.models import PublicProfile
-from conformly.risks.models import Risk, RiskCategory, RiskStatus, RiskTreatment, RiskTreatmentStrategy
+from conformly.risks.models import (
+    Risk,
+    RiskCategory,
+    RiskStatus,
+    RiskTreatment,
+    RiskTreatmentStrategy,
+)
 from conformly.storage.providers import MemoryStorageProvider
 from conformly.storage.service import StorageService
 from conformly.vendors.models import Vendor, VendorCriticality
@@ -181,7 +187,14 @@ def test_create_export_packages_tenant_data_and_files(session: Session) -> None:
     else:
         entitlement = TenantEntitlement(
             tenant_id=tenant.id,
-            enabled_modules=["compliance", "frameworks", "risks", "assets", "vendors", "organization"],
+            enabled_modules=[
+                "compliance",
+                "frameworks",
+                "risks",
+                "assets",
+                "vendors",
+                "organization",
+            ],
             max_members=50,
             max_storage_bytes=100000000,
             allowed_framework_slugs=["*"],
@@ -270,21 +283,23 @@ def test_create_export_packages_tenant_data_and_files(session: Session) -> None:
         legal_entity_id=legal_entity.id,
         business_unit_id=business_unit.id,
     )
-    session.add_all([
-        evidence,
-        link,
-        policy,
-        task,
-        pre_audit,
-        pub_profile,
-        legal_entity,
-        business_unit,
-        location,
-        risk,
-        treatment,
-        asset,
-        vendor,
-    ])
+    session.add_all(
+        [
+            evidence,
+            link,
+            policy,
+            task,
+            pre_audit,
+            pub_profile,
+            legal_entity,
+            business_unit,
+            location,
+            risk,
+            treatment,
+            asset,
+            vendor,
+        ]
+    )
     session.flush()
 
     # Trigger export

@@ -72,10 +72,14 @@ class PreAudit(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __table_args__ = (
         Index("ix_pre_audits_tenant_status", "tenant_id", "status"),
         Index("ix_pre_audits_tenant_adoption", "tenant_id", "framework_adoption_id"),
+        Index("ix_pre_audits_tenant_legal_entity", "tenant_id", "legal_entity_id"),
     )
 
     tenant_id: Mapped[UUID] = mapped_column(
         Uuid, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
+    )
+    legal_entity_id: Mapped[UUID | None] = mapped_column(
+        Uuid, ForeignKey("legal_entities.id", ondelete="SET NULL"), nullable=True
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, default="", nullable=False)
@@ -351,5 +355,6 @@ class PreAuditCertificate(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     superseded_by_certificate_id: Mapped[UUID | None] = mapped_column(
         Uuid, ForeignKey("pre_audit_certificates.id", ondelete="SET NULL")
     )
+    issuance_package_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     pre_audit: Mapped["PreAudit"] = relationship(back_populates="certificates")

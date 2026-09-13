@@ -46,8 +46,12 @@ def upgrade() -> None:
                 nullable=True,
             )
         )
-        batch_op.add_column(sa.Column("last_reviewed_at", sa.DateTime(timezone=True), nullable=True))
-        batch_op.add_column(sa.Column("next_review_due_at", sa.DateTime(timezone=True), nullable=True))
+        batch_op.add_column(
+            sa.Column("last_reviewed_at", sa.DateTime(timezone=True), nullable=True)
+        )
+        batch_op.add_column(
+            sa.Column("next_review_due_at", sa.DateTime(timezone=True), nullable=True)
+        )
         batch_op.create_index("ix_risks_legal_entity", ["tenant_id", "legal_entity_id"])
         batch_op.create_index("ix_risks_business_unit", ["tenant_id", "business_unit_id"])
 
@@ -83,8 +87,12 @@ def upgrade() -> None:
                 nullable=True,
             )
         )
-        batch_op.add_column(sa.Column("last_reviewed_at", sa.DateTime(timezone=True), nullable=True))
-        batch_op.add_column(sa.Column("next_review_due_at", sa.DateTime(timezone=True), nullable=True))
+        batch_op.add_column(
+            sa.Column("last_reviewed_at", sa.DateTime(timezone=True), nullable=True)
+        )
+        batch_op.add_column(
+            sa.Column("next_review_due_at", sa.DateTime(timezone=True), nullable=True)
+        )
         batch_op.create_index("ix_assets_legal_entity", ["tenant_id", "legal_entity_id"])
         batch_op.create_index("ix_assets_business_unit", ["tenant_id", "business_unit_id"])
 

@@ -275,7 +275,9 @@ def test_policy_approval_and_publishing_workflow(
     session.flush()
 
     principal_approver = Principal(user_id=approver.id, is_platform_admin=False)
-    ctx_approver = TenantContext(tenant_id=tenant.id, user_id=approver.id, role=Role.COMPLIANCE_MANAGER)
+    ctx_approver = TenantContext(
+        tenant_id=tenant.id, user_id=approver.id, role=Role.COMPLIANCE_MANAGER
+    )
 
     approved = service.approve_policy(
         principal_approver, ctx_approver, policy.id, expected_version=2

@@ -1,6 +1,11 @@
+import io
+import logging
 import os
 import re
+import socket
+import struct
 import unicodedata
+import zipfile
 from typing import Protocol
 
 DISALLOWED_EXTENSIONS = frozenset(
@@ -61,12 +66,6 @@ MAX_FILENAME_LENGTH = 255
 
 EICAR_SIGNATURE = b"X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
 
-
-import io
-import logging
-import socket
-import struct
-import zipfile
 
 logger = logging.getLogger(__name__)
 
@@ -131,14 +130,24 @@ class ProductionMalwareScanner:
         clamav_port: int | None = None,
         timeout_seconds: float = 3.0,
     ) -> None:
-        self.clamav_host = clamav_host or os.environ.get("CLAMAV_HOST")
-        self.clamav_port = clamav_port or int(os.environ.get("CLAMAV_PORT", "3310"))
+        self.clamav_host = (
+            clamav_host or os.environ.get("CONFORMLY_CLAMAV_HOST") or os.environ.get("CLAMAV_HOST")
+        )
+        port_raw = (
+            clamav_port
+            or os.environ.get("CONFORMLY_CLAMAV_PORT")
+            or os.environ.get("CLAMAV_PORT")
+            or 3310
+        )
+        self.clamav_port = int(port_raw)
         self.timeout_seconds = timeout_seconds
 
     def scan(self, data: bytes, filename: str) -> None:
         # 1. EICAR Test Signature
         if EICAR_SIGNATURE in data:
-            raise MalwareDetectedError("malicious signature detected: EICAR test signature in uploaded file")
+            raise MalwareDetectedError(
+                "malicious signature detected: EICAR test signature in uploaded file"
+            )
 
         # 2. Executable / Binary Header Inspection
         for magic, desc in DANGEROUS_MAGIC_HEADERS:
@@ -157,7 +166,11 @@ class ProductionMalwareScanner:
 
         # 4. Markup / SVG Script Injection
         _, ext = os.path.splitext(filename.lower())
-        if ext in {".svg", ".xml", ".html", ".htm"} or b"<svg" in lower_data or b"<?xml" in lower_data:
+        if (
+            ext in {".svg", ".xml", ".html", ".htm"}
+            or b"<svg" in lower_data
+            or b"<?xml" in lower_data
+        ):
             for pattern in SCRIPT_INJECTION_PATTERNS:
                 if pattern in lower_data:
                     raise MalwareDetectedError(
@@ -179,17 +192,23 @@ class ProductionMalwareScanner:
                 for info in zf.infolist():
                     # Defeat zip slip path traversal
                     if ".." in info.filename or info.filename.startswith(("/", "\\")):
-                        raise MalwareDetectedError("archive contains hazardous path traversal entries")
+                        raise MalwareDetectedError(
+                            "archive contains hazardous path traversal entries"
+                        )
                     total_uncompressed += info.file_size
                     # Check ratio for individual file
                     if info.compress_size > 0:
                         ratio = info.file_size / info.compress_size
                         if ratio > 100 and info.file_size > 10 * 1024 * 1024:
-                            raise MalwareDetectedError("decompression bomb pattern detected (high compression ratio)")
+                            raise MalwareDetectedError(
+                                "decompression bomb pattern detected (high compression ratio)"
+                            )
 
                 # Max total uncompressed limit (500MB safety ceiling)
                 if total_uncompressed > 500 * 1024 * 1024:
-                    raise MalwareDetectedError("decompression bomb pattern detected (excessive total uncompressed size)")
+                    raise MalwareDetectedError(
+                        "decompression bomb pattern detected (excessive total uncompressed size)"
+                    )
         except zipfile.BadZipFile:
             pass  # Not a valid zip file, allow normal file processing
 

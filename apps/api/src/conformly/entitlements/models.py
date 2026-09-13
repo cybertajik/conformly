@@ -26,9 +26,7 @@ class TenantEntitlement(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     """Data-driven activation, feature limits, and framework-pack permissions for a tenant."""
 
     __tablename__ = "tenant_entitlements"
-    __table_args__ = (
-        Index("ix_tenant_entitlements_tenant_id", "tenant_id", unique=True),
-    )
+    __table_args__ = (Index("ix_tenant_entitlements_tenant_id", "tenant_id", unique=True),)
 
     tenant_id: Mapped[UUID] = mapped_column(
         ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, unique=True
@@ -47,6 +45,4 @@ class TenantEntitlement(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     effective_from: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
-    effective_until: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    effective_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

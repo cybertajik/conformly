@@ -89,11 +89,14 @@ def list_legal_entities_endpoint(
         ]
     except AuthorizationDeniedError:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing organization:read capability"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing organization:read capability",
         )
 
 
-@router.post("/legal-entities", response_model=LegalEntityResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/legal-entities", response_model=LegalEntityResponse, status_code=status.HTTP_201_CREATED
+)
 def create_legal_entity_endpoint(
     payload: LegalEntityCreateRequest,
     request: Request,
@@ -124,7 +127,8 @@ def create_legal_entity_endpoint(
         )
     except AuthorizationDeniedError:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing organization:manage capability"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing organization:manage capability",
         )
 
 
@@ -153,11 +157,14 @@ def list_business_units_endpoint(
         ]
     except AuthorizationDeniedError:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing organization:read capability"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing organization:read capability",
         )
 
 
-@router.post("/business-units", response_model=BusinessUnitResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/business-units", response_model=BusinessUnitResponse, status_code=status.HTTP_201_CREATED
+)
 def create_business_unit_endpoint(
     payload: BusinessUnitCreateRequest,
     request: Request,
@@ -186,7 +193,8 @@ def create_business_unit_endpoint(
         )
     except AuthorizationDeniedError:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing organization:manage capability"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing organization:manage capability",
         )
     except service.OrganizationNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
@@ -219,7 +227,8 @@ def list_locations_endpoint(
         ]
     except AuthorizationDeniedError:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing organization:read capability"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing organization:read capability",
         )
 
 
@@ -256,7 +265,8 @@ def create_location_endpoint(
         )
     except AuthorizationDeniedError:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing organization:manage capability"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing organization:manage capability",
         )
     except service.OrganizationNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
@@ -272,7 +282,9 @@ def get_legal_entity_endpoint(
 ) -> LegalEntityResponse:
     request_id = getattr(request.state, "request_id", "req-le-get")
     try:
-        entity = service.get_legal_entity(database, principal, tenant_context, entity_id, request_id)
+        entity = service.get_legal_entity(
+            database, principal, tenant_context, entity_id, request_id
+        )
         return LegalEntityResponse(
             id=entity.id,
             tenant_id=entity.tenant_id,

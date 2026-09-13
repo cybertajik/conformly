@@ -1,6 +1,5 @@
 from collections.abc import Generator
 from datetime import UTC, datetime, timedelta
-from typing import Any
 from uuid import uuid4
 
 import pytest
@@ -33,9 +32,16 @@ from conformly.compliance.models import (
 from conformly.compliance.worker import run_compliance_worker_tick
 from conformly.crypto.fields import EncryptedFieldCodec, get_encrypted_field_codec
 from conformly.db.session import get_db
-from conformly.identity.models import AuthSession, Membership, MembershipStatus, Tenant, TenantStatus, User, UserStatus
+from conformly.identity.models import (
+    AuthSession,
+    Membership,
+    MembershipStatus,
+    Tenant,
+    TenantStatus,
+    User,
+    UserStatus,
+)
 from conformly.main import app
-from conformly.notifications.models import NotificationOutbox
 from conformly.vendors.models import Vendor, VendorCriticality, VendorStatus
 
 
@@ -189,9 +195,7 @@ def test_enforce_expired_evidence_and_task(
     assert created_task.priority == TaskPriority.CRITICAL
 
 
-def test_escalate_overdue_tasks(
-    session: Session, test_codec: EncryptedFieldCodec
-) -> None:
+def test_escalate_overdue_tasks(session: Session, test_codec: EncryptedFieldCodec) -> None:
     user, tenant, _ = _seed_tenant_user(session, Role.OWNER)
     now = datetime.now(UTC)
 
@@ -218,9 +222,7 @@ def test_escalate_overdue_tasks(
     assert task.version == 2
 
 
-def test_check_policy_reviews_and_task(
-    session: Session, test_codec: EncryptedFieldCodec
-) -> None:
+def test_check_policy_reviews_and_task(session: Session, test_codec: EncryptedFieldCodec) -> None:
     user, tenant, _ = _seed_tenant_user(session, Role.OWNER)
     now = datetime.now(UTC)
 
@@ -253,9 +255,7 @@ def test_check_policy_reviews_and_task(
     assert created_task.assignee_user_id == user.id
 
 
-def test_check_vendor_cadence_and_dpa(
-    session: Session, test_codec: EncryptedFieldCodec
-) -> None:
+def test_check_vendor_cadence_and_dpa(session: Session, test_codec: EncryptedFieldCodec) -> None:
     user, tenant, _ = _seed_tenant_user(session, Role.OWNER)
     now = datetime.now(UTC)
 
@@ -369,9 +369,7 @@ def test_run_continuous_compliance_cycle_complete(
     session.add_all([e1, e2, t1, p1, v1])
     session.flush()
 
-    result = run_continuous_compliance_cycle(
-        session, test_codec, tenant_id=tenant.id, now=now
-    )
+    result = run_continuous_compliance_cycle(session, test_codec, tenant_id=tenant.id, now=now)
 
     assert result.expired_evidence_count == 1
     assert result.expiring_evidence_warnings == 1
@@ -436,9 +434,7 @@ def test_cycle_api_endpoint_permissions(
     assert response_emp.status_code == status.HTTP_403_FORBIDDEN
 
 
-def test_worker_tick_runs_across_tenants(
-    session: Session, test_codec: EncryptedFieldCodec
-) -> None:
+def test_worker_tick_runs_across_tenants(session: Session, test_codec: EncryptedFieldCodec) -> None:
     u1, t1, _ = _seed_tenant_user(session, Role.OWNER)
     u2, t2, _ = _seed_tenant_user(session, Role.OWNER)
 
@@ -457,11 +453,10 @@ def test_worker_tick_runs_across_tenants(
 
     # Create dummy session factory yielding the test session
     from unittest.mock import MagicMock
+
     session_factory_mock = MagicMock()
     session_factory_mock.return_value.__enter__.return_value = session
 
-    summary = run_compliance_worker_tick(
-        session_factory_mock, test_codec, now=now
-    )
+    summary = run_compliance_worker_tick(session_factory_mock, test_codec, now=now)
     assert summary["tenants_checked"] >= 2
     assert summary["total_alerts_enqueued"] >= 1

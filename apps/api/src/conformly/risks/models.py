@@ -72,8 +72,12 @@ class Risk(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     business_unit_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("business_units.id", ondelete="SET NULL"), nullable=True
     )
-    last_reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    next_review_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_reviewed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    next_review_due_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     treatments: Mapped[list["RiskTreatment"]] = relationship(
         back_populates="risk", cascade="all, delete-orphan"

@@ -265,7 +265,9 @@ class EvidenceRevision(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     __tablename__ = "evidence_revisions"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "evidence_id", "revision_number", name="uq_evidence_revisions_number"),
+        UniqueConstraint(
+            "tenant_id", "evidence_id", "revision_number", name="uq_evidence_revisions_number"
+        ),
         Index("ix_evidence_revisions_tenant_evidence", "tenant_id", "evidence_id"),
     )
 
@@ -299,7 +301,9 @@ class PolicyRevision(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     __tablename__ = "policy_revisions"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "policy_id", "revision_number", name="uq_policy_revisions_number"),
+        UniqueConstraint(
+            "tenant_id", "policy_id", "revision_number", name="uq_policy_revisions_number"
+        ),
         Index("ix_policy_revisions_tenant_policy", "tenant_id", "policy_id"),
     )
 

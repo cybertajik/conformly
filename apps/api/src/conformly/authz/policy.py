@@ -14,6 +14,7 @@ class AuthorizationDeniedError(Exception):
 class Principal:
     user_id: UUID
     is_platform_admin: bool = False
+    mfa_verified: bool = True
 
 
 @dataclass(frozen=True, slots=True)

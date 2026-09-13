@@ -125,6 +125,7 @@ class PreAuditCertificateResponse(BaseModel):
     suspended_reason: str | None = None
     superseded_at: datetime | None = None
     superseded_by_certificate_id: UUID | None = None
+    issuance_package_json: str | None = None
     created_at: datetime
 
 
@@ -136,11 +137,20 @@ class ReadinessScoreResponse(BaseModel):
     not_applicable_checks: int
     pending_checks: int
     open_findings: int
+    scope_type: str = "full_standard"
+    declared_scope: str | None = None
+    scope_limitations: list[str] = []
+    disclaimer: str = (
+        "Conformly is an audit-readiness and compliance operations platform, "
+        "not an accredited certification body. Pre-audit readiness badges represent "
+        "automated evaluations of declared scope, not accredited third-party certifications."
+    )
 
 
 class PreAuditResponse(BaseModel):
     id: UUID
     tenant_id: UUID
+    legal_entity_id: UUID | None = None
     title: str
     description: str
     status: str
@@ -168,6 +178,7 @@ class CreatePreAuditRequest(BaseModel):
     description: str = Field(default="", max_length=4000)
     framework_adoption_id: UUID
     lead_user_id: UUID
+    legal_entity_id: UUID | None = None
 
 
 class AddFindingRequest(BaseModel):
@@ -324,6 +335,7 @@ def _cert_response(c: object) -> PreAuditCertificateResponse:
         suspended_reason=getattr(c, "suspended_reason", None),
         superseded_at=getattr(c, "superseded_at", None),
         superseded_by_certificate_id=getattr(c, "superseded_by_certificate_id", None),
+        issuance_package_json=getattr(c, "issuance_package_json", None),
         created_at=c.created_at,  # type: ignore[attr-defined]
     )
 
@@ -356,6 +368,7 @@ def _pa_response(pa: object, *, detail: bool = False) -> PreAuditResponse:
     return PreAuditResponse(
         id=pa.id,  # type: ignore[attr-defined]
         tenant_id=pa.tenant_id,  # type: ignore[attr-defined]
+        legal_entity_id=getattr(pa, "legal_entity_id", None),
         title=pa.title,  # type: ignore[attr-defined]
         description=pa.description,  # type: ignore[attr-defined]
         status=str(pa.status),  # type: ignore[attr-defined]
@@ -401,6 +414,7 @@ def create_pre_audit(
             description=body.description,
             framework_adoption_id=body.framework_adoption_id,
             lead_user_id=body.lead_user_id,
+            legal_entity_id=body.legal_entity_id,
         )
         return _pa_response(pa)
     except AuthorizationDeniedError as exc:

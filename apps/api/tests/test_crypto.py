@@ -151,3 +151,65 @@ def test_classification_encryption_policy(
         )
         is expected
     )
+
+
+def test_vault_kms_provider_roundtrip() -> None:
+    import json
+
+    import httpx
+
+    from conformly.config import Settings
+    from conformly.crypto.providers import VaultKmsProvider, get_kms_provider
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        url_path = request.url.path
+        if "/encrypt/" in url_path:
+            body = json.loads(request.content)
+            plaintext = body["plaintext"]
+            context_b64 = body.get("context", "")
+            ct = f"vault:v1:{plaintext}.{context_b64}"
+            return httpx.Response(200, json={"data": {"ciphertext": ct}})
+        if "/decrypt/" in url_path:
+            body = json.loads(request.content)
+            ct = body["ciphertext"]
+            context_b64 = body.get("context", "")
+            parts = ct.split(":")
+            payload = parts[2]
+            pt, saved_context = payload.split(".", 1)
+            if saved_context != context_b64:
+                return httpx.Response(400, json={"errors": ["context mismatch"]})
+            return httpx.Response(200, json={"data": {"plaintext": pt}})
+        return httpx.Response(404)
+
+    mock_client = httpx.Client(transport=httpx.MockTransport(handler), base_url="http://vault:8200")
+    kms = VaultKmsProvider(
+        endpoint="http://vault:8200",
+        token="test-token",
+        key_name="master",
+        mount="transit",
+        active_key_version="1",
+        http_client=mock_client,
+    )
+
+    test_dek = os.urandom(32)
+    aad = b"tenant-123:field"
+
+    wrapped = kms.wrap_key(test_dek, aad)
+    assert wrapped.key_version == "1"
+    assert wrapped.ciphertext.startswith(b"vault:v1:")
+
+    unwrapped = kms.unwrap_key(wrapped, aad)
+    assert unwrapped == test_dek
+
+    # Tampered context fails
+    with pytest.raises(InvalidCiphertextError):
+        kms.unwrap_key(wrapped, b"wrong-tenant")
+
+    # Factory instantiation test
+    settings = Settings(
+        kms_provider="vault",
+        vault_endpoint="http://vault:8200",
+        vault_token="root",
+    )
+    provider = get_kms_provider(settings)
+    assert isinstance(provider, VaultKmsProvider)

@@ -12,7 +12,7 @@ from conformly.authz.policy import (
     authorize_resource,
 )
 from conformly.authz.roles import Capability, Role
-from conformly.compliance.models import ComplianceTask, EvidenceItem, Finding, TaskStatus
+from conformly.compliance.models import ComplianceTask, EvidenceItem, Finding
 from conformly.compliance.service import ComplianceService
 from conformly.crypto.envelope import EnvelopeEncryptionService
 from conformly.crypto.fields import EncryptedFieldCodec
@@ -23,7 +23,6 @@ from conformly.identity.models import (
     Membership,
     MembershipStatus,
     Tenant,
-    TenantStatus,
     User,
 )
 from conformly.identity.service import update_membership_scopes
@@ -39,17 +38,17 @@ from conformly.tenancy.context import TenantContextError, resolve_tenant_context
 
 
 def make_test_codec() -> EncryptedFieldCodec:
-    raw_key = b"0" * 32
     enc = EnvelopeEncryptionService(
-        AES256GCMProvider(), LocalKeyManagementProvider({"v1": "MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="}, "v1")
+        AES256GCMProvider(),
+        LocalKeyManagementProvider({"v1": "MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="}, "v1"),
     )
     return EncryptedFieldCodec(enc)
 
 
 def make_test_storage(session: Session) -> StorageService:
-    raw_key = b"0" * 32
     enc = EnvelopeEncryptionService(
-        AES256GCMProvider(), LocalKeyManagementProvider({"v1": "MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="}, "v1")
+        AES256GCMProvider(),
+        LocalKeyManagementProvider({"v1": "MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="}, "v1"),
     )
     return StorageService(session, MemoryStorageProvider(), enc)
 
@@ -109,9 +108,7 @@ def create_tenant_and_user(
 
 def test_administrator_cannot_create_or_read_exports(session: Session) -> None:
     """Tenant Administrator withholding normal content access cannot bypass via full exports."""
-    tenant, user, principal, context, _ = create_tenant_and_user(
-        session, role=Role.ADMINISTRATOR
-    )
+    tenant, user, principal, context, _ = create_tenant_and_user(session, role=Role.ADMINISTRATOR)
 
     with pytest.raises(AuthorizationDeniedError):
         authorize(principal, context, Capability.EXPORT_CREATE)
@@ -186,7 +183,9 @@ def test_reviewer_can_access_assigned_material_and_denied_unassigned(session: Se
     assert item.id == assigned_evidence.id
 
     # Reviewer is denied unassigned evidence
-    with pytest.raises(AuthorizationDeniedError, match="reviewer may only access assigned material"):
+    with pytest.raises(
+        AuthorizationDeniedError, match="reviewer may only access assigned material"
+    ):
         compliance.get_evidence(rev_principal, rev_context, unassigned_evidence.id)
 
     # Listing evidence only returns assigned evidence
@@ -216,7 +215,9 @@ def test_reviewer_can_access_assigned_material_and_denied_unassigned(session: Se
     task = compliance.get_task(rev_principal, rev_context, assigned_task.id)
     assert task.id == assigned_task.id
 
-    with pytest.raises(AuthorizationDeniedError, match="reviewer may only access assigned material"):
+    with pytest.raises(
+        AuthorizationDeniedError, match="reviewer may only access assigned material"
+    ):
         compliance.get_task(rev_principal, rev_context, unassigned_task.id)
 
     tasks_list = compliance.list_tasks(rev_principal, rev_context)
@@ -243,7 +244,9 @@ def test_reviewer_can_access_assigned_material_and_denied_unassigned(session: Se
     finding = compliance.get_finding(rev_principal, rev_context, assigned_finding.id)
     assert finding.id == assigned_finding.id
 
-    with pytest.raises(AuthorizationDeniedError, match="reviewer may only access assigned material"):
+    with pytest.raises(
+        AuthorizationDeniedError, match="reviewer may only access assigned material"
+    ):
         compliance.get_finding(rev_principal, rev_context, unassigned_finding.id)
 
     findings_list = compliance.list_findings(rev_principal, rev_context)
@@ -269,13 +272,19 @@ def test_assessor_and_external_advisor_cannot_modify_evidence() -> None:
         role=Role.REVIEWER,
         expires_at=datetime.now(UTC) + timedelta(days=30),
     )
-    with pytest.raises(AuthorizationDeniedError, match="cannot modify customer evidence or controls"):
+    with pytest.raises(
+        AuthorizationDeniedError, match="cannot modify customer evidence or controls"
+    ):
         authorize(principal, rev_context, Capability.EVIDENCE_MANAGE)
 
-    with pytest.raises(AuthorizationDeniedError, match="cannot modify customer evidence or controls"):
+    with pytest.raises(
+        AuthorizationDeniedError, match="cannot modify customer evidence or controls"
+    ):
         authorize(principal, rev_context, Capability.FILE_WRITE)
 
-    with pytest.raises(AuthorizationDeniedError, match="cannot modify customer evidence or controls"):
+    with pytest.raises(
+        AuthorizationDeniedError, match="cannot modify customer evidence or controls"
+    ):
         authorize(principal, rev_context, Capability.FILE_DELETE)
 
     # 2. External advisor classification cannot mutate evidence even if role has capability
@@ -286,7 +295,9 @@ def test_assessor_and_external_advisor_cannot_modify_evidence() -> None:
         is_external_advisor=True,
         expires_at=datetime.now(UTC) + timedelta(days=30),
     )
-    with pytest.raises(AuthorizationDeniedError, match="cannot modify customer evidence or controls"):
+    with pytest.raises(
+        AuthorizationDeniedError, match="cannot modify customer evidence or controls"
+    ):
         authorize(principal, advisor_context, Capability.EVIDENCE_MANAGE)
 
 
@@ -338,11 +349,15 @@ def test_workforce_member_standing_access_denied(session: Session) -> None:
     )
 
     # Denied at authorize
-    with pytest.raises(AuthorizationDeniedError, match="workforce members must have an active expiring engagement"):
+    with pytest.raises(
+        AuthorizationDeniedError, match="workforce members must have an active expiring engagement"
+    ):
         authorize(principal, context, Capability.EVIDENCE_READ)
 
     # Denied at context resolution
-    with pytest.raises(TenantContextError, match="workforce members must have an active expiring engagement"):
+    with pytest.raises(
+        TenantContextError, match="workforce members must have an active expiring engagement"
+    ):
         resolve_tenant_context(session, principal, tenant.id)
 
 
@@ -429,9 +444,7 @@ def test_organizational_scope_isolation_in_policy() -> None:
 
 def test_organization_service_scopes_filtering(session: Session) -> None:
     """OrganizationService queries and mutations strictly honor membership scopes."""
-    tenant, _, admin_principal, admin_context, _ = create_tenant_and_user(
-        session, role=Role.OWNER
-    )
+    tenant, _, admin_principal, admin_context, _ = create_tenant_and_user(session, role=Role.OWNER)
 
     # Create two legal entities
     entity_1 = create_legal_entity(
@@ -444,7 +457,7 @@ def test_organization_service_scopes_filtering(session: Session) -> None:
     unit_1 = create_business_unit(
         session, admin_principal, admin_context, entity_1.id, "Unit 1", "U1", "req-bu-1"
     )
-    unit_2 = create_business_unit(
+    _ = create_business_unit(
         session, admin_principal, admin_context, entity_2.id, "Unit 2", "U2", "req-bu-2"
     )
 
@@ -487,12 +500,8 @@ def test_organization_service_scopes_filtering(session: Session) -> None:
 
 def test_update_membership_scopes_management(session: Session) -> None:
     """Authorized managers can configure membership scopes and audit events are emitted."""
-    tenant, _, owner_principal, owner_context, _ = create_tenant_and_user(
-        session, role=Role.OWNER
-    )
-    _, _, _, target_membership = create_user_in_tenant(
-        session, tenant, role=Role.REVIEWER
-    )
+    tenant, _, owner_principal, owner_context, _ = create_tenant_and_user(session, role=Role.OWNER)
+    _, _, _, target_membership = create_user_in_tenant(session, tenant, role=Role.REVIEWER)
 
     le_id = uuid4()
     bu_id = uuid4()
@@ -517,4 +526,3 @@ def test_update_membership_scopes_management(session: Session) -> None:
     assert updated.expires_at is not None
     assert abs((updated.expires_at - exp_time).total_seconds()) < 1.0
     assert updated.is_workforce is False
-

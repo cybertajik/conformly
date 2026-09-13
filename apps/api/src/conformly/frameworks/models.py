@@ -1,8 +1,11 @@
 from datetime import UTC, datetime
 from enum import StrEnum
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import (
+    JSON,
+    Boolean,
     DateTime,
     Enum,
     ForeignKey,
@@ -37,6 +40,7 @@ class OverlayApplicability(StrEnum):
     APPLICABLE = "applicable"
     NOT_APPLICABLE = "not_applicable"
     SCOPED_OUT = "scoped_out"
+    REVIEW_REQUIRED = "review_required"
 
 
 class CustomControlStatus(StrEnum):
@@ -53,6 +57,23 @@ class MappingType(StrEnum):
 class ControlEntityType(StrEnum):
     CANONICAL = "canonical"
     CUSTOM = "custom"
+
+
+class SourceRequirementType(StrEnum):
+    CLAUSE = "clause"
+    SUBCLAUSE = "subclause"
+    SAFEGUARD = "safeguard"
+    ARTICLE = "article"
+    OUTCOME = "outcome"
+    STATUTORY = "statutory"
+    REQUIREMENT = "requirement"
+
+
+class CoverageDisposition(StrEnum):
+    IMPLEMENTED = "IMPLEMENTED"
+    NOT_CUSTOMER_OBLIGATION = "NOT_CUSTOMER_OBLIGATION"
+    PROFILE_EXCLUSION = "PROFILE_EXCLUSION"
+    BLOCKED = "BLOCKED"
 
 
 class Framework(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -110,6 +131,23 @@ class FrameworkVersion(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         cascade="all, delete-orphan",
         order_by="CanonicalControl.sort_order",
     )
+    source_requirements: Mapped[list["SourceRequirement"]] = relationship(
+        back_populates="framework_version",
+        cascade="all, delete-orphan",
+        order_by="SourceRequirement.sort_order",
+    )
+    coverage_ledger_entries: Mapped[list["CoverageLedgerEntry"]] = relationship(
+        back_populates="framework_version",
+        cascade="all, delete-orphan",
+    )
+    requirement_control_mappings: Mapped[list["RequirementControlMapping"]] = relationship(
+        back_populates="framework_version",
+        cascade="all, delete-orphan",
+    )
+    evidence_specifications: Mapped[list["EvidenceSpecification"]] = relationship(
+        back_populates="framework_version",
+        cascade="all, delete-orphan",
+    )
 
 
 class CanonicalControl(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -134,6 +172,13 @@ class CanonicalControl(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     framework_version: Mapped["FrameworkVersion"] = relationship(back_populates="controls")
+    requirement_mappings: Mapped[list["RequirementControlMapping"]] = relationship(
+        back_populates="canonical_control",
+        cascade="all, delete-orphan",
+    )
+    evidence_specifications: Mapped[list["EvidenceSpecification"]] = relationship(
+        back_populates="canonical_control",
+    )
 
 
 class TenantFrameworkAdoption(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -185,6 +230,9 @@ class TenantFrameworkAdoption(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     overlays: Mapped[list["TenantControlOverlay"]] = relationship(
         back_populates="adoption", cascade="all, delete-orphan"
     )
+    applicability_profiles: Mapped[list["TenantApplicabilityProfile"]] = relationship(
+        back_populates="adoption", cascade="all, delete-orphan"
+    )
 
 
 class TenantControlOverlay(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -223,6 +271,40 @@ class TenantControlOverlay(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
 
     adoption: Mapped["TenantFrameworkAdoption"] = relationship(back_populates="overlays")
+
+
+class TenantApplicabilityProfile(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """Persisted scope evaluation facts, answers, sources, evaluator version, and review records."""
+
+    __tablename__ = "tenant_applicability_profiles"
+    __table_args__ = (
+        Index("ix_tenant_applicability_profiles_tenant", "tenant_id"),
+        Index("ix_tenant_applicability_profiles_adoption", "adoption_id"),
+    )
+
+    tenant_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
+    )
+    adoption_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("tenant_framework_adoptions.id", ondelete="CASCADE"), nullable=False
+    )
+    evaluator_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    profile_answers_json: Mapped[str] = mapped_column(Text, nullable=False)
+    sources_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    contradictions_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    evaluation_summary_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    evaluated_by_user_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
+    )
+    reviewed_by_user_id: Mapped[UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    review_status: Mapped[str] = mapped_column(String(32), default="EVALUATED", nullable=False)
+
+    adoption: Mapped["TenantFrameworkAdoption"] = relationship(
+        back_populates="applicability_profiles"
+    )
 
 
 class CustomControl(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -280,4 +362,186 @@ class ControlMapping(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     rationale: Mapped[str | None] = mapped_column(Text)
     created_by_user_id: Mapped[UUID] = mapped_column(
         Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
+    )
+
+
+class SourceRequirement(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """System-scoped official source requirement (statutory article, standard clause, safeguard)."""
+
+    __tablename__ = "source_requirements"
+    __table_args__ = (
+        UniqueConstraint(
+            "framework_version_id",
+            "source_reference",
+            name="uq_source_requirements_version_ref",
+        ),
+        Index("ix_source_requirements_version", "framework_version_id"),
+        Index("ix_source_requirements_type", "requirement_type"),
+    )
+
+    framework_version_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("framework_versions.id", ondelete="CASCADE"), nullable=False
+    )
+    source_reference: Mapped[str] = mapped_column(String(100), nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    requirement_type: Mapped[SourceRequirementType] = mapped_column(
+        Enum(SourceRequirementType, native_enum=False, length=32),
+        default=SourceRequirementType.CLAUSE,
+        nullable=False,
+    )
+    source_authority: Mapped[str] = mapped_column(String(255), nullable=False)
+    source_url: Mapped[str | None] = mapped_column(String(500))
+    retrieval_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    edition_or_amendment: Mapped[str] = mapped_column(String(100), nullable=False)
+    language: Mapped[str] = mapped_column(String(10), default="en", nullable=False)
+    effective_date: Mapped[str | None] = mapped_column(String(50))
+    content_rights: Mapped[str] = mapped_column(Text, nullable=False)
+    permitted_use: Mapped[str | None] = mapped_column(Text)
+    source_text: Mapped[str] = mapped_column(Text, nullable=False)
+    conformly_guidance: Mapped[str | None] = mapped_column(Text)
+    suggested_operating_targets: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    assessment_procedure: Mapped[str | None] = mapped_column(Text)
+    default_owner_role: Mapped[str | None] = mapped_column(String(64))
+    review_cadence: Mapped[str | None] = mapped_column(String(64))
+    applicability_conditions: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    reporting_limitations: Mapped[str | None] = mapped_column(Text)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    framework_version: Mapped["FrameworkVersion"] = relationship(
+        back_populates="source_requirements"
+    )
+    control_mappings: Mapped[list["RequirementControlMapping"]] = relationship(
+        back_populates="source_requirement", cascade="all, delete-orphan"
+    )
+    evidence_specifications: Mapped[list["EvidenceSpecification"]] = relationship(
+        back_populates="source_requirement"
+    )
+    coverage_ledger_entry: Mapped["CoverageLedgerEntry | None"] = relationship(
+        back_populates="source_requirement", cascade="all, delete-orphan", uselist=False
+    )
+
+
+class RequirementControlMapping(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """System-scoped mapping linking an official SourceRequirement to a CanonicalControl."""
+
+    __tablename__ = "requirement_control_mappings"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_requirement_id",
+            "canonical_control_id",
+            name="uq_req_control_mappings_req_ctrl",
+        ),
+        Index("ix_req_ctrl_mappings_version", "framework_version_id"),
+        Index("ix_req_ctrl_mappings_req", "source_requirement_id"),
+        Index("ix_req_ctrl_mappings_ctrl", "canonical_control_id"),
+    )
+
+    framework_version_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("framework_versions.id", ondelete="CASCADE"), nullable=False
+    )
+    source_requirement_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("source_requirements.id", ondelete="CASCADE"), nullable=False
+    )
+    canonical_control_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("canonical_controls.id", ondelete="CASCADE"), nullable=False
+    )
+    mapping_type: Mapped[MappingType] = mapped_column(
+        Enum(MappingType, native_enum=False, length=32),
+        default=MappingType.SATISFIES,
+        nullable=False,
+    )
+    rationale: Mapped[str | None] = mapped_column(Text)
+
+    framework_version: Mapped["FrameworkVersion"] = relationship(
+        back_populates="requirement_control_mappings"
+    )
+    source_requirement: Mapped["SourceRequirement"] = relationship(
+        back_populates="control_mappings"
+    )
+    canonical_control: Mapped["CanonicalControl"] = relationship(
+        back_populates="requirement_mappings"
+    )
+
+
+class EvidenceSpecification(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """System-scoped structured specification of evidence expected for a control/requirement."""
+
+    __tablename__ = "evidence_specifications"
+    __table_args__ = (
+        UniqueConstraint(
+            "framework_version_id",
+            "identifier",
+            name="uq_evidence_specifications_version_ident",
+        ),
+        Index("ix_evidence_specifications_version", "framework_version_id"),
+        Index("ix_evidence_specifications_control", "canonical_control_id"),
+        Index("ix_evidence_specifications_req", "source_requirement_id"),
+    )
+
+    framework_version_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("framework_versions.id", ondelete="CASCADE"), nullable=False
+    )
+    canonical_control_id: Mapped[UUID | None] = mapped_column(
+        Uuid, ForeignKey("canonical_controls.id", ondelete="SET NULL")
+    )
+    source_requirement_id: Mapped[UUID | None] = mapped_column(
+        Uuid, ForeignKey("source_requirements.id", ondelete="SET NULL")
+    )
+    identifier: Mapped[str] = mapped_column(String(100), nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    original_file_required: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    observation_period_days: Mapped[int | None] = mapped_column(Integer)
+    validity_period_days: Mapped[int | None] = mapped_column(Integer)
+    review_cadence_days: Mapped[int | None] = mapped_column(Integer)
+    confidentiality_level: Mapped[str] = mapped_column(
+        String(32), default="Internal", nullable=False
+    )
+    suggested_storage_format: Mapped[str | None] = mapped_column(String(64))
+
+    framework_version: Mapped["FrameworkVersion"] = relationship(
+        back_populates="evidence_specifications"
+    )
+    canonical_control: Mapped["CanonicalControl | None"] = relationship(
+        back_populates="evidence_specifications"
+    )
+    source_requirement: Mapped["SourceRequirement | None"] = relationship(
+        back_populates="evidence_specifications"
+    )
+
+
+class CoverageLedgerEntry(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """System-scoped ledger entry tracking the explicit disposition of every source requirement."""
+
+    __tablename__ = "coverage_ledger_entries"
+    __table_args__ = (
+        UniqueConstraint(
+            "framework_version_id",
+            "source_requirement_id",
+            name="uq_coverage_ledger_version_req",
+        ),
+        Index("ix_coverage_ledger_version_disposition", "framework_version_id", "disposition"),
+    )
+
+    framework_version_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("framework_versions.id", ondelete="CASCADE"), nullable=False
+    )
+    source_requirement_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("source_requirements.id", ondelete="CASCADE"), nullable=False
+    )
+    disposition: Mapped[CoverageDisposition] = mapped_column(
+        Enum(CoverageDisposition, native_enum=False, length=32), nullable=False
+    )
+    rationale: Mapped[str] = mapped_column(Text, nullable=False)
+    reviewed_by_user_id: Mapped[UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="SET NULL")
+    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    framework_version: Mapped["FrameworkVersion"] = relationship(
+        back_populates="coverage_ledger_entries"
+    )
+    source_requirement: Mapped["SourceRequirement"] = relationship(
+        back_populates="coverage_ledger_entry"
     )

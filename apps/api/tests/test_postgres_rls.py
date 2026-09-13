@@ -135,3 +135,68 @@ def test_postgresql_membership_rls_enforces_discovery_and_selected_tenant() -> N
         assert [event.action for event in visible_audits] == ["rls.first_tenant"]
         session.close()
         transaction.rollback()
+
+
+def test_postgresql_framework_evidence_requests_rls_enforces_tenant_isolation() -> None:
+    """PostgreSQL RLS policy framework_requests_tenant strictly isolates framework_evidence_requests across tenants."""
+    database_url = os.getenv("CONFORMLY_TEST_APP_DATABASE_URL")
+    if not database_url:
+        pytest.skip("PostgreSQL app-role integration URL is not configured")
+
+    from conformly.frameworks.workflow import FrameworkEvidenceRequest
+
+    engine = create_engine(database_url)
+    with engine.connect() as connection, connection.begin() as transaction:
+        session = Session(bind=connection)
+        user_1 = User(
+            oidc_issuer="https://rls.example.test",
+            oidc_subject=str(uuid4()),
+            email=f"{uuid4()}@example.test",
+            display_name="User 1",
+        )
+        user_2 = User(
+            oidc_issuer="https://rls.example.test",
+            oidc_subject=str(uuid4()),
+            email=f"{uuid4()}@example.test",
+            display_name="User 2",
+        )
+        tenant_1 = Tenant(name="Tenant 1 RLS", slug=f"t1-rls-{uuid4().hex[:8]}")
+        tenant_2 = Tenant(name="Tenant 2 RLS", slug=f"t2-rls-{uuid4().hex[:8]}")
+        session.add_all([user_1, user_2, tenant_1, tenant_2])
+        session.flush()
+
+        set_rls_context(session, user_id=user_1.id, tenant_id=tenant_1.id, tenant_verified=True)
+
+        req_1 = FrameworkEvidenceRequest(
+            tenant_id=tenant_1.id,
+            adoption_id=uuid4(),
+            specification_id=uuid4(),
+            task_id=uuid4(),
+        )
+        session.add(req_1)
+        session.flush()
+
+        set_rls_context(session, user_id=user_2.id, tenant_id=tenant_2.id, tenant_verified=True)
+
+        req_2 = FrameworkEvidenceRequest(
+            tenant_id=tenant_2.id,
+            adoption_id=uuid4(),
+            specification_id=uuid4(),
+            task_id=uuid4(),
+        )
+        session.add(req_2)
+        session.flush()
+
+        # Under tenant_2 context, only tenant_2 requests are visible
+        t2_visible = session.scalars(select(FrameworkEvidenceRequest)).all()
+        assert len(t2_visible) == 1
+        assert t2_visible[0].id == req_2.id
+
+        # Switch back to tenant_1 context, only tenant_1 requests are visible
+        set_rls_context(session, user_id=user_1.id, tenant_id=tenant_1.id, tenant_verified=True)
+        t1_visible = session.scalars(select(FrameworkEvidenceRequest)).all()
+        assert len(t1_visible) == 1
+        assert t1_visible[0].id == req_1.id
+
+        session.close()
+        transaction.rollback()

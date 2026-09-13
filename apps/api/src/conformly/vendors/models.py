@@ -45,8 +45,12 @@ class Vendor(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     country_residency: Mapped[str] = mapped_column(String(50), default="DE", nullable=False)
     dpa_signed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    security_reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    next_review_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    security_reviewed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    next_review_due_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     owner_user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )

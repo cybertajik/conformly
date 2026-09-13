@@ -1,8 +1,9 @@
 from uuid import uuid4
+
 import pytest
 from sqlalchemy.orm import Session
 
-from conformly.authz.policy import Principal, TenantContext, AuthorizationDeniedError
+from conformly.authz.policy import Principal, TenantContext
 from conformly.authz.roles import Role
 from conformly.organization import service
 from conformly.organization.service import OrganizationNotFoundError

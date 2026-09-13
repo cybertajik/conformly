@@ -154,4 +154,48 @@ def test_dev_token_verifier_and_mint_roundtrip() -> None:
     assert claims.display_name == "Dev Tester"
     assert claims.email_verified is True
     assert claims.issuer == "https://development.invalid"
+    assert claims.mfa_verified is True
+    assert "otp" in claims.amr
 
+
+def test_mfa_enforcement_for_privileged_roles(session: Session) -> None:
+    from fastapi import HTTPException
+
+    from conformly.auth.dependencies import get_tenant_context
+    from conformly.authz.policy import Principal
+    from conformly.authz.roles import Role
+    from conformly.identity.models import Membership, MembershipStatus, Tenant, TenantStatus
+
+    user = create_user_session(session, session_id="mfa-session")
+    tenant = Tenant(name="MFA Test Tenant", slug="mfa-test", status=TenantStatus.ACTIVE)
+    session.add(tenant)
+    session.flush()
+
+    # Create Owner membership
+    membership = Membership(
+        tenant_id=tenant.id,
+        user_id=user.id,
+        role=Role.OWNER,
+        status=MembershipStatus.ACTIVE,
+    )
+    session.add(membership)
+    session.commit()
+
+    # Principal without MFA should be rejected with 403
+    unauthenticated_mfa_principal = Principal(user_id=user.id, mfa_verified=False)
+    with pytest.raises(HTTPException) as exc_info:
+        get_tenant_context(tenant.id, unauthenticated_mfa_principal, session)
+    assert exc_info.value.status_code == 403
+    assert "MFA enforcement" in exc_info.value.detail
+
+    # Principal with MFA should succeed
+    mfa_verified_principal = Principal(user_id=user.id, mfa_verified=True)
+    context = get_tenant_context(tenant.id, mfa_verified_principal, session)
+    assert context.tenant_id == tenant.id
+    assert context.role == Role.OWNER
+
+    # Non-privileged role (EMPLOYEE) does not require MFA
+    membership.role = Role.EMPLOYEE
+    session.commit()
+    employee_context = get_tenant_context(tenant.id, unauthenticated_mfa_principal, session)
+    assert employee_context.role == Role.EMPLOYEE

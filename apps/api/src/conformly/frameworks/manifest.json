@@ -1,0 +1,309 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Conformly Module A Beta Release Manifest",
+  "generated_at": "2026-09-13T12:15:00Z",
+  "release_target": "Module A Beta (Tier A Core Compliance)",
+  "authority": "docs/PRODUCT_SOURCE_OF_TRUTH.md and docs/MODULE_A_BETA_IMPLEMENTATION_PROMPT.md",
+  "summary": {
+    "total_catalog_candidates": 54,
+    "required_beta_count": 6,
+    "owner_decision_required_count": 4,
+    "later_a_count": 44,
+    "working_implementation_batch_size": 6
+  },
+  "packs": [
+    {
+      "pack_id": "iso-27001",
+      "name": "ISO/IEC 27001:2022 ISMS Pre-Audit Readiness",
+      "source_edition": "ISO/IEC 27001:2022 (incorporating ISO/IEC 27001:2022/Amd 1:2024 Climate Action)",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "Global / International",
+      "declared_scope": "Full ISMS context (Clauses 4-10) and Annex A Reference Controls (A.5-A.8)",
+      "profile": "ISMS Pre-Audit Readiness Profile",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-057 & docs/PRODUCT_SOURCE_OF_TRUTH.md; part of initial 5-pack Core Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Security & Compliance Architecture",
+      "blockers": [
+        "Annex A and Clauses 4-10 full source requirement decomposition",
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs_data.py",
+        "docs/FRAMEWORK_PACKS_TIER_A.md#1-isoiec-270012022",
+        "https://www.iso.org/standard/27001"
+      ]
+    },
+    {
+      "pack_id": "gdpr-bdsg",
+      "name": "EU GDPR & German BDSG Privacy Operations",
+      "source_edition": "Regulation (EU) 2016/679 (GDPR) & German BDSG (BDSG n.F. 2018 as amended)",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "European Union (EU/EEA) & Germany (DE)",
+      "declared_scope": "SaaS Controller & Processor compliance obligations, data subject rights, Art 30 VVT, Art 32 TOMs, Art 33-34 breach response, Art 35 DPIA, Art 37-39 & BDSG § 38 DPO, Chapter V transfers, and § 26 BDSG employee data processing",
+      "profile": "EU SaaS Controller & Processor Baseline Profile with German National Supplement",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-057 & docs/PRODUCT_SOURCE_OF_TRUTH.md; baseline European privacy foundation",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Data Protection & Regulatory Counsel",
+      "blockers": [
+        "Comprehensive Article-level requirement coverage expansion beyond current 15 entries",
+        "Independent human legal and compliance review"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs_data.py",
+        "docs/FRAMEWORK_PACKS_TIER_A.md#2-eu-gdpr--german-bdsg",
+        "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+        "https://www.gesetze-im-internet.de/bdsg_2018/"
+      ]
+    },
+    {
+      "pack_id": "nist-csf",
+      "name": "NIST Cybersecurity Framework 2.0",
+      "source_edition": "NIST CSWP 29 / The NIST Cybersecurity Framework 2.0 (February 2024)",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "United States (US) & Global Commercial Workloads",
+      "declared_scope": "NIST CSF 2.0 Core: Govern (GV), Identify (ID), Protect (PR), Detect (DE), Respond (RS), Recover (RC) across all 106 official Core subcategories",
+      "profile": "Organizational Target Profile Baseline",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-057 & docs/PRODUCT_SOURCE_OF_TRUTH.md; standard cyber risk baseline",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Platform Security Team",
+      "blockers": [
+        "Complete 106 Core Subcategory mapping and evidence specifications implemented",
+        "Independent reviewer approval"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/nist_csf.py",
+        "docs/FRAMEWORK_PACKS_TIER_A.md#3-nist-cybersecurity-framework-20",
+        "https://doi.org/10.6028/NIST.CSWP.29"
+      ]
+    },
+    {
+      "pack_id": "cis-controls-ig1",
+      "name": "CIS Critical Security Controls v8 IG1",
+      "source_edition": "CIS Controls Version 8 (Implementation Group 1 - Basic Cyber Hygiene)",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "Global Enterprise / Baseline Defense",
+      "declared_scope": "56 official CIS IG1 safeguards across 18 control families for foundational defense",
+      "profile": "Implementation Group 1 (IG1) Essential Hygiene",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-057 & docs/PRODUCT_SOURCE_OF_TRUTH.md; SMB & starter cyber hygiene standard",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Infrastructure & Security Engineering",
+      "blockers": [
+        "Exhaustive 56 safeguard enumeration (expanded from current 10 summary entries)",
+        "Independent reviewer approval"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs_data.py",
+        "docs/FRAMEWORK_PACKS_TIER_A.md#4-cis-critical-security-controls-v8-ig1",
+        "https://www.cisecurity.org/controls/implementation-groups"
+      ]
+    },
+    {
+      "pack_id": "mvsp",
+      "name": "Minimum Viable Secure Product 2.0",
+      "source_edition": "MVSP Version 2.0 (Official MVSP Working Group 2024 Specification)",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "Global SaaS / Enterprise Vendor Assurance",
+      "declared_scope": "Full MVSP checklist across Business, Application, Operational, and Physical Security",
+      "profile": "SaaS Minimum Security Profile",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-057 & docs/PRODUCT_SOURCE_OF_TRUTH.md; rapid vendor compliance baseline",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Product Security Team",
+      "blockers": [
+        "Checklist requirement numbering alignment with official published release",
+        "Independent reviewer approval"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs_data.py",
+        "docs/FRAMEWORK_PACKS_TIER_A.md#5-minimum-viable-secure-product-v20",
+        "https://mvsp.dev/"
+      ]
+    },
+    {
+      "pack_id": "iso-9001",
+      "name": "ISO 9001:2015 Quality Management System Pre-Audit Readiness",
+      "source_edition": "ISO 9001:2015 (incorporating Technical Corrigendum 1:2009 errata, confirmed 2021)",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "Global / Commercial Operations",
+      "declared_scope": "Quality Management System (QMS) all addressable subclauses of Clauses 4-10: Context, Leadership, Planning, Support, Operation (incl. D&D Clause 8.3 and External Providers Clause 8.4), Performance Evaluation, Improvement",
+      "profile": "General QMS Pre-Audit Readiness — applicable to any organization seeking ISO 9001 certification or readiness assessment",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-059 — Product Owner explicitly admitted ISO 9001 to Module A Beta, 2026-09-13. Supersedes prior OWNER_DECISION_REQUIRED status.",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Quality & Compliance Architecture",
+      "blockers": [
+        "Independent legal/IP counsel review required to confirm control guidance phrasing is non-infringing of ISO/TC 176/SC 2 copyright prior to production customer issuance",
+        "Independent second-person human review and formal approval required before RELEASED state"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/iso_9001.py",
+        "docs/FRAMEWORK_PACKS_TIER_A.md#6-iso-90012015-quality-management-system",
+        "https://www.iso.org/standard/62085.html"
+      ]
+    },
+    {
+      "pack_id": "us-ca-ccpa-cpra",
+      "name": "California Consumer Privacy Act (CCPA as amended by CPRA)",
+      "source_edition": "Cal. Civ. Code § 1798.100 et seq. & CPPA Regulations (11 CCR § 7000 et seq.)",
+      "conformly_content_revision": "none",
+      "jurisdiction": "United States - California (US-CA)",
+      "declared_scope": "Consumer privacy rights (opt-out of sale/share, limit use of sensitive personal information), notice at collection, privacy policy, vendor/service provider contracts",
+      "profile": "For-Profit Business Meeting Statutory Thresholds",
+      "required_for_beta_status": "OWNER_DECISION_REQUIRED",
+      "decision_provenance": "docs/GLOBAL_FRAMEWORK_CATALOG.md Section 6",
+      "content_state": "UNIMPLEMENTED_PENDING_OWNER_CONFIRMATION",
+      "owner": "Product Owner",
+      "blockers": [
+        "Requires explicit Product Owner decision: whether required for beta or deferred to general Tier A",
+        "Threshold evaluation rule design (annual gross revenue >$25M, buying/selling 100k consumers, 50% revenue from selling)",
+        "Service provider contract clause review under § 1798.140(ag)"
+      ],
+      "evidence": [
+        "docs/GLOBAL_FRAMEWORK_CATALOG.md#6-united-states",
+        "https://cppa.ca.gov/regulations/"
+      ]
+    },
+    {
+      "pack_id": "sa-pdpl",
+      "name": "Saudi Arabia Personal Data Protection Law (PDPL)",
+      "source_edition": "Royal Decree No. M/19 of 9/2/1443H (as amended by M/148 of 5/9/1444H) & Implementing Regulations (SDAIA)",
+      "conformly_content_revision": "none",
+      "jurisdiction": "Kingdom of Saudi Arabia (SA)",
+      "declared_scope": "Controller obligations, data subject rights, legal bases, cross-border transfer rules, record of processing activities",
+      "profile": "Saudi Commercial Entity Baseline",
+      "required_for_beta_status": "OWNER_DECISION_REQUIRED",
+      "decision_provenance": "docs/GLOBAL_FRAMEWORK_CATALOG.md Section 7",
+      "content_state": "UNIMPLEMENTED_PENDING_OWNER_CONFIRMATION",
+      "owner": "Product Owner",
+      "blockers": [
+        "Requires explicit Product Owner decision: whether required for beta or deferred to general Tier A",
+        "SDAIA executive regulation mapping and cross-border transfer regulatory review"
+      ],
+      "evidence": [
+        "docs/GLOBAL_FRAMEWORK_CATALOG.md#7-arab-country-coverage",
+        "https://sdaia.gov.sa/en/SDAIA/about/Pages/RegulationsAndPolicies.aspx"
+      ]
+    },
+    {
+      "pack_id": "jp-appi",
+      "name": "Japan Act on the Protection of Personal Information (APPI)",
+      "source_edition": "Act No. 57 of 2003 (as amended through 2020/2022 reforms) & PPC Guidelines",
+      "conformly_content_revision": "none",
+      "jurisdiction": "Japan (JP)",
+      "declared_scope": "Personal Information Handling Business Operator (PIHBO) obligations, purpose of use specification, safety management measures, provision to third parties, cross-border transfers",
+      "profile": "Commercial Enterprise Operating in Japan",
+      "required_for_beta_status": "OWNER_DECISION_REQUIRED",
+      "decision_provenance": "docs/GLOBAL_FRAMEWORK_CATALOG.md Section 9",
+      "content_state": "UNIMPLEMENTED_PENDING_OWNER_CONFIRMATION",
+      "owner": "Product Owner",
+      "blockers": [
+        "Requires explicit Product Owner decision: whether required for beta or deferred to general Tier A",
+        "Personal Information Protection Commission (PPC) guideline translation & legal verification"
+      ],
+      "evidence": [
+        "docs/GLOBAL_FRAMEWORK_CATALOG.md#9-japan",
+        "https://www.ppc.go.jp/personalinfo/legal/"
+      ]
+    },
+    {
+      "pack_id": "au-privacy-act",
+      "name": "Australia Privacy Act 1988 & Australian Privacy Principles (APPs)",
+      "source_edition": "Privacy Act 1988 (Cth) incorporating 13 Australian Privacy Principles & Notifiable Data Breaches (NDB) Scheme",
+      "conformly_content_revision": "none",
+      "jurisdiction": "Australia (AU)",
+      "declared_scope": "APP entity obligations (open & transparent management, collection, use/disclosure, cross-border disclosure under APP 8, security of personal information under APP 11, access and correction), NDB mandatory notification",
+      "profile": "APP Entity (Turnover > $3M AUD or Health/Opt-in Small Business)",
+      "required_for_beta_status": "OWNER_DECISION_REQUIRED",
+      "decision_provenance": "docs/GLOBAL_FRAMEWORK_CATALOG.md Section 10",
+      "content_state": "UNIMPLEMENTED_PENDING_OWNER_CONFIRMATION",
+      "owner": "Product Owner",
+      "blockers": [
+        "Requires explicit Product Owner decision: whether required for beta or deferred to general Tier A",
+        "OAIC guideline alignment and small business exemption evaluation rules ($3M turnover threshold)"
+      ],
+      "evidence": [
+        "docs/GLOBAL_FRAMEWORK_CATALOG.md#10-australia",
+        "https://www.oaic.gov.au/privacy/australian-privacy-principles"
+      ]
+    },
+    {
+      "pack_id": "cisa-cpg",
+      "name": "CISA Cross-Sector Cybersecurity Performance Goals",
+      "source_edition": "CISA CPG Version 1.0.1 (March 2023)",
+      "conformly_content_revision": "none",
+      "jurisdiction": "United States / Critical Infrastructure & General Cyber",
+      "declared_scope": "Baseline cyber performance goals across Account Security, Device Security, Data Security, Governance, Response, Supply Chain",
+      "profile": "Baseline Cross-Sector Cyber Hygiene",
+      "required_for_beta_status": "LATER_A",
+      "decision_provenance": "docs/GLOBAL_FRAMEWORK_CATALOG.md Section 4",
+      "content_state": "ROADMAP_BACKLOG",
+      "owner": "Conformly Security Architecture",
+      "blockers": ["Scheduled for Tier A Post-Beta"],
+      "evidence": ["https://www.cisa.gov/cybersecurity-performance-goals"]
+    },
+    {
+      "pack_id": "au-essential-eight-l1",
+      "name": "Essential Eight Maturity Level 1 Profile",
+      "source_edition": "Australian Signals Directorate (ASD) Essential Eight Maturity Model (2023)",
+      "conformly_content_revision": "none",
+      "jurisdiction": "Australia (AU) / Global Operations",
+      "declared_scope": "Introductory Maturity Level 1 strategies: application control, patch applications, configure Microsoft Office macros, user application hardening, restrict admin privileges, patch OS, MFA, regular backups",
+      "profile": "Maturity Level 1",
+      "required_for_beta_status": "LATER_A",
+      "decision_provenance": "docs/GLOBAL_FRAMEWORK_CATALOG.md Section 10",
+      "content_state": "ROADMAP_BACKLOG",
+      "owner": "Conformly Security Architecture",
+      "blockers": ["Scheduled for Tier A Post-Beta"],
+      "evidence": ["https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/essential-eight"]
+    },
+    {
+      "pack_id": "eu-national-privacy-overlays",
+      "name": "EU 26 Member State National Privacy Overlays",
+      "source_edition": "National transposition statutes (Austria DSG, France Data Protection Act, Spain LOPDGDD, Italy Privacy Code, etc.)",
+      "conformly_content_revision": "none",
+      "jurisdiction": "26 European Union Member States (excluding Germany which is covered in gdpr-bdsg)",
+      "declared_scope": "National DPO appointment criteria, employee privacy rules, age of digital consent, supervisory authority notification details",
+      "profile": "National Jurisdictional Overlays to GDPR",
+      "required_for_beta_status": "LATER_A",
+      "decision_provenance": "docs/GLOBAL_FRAMEWORK_CATALOG.md Section 5 Mandatory Country Coverage Register",
+      "content_state": "RESEARCH_REQUIRED",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": ["Requires individual country research and reviewed overlays; no single template substitute permitted"],
+      "evidence": ["https://www.edpb.europa.eu/about-edpb/our-members_en"]
+    },
+    {
+      "pack_id": "us-state-privacy-overlays",
+      "name": "US 49 State Privacy & Breach Notification Overlays",
+      "source_edition": "State statutes (Virginia VCDPA, Colorado CPA, Connecticut CTDPA, Texas TDPSA, etc.)",
+      "conformly_content_revision": "none",
+      "jurisdiction": "49 US States + District of Columbia (excluding California)",
+      "declared_scope": "State omnibus privacy obligations and mandatory breach notification timelines",
+      "profile": "State Jurisdictional Overlays",
+      "required_for_beta_status": "LATER_A",
+      "decision_provenance": "docs/GLOBAL_FRAMEWORK_CATALOG.md Section 6 US State Register",
+      "content_state": "RESEARCH_REQUIRED",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": ["Scheduled for post-beta progressive rollout"],
+      "evidence": ["docs/GLOBAL_FRAMEWORK_CATALOG.md#state-register"]
+    },
+    {
+      "pack_id": "arab-privacy-candidates",
+      "name": "Arab League Country Privacy Candidates (21 Countries)",
+      "source_edition": "National laws (UAE Federal Decree 45/2021, Qatar Law 13/2016, Bahrain Law 30/2018, Oman RD 6/2022, Kuwait CITRA, Egypt Law 151/2020, Morocco 09-08, Jordan Law 24/2023, etc.)",
+      "conformly_content_revision": "none",
+      "jurisdiction": "21 Arab League Countries (excluding Saudi Arabia)",
+      "declared_scope": "National privacy and personal data protection regulations",
+      "profile": "National Commercial Overlays",
+      "required_for_beta_status": "LATER_A",
+      "decision_provenance": "docs/GLOBAL_FRAMEWORK_CATALOG.md Section 7",
+      "content_state": "RESEARCH_REQUIRED",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": ["Scheduled for post-beta regional expansion"],
+      "evidence": ["docs/GLOBAL_FRAMEWORK_CATALOG.md#7-arab-country-coverage"]
+    }
+  ]
+}

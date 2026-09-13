@@ -618,7 +618,9 @@ class TestCertificateIssuance:
         cert = svc.issue_certificate(lead_p, ctx, pa.id)
         assert cert.status == CertificateStatus.ACTIVE
 
-        suspended = svc.suspend_certificate(lead_p, ctx, pa.id, cert.id, reason="Control under review")
+        suspended = svc.suspend_certificate(
+            lead_p, ctx, pa.id, cert.id, reason="Control under review"
+        )
         assert suspended.status == CertificateStatus.SUSPENDED
         assert suspended.suspended_reason == "Control under review"
         assert suspended.suspended_at is not None

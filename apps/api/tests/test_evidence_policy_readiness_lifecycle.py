@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from io import BytesIO
 from uuid import uuid4
 
@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy.orm import Session
 
 from conformly.authz.policy import Principal, TenantContext
-from conformly.authz.roles import Capability, Role
+from conformly.authz.roles import Role
 from conformly.compliance.models import (
     ControlImplementationStatus,
     EvidenceControlLink,
@@ -30,11 +30,9 @@ from conformly.frameworks.models import (
     ControlEntityType,
     Framework,
     FrameworkVersion,
-    OverlayApplicability,
     ReleaseState,
     TenantFrameworkAdoption,
 )
-from conformly.frameworks.service import FrameworkService
 from conformly.identity.models import (
     Membership,
     MembershipStatus,
@@ -43,7 +41,7 @@ from conformly.identity.models import (
     User,
     UserStatus,
 )
-from conformly.preaudit.models import CertificateStatus, CheckResult
+from conformly.preaudit.models import CertificateStatus
 from conformly.preaudit.service import (
     CertificateIssuanceBlockedError,
     PreAuditService,
@@ -504,7 +502,6 @@ def test_readiness_assessor_reviewer_tenant_approval_and_auto_suspension(
     tenant, lead, reviewer, owner, adoption, ctrl = _setup_preaudit_env(session)
     preaudit_svc = PreAuditService(session)
     compliance_svc = ComplianceService(session, test_codec)
-    framework_svc = FrameworkService(session)
 
     lead_p = Principal(user_id=lead.id, is_platform_admin=False)
     lead_ctx = TenantContext(tenant_id=tenant.id, user_id=lead.id, role=Role.COMPLIANCE_MANAGER)
@@ -540,9 +537,7 @@ def test_readiness_assessor_reviewer_tenant_approval_and_auto_suspension(
     )
 
     # 4. Reviewer completes review (verifying canonical Reviewer has PREAUDIT_REVIEW capability)
-    pa = preaudit_svc.complete_review(
-        reviewer_p, reviewer_ctx, pa.id, expected_version=pa.version
-    )
+    pa = preaudit_svc.complete_review(reviewer_p, reviewer_ctx, pa.id, expected_version=pa.version)
     assert pa.reviewed_at is not None
 
     # Reviewer cannot tenant-approve

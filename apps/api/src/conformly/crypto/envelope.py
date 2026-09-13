@@ -8,9 +8,7 @@ from conformly.crypto.providers import (
     AES256GCMProvider,
     CryptoProvider,
     InvalidCiphertextError,
-    KeyConfigurationError,
     KeyManagementProvider,
-    LocalKeyManagementProvider,
 )
 from conformly.crypto.types import (
     AEADCiphertext,
@@ -102,10 +100,10 @@ class EnvelopeEncryptionService:
 
 @lru_cache
 def get_envelope_encryption_service() -> EnvelopeEncryptionService:
+    from conformly.crypto.providers import get_kms_provider
+
     settings = get_settings()
-    if not settings.local_keks or not settings.active_kek_version:
-        raise KeyConfigurationError("local development KEK settings are incomplete")
     return EnvelopeEncryptionService(
         AES256GCMProvider(),
-        LocalKeyManagementProvider(settings.local_keks, settings.active_kek_version),
+        get_kms_provider(settings),
     )

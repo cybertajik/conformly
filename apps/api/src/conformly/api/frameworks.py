@@ -10,7 +10,13 @@ from sqlalchemy.orm import Session
 from conformly.auth.dependencies import CurrentPrincipal, CurrentTenant
 from conformly.authz.policy import AuthorizationDeniedError
 from conformly.db.session import get_db
+from conformly.entitlements.dependencies import require_module
+from conformly.frameworks.applicability import (
+    TenantProfileContext,
+    evaluate_and_apply_adoption_applicability,
+)
 from conformly.frameworks.impact import ControlModification, ControlSummaryItem, TenantImpactWarning
+from conformly.frameworks.manifest import get_pack_manifest_by_id
 from conformly.frameworks.models import (
     ControlEntityType,
     CustomControlStatus,
@@ -32,8 +38,6 @@ from conformly.frameworks.service import (
     InvalidStateTransitionError,
     UnapprovedReleaseError,
 )
-
-from conformly.entitlements.dependencies import require_module
 
 canonical_router = APIRouter(prefix="/v1/frameworks", tags=["canonical_frameworks"])
 tenant_router = APIRouter(
@@ -74,6 +78,10 @@ class CanonicalControlResponse(BaseModel):
     guidance: str | None = None
     sort_order: int
     created_at: datetime
+    source_reference: str | None = None
+    why_evidence_requested: str | None = None
+    coverage_disposition: str | None = None
+    coverage_rationale: str | None = None
 
 
 class FrameworkVersionSummaryResponse(BaseModel):
@@ -90,6 +98,14 @@ class FrameworkVersionSummaryResponse(BaseModel):
     released_at: datetime | None
     retired_at: datetime | None
     created_at: datetime
+    source_edition: str | None = None
+    content_revision: str | None = None
+    jurisdiction: str | None = None
+    declared_scope: str | None = None
+    profile: str | None = None
+    limitations: list[str] = []
+    is_blocked: bool = False
+    required_for_beta_status: str | None = None
 
 
 class FrameworkVersionDetailResponse(FrameworkVersionSummaryResponse):
@@ -104,6 +120,14 @@ class FrameworkResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     versions: list[FrameworkVersionSummaryResponse] = []
+    source_edition: str | None = None
+    content_revision: str | None = None
+    jurisdiction: str | None = None
+    declared_scope: str | None = None
+    profile: str | None = None
+    limitations: list[str] = []
+    is_blocked: bool = False
+    required_for_beta_status: str | None = None
 
 
 class CreateVersionRequest(BaseModel):
@@ -134,6 +158,10 @@ class ReviewVersionRequest(BaseModel):
 
 class ApproveVersionRequest(BaseModel):
     notes: str | None = Field(None, max_length=2000)
+
+
+class ReturnVersionToDraftRequest(BaseModel):
+    reason: str = Field(..., min_length=3, max_length=500)
 
 
 class ImpactReportResponse(BaseModel):
@@ -265,6 +293,9 @@ def list_frameworks(
     frameworks = service.list_frameworks(is_platform_admin=principal.is_platform_admin)
     result: list[FrameworkResponse] = []
     for fw in frameworks:
+        pack_meta = get_pack_manifest_by_id(fw.slug) or {}
+        req_status = pack_meta.get("required_for_beta_status")
+        fw_blocked = req_status == "OWNER_DECISION_REQUIRED"
         versions = [
             FrameworkVersionSummaryResponse(
                 id=v.id,
@@ -280,6 +311,14 @@ def list_frameworks(
                 released_at=v.released_at,
                 retired_at=v.retired_at,
                 created_at=v.created_at,
+                source_edition=pack_meta.get("source_edition"),
+                content_revision=pack_meta.get("conformly_content_revision"),
+                jurisdiction=pack_meta.get("jurisdiction"),
+                declared_scope=pack_meta.get("declared_scope"),
+                profile=pack_meta.get("profile"),
+                limitations=list(pack_meta.get("blockers") or []),
+                is_blocked=fw_blocked or (v.release_state != ReleaseState.RELEASED),
+                required_for_beta_status=req_status,
             )
             for v in fw.versions
             if principal.is_platform_admin
@@ -294,6 +333,14 @@ def list_frameworks(
                 created_at=fw.created_at,
                 updated_at=fw.updated_at,
                 versions=versions,
+                source_edition=pack_meta.get("source_edition"),
+                content_revision=pack_meta.get("conformly_content_revision"),
+                jurisdiction=pack_meta.get("jurisdiction"),
+                declared_scope=pack_meta.get("declared_scope"),
+                profile=pack_meta.get("profile"),
+                limitations=list(pack_meta.get("blockers") or []),
+                is_blocked=fw_blocked,
+                required_for_beta_status=req_status,
             )
         )
     return result
@@ -338,6 +385,9 @@ def get_framework(
         fw = service.get_framework(
             framework_id=framework_id, is_platform_admin=principal.is_platform_admin
         )
+        pack_meta = get_pack_manifest_by_id(fw.slug) or {}
+        req_status = pack_meta.get("required_for_beta_status")
+        fw_blocked = req_status == "OWNER_DECISION_REQUIRED"
         versions = [
             FrameworkVersionSummaryResponse(
                 id=v.id,
@@ -353,6 +403,14 @@ def get_framework(
                 released_at=v.released_at,
                 retired_at=v.retired_at,
                 created_at=v.created_at,
+                source_edition=pack_meta.get("source_edition"),
+                content_revision=pack_meta.get("conformly_content_revision"),
+                jurisdiction=pack_meta.get("jurisdiction"),
+                declared_scope=pack_meta.get("declared_scope"),
+                profile=pack_meta.get("profile"),
+                limitations=list(pack_meta.get("blockers") or []),
+                is_blocked=fw_blocked or (v.release_state != ReleaseState.RELEASED),
+                required_for_beta_status=req_status,
             )
             for v in fw.versions
             if principal.is_platform_admin
@@ -366,6 +424,14 @@ def get_framework(
             created_at=fw.created_at,
             updated_at=fw.updated_at,
             versions=versions,
+            source_edition=pack_meta.get("source_edition"),
+            content_revision=pack_meta.get("conformly_content_revision"),
+            jurisdiction=pack_meta.get("jurisdiction"),
+            declared_scope=pack_meta.get("declared_scope"),
+            profile=pack_meta.get("profile"),
+            limitations=list(pack_meta.get("blockers") or []),
+            is_blocked=fw_blocked,
+            required_for_beta_status=req_status,
         )
     except FrameworkNotFoundError as err:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err)) from err
@@ -428,20 +494,52 @@ def get_version_details(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="version does not belong to framework"
             )
-        controls = [
-            CanonicalControlResponse(
-                id=c.id,
-                framework_version_id=c.framework_version_id,
-                identifier=c.identifier,
-                title=c.title,
-                description=c.description,
-                category=c.category,
-                guidance=c.guidance,
-                sort_order=c.sort_order,
-                created_at=c.created_at,
+
+        mappings_by_ctrl = {
+            m.canonical_control_id: m for m in getattr(v, "requirement_control_mappings", [])
+        }
+        specs_by_ctrl = {
+            s.canonical_control_id: s
+            for s in getattr(v, "evidence_specifications", [])
+            if s.canonical_control_id
+        }
+        reqs_by_id = {r.id: r for r in getattr(v, "source_requirements", [])}
+        coverage_by_req = {
+            c.source_requirement_id: c for c in getattr(v, "coverage_ledger_entries", [])
+        }
+
+        controls = []
+        for c in v.controls:
+            m = mappings_by_ctrl.get(c.id)
+            source_req = reqs_by_id.get(m.source_requirement_id) if m else None
+            spec = specs_by_ctrl.get(c.id)
+            cov = coverage_by_req.get(source_req.id) if source_req else None
+
+            controls.append(
+                CanonicalControlResponse(
+                    id=c.id,
+                    framework_version_id=c.framework_version_id,
+                    identifier=c.identifier,
+                    title=c.title,
+                    description=c.description,
+                    category=c.category,
+                    guidance=c.guidance,
+                    sort_order=c.sort_order,
+                    created_at=c.created_at,
+                    source_reference=source_req.source_reference if source_req else None,
+                    why_evidence_requested=spec.description if spec else None,
+                    coverage_disposition=str(cov.disposition) if cov else None,
+                    coverage_rationale=cov.rationale if cov else None,
+                )
             )
-            for c in v.controls
-        ]
+
+        fw = service.get_framework(framework_id, is_platform_admin=principal.is_platform_admin)
+        pack_meta = get_pack_manifest_by_id(fw.slug) or {}
+        req_status = pack_meta.get("required_for_beta_status")
+        is_blocked = (req_status == "OWNER_DECISION_REQUIRED") or (
+            v.release_state != ReleaseState.RELEASED
+        )
+
         return FrameworkVersionDetailResponse(
             id=v.id,
             framework_id=v.framework_id,
@@ -457,6 +555,14 @@ def get_version_details(
             retired_at=v.retired_at,
             created_at=v.created_at,
             controls=controls,
+            source_edition=pack_meta.get("source_edition"),
+            content_revision=pack_meta.get("conformly_content_revision"),
+            jurisdiction=pack_meta.get("jurisdiction"),
+            declared_scope=pack_meta.get("declared_scope"),
+            profile=pack_meta.get("profile"),
+            limitations=list(pack_meta.get("blockers") or []),
+            is_blocked=is_blocked,
+            required_for_beta_status=req_status,
         )
     except FrameworkVersionNotFoundError as err:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err)) from err
@@ -604,6 +710,42 @@ def submit_version_for_review(
     except PermissionError as err:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(err)) from err
     except (InvalidStateTransitionError, FrameworkVersionNotFoundError) as err:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err)) from err
+
+
+@canonical_router.post(
+    "/{framework_id}/versions/{version_id}/return-draft",
+    response_model=FrameworkVersionSummaryResponse,
+)
+def return_version_to_draft(
+    framework_id: UUID,
+    version_id: UUID,
+    principal: CurrentPrincipal,
+    body: ReturnVersionToDraftRequest,
+    request: Request,
+    service: Annotated[FrameworkService, Depends(_svc)],
+) -> FrameworkVersionSummaryResponse:
+    request_id = request.headers.get("x-request-id", "req-unknown")
+    try:
+        v = service.return_version_to_draft(principal, version_id, body.reason, request_id)
+        return FrameworkVersionSummaryResponse(
+            id=v.id,
+            framework_id=v.framework_id,
+            version=v.version,
+            release_state=v.release_state,
+            release_notes=v.release_notes,
+            created_by_user_id=v.created_by_user_id,
+            legal_reviewed_by_user_id=v.legal_reviewed_by_user_id,
+            legal_reviewed_at=v.legal_reviewed_at,
+            approved_by_user_id=v.approved_by_user_id,
+            approved_at=v.approved_at,
+            released_at=v.released_at,
+            retired_at=v.retired_at,
+            created_at=v.created_at,
+        )
+    except PermissionError as err:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(err)) from err
+    except (InvalidStateTransitionError, FrameworkVersionNotFoundError, ValueError) as err:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err)) from err
 
 
@@ -788,6 +930,63 @@ def compare_versions(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err)) from err
 
 
+@canonical_router.get("/applicability-rules")
+def get_applicability_rules() -> dict[str, Any]:
+    """Return catalog schema and parameter descriptions for deterministic applicability rules."""
+    return {
+        "parameters": [
+            {
+                "field": "entity_role",
+                "type": "string",
+                "options": ["controller", "processor", "both"],
+                "description": "Role under GDPR/privacy regulations (Controller, Processor, or Both).",
+            },
+            {
+                "field": "deployment_model",
+                "type": "string",
+                "options": ["cloud_saas", "hybrid", "on_premise"],
+                "description": "Architecture and deployment model.",
+            },
+            {
+                "field": "employee_count",
+                "type": "integer",
+                "description": "Total employee headcount (triggers German § 38 BDSG DPO threshold if >= 20).",
+            },
+            {
+                "field": "processes_personal_data",
+                "type": "boolean",
+                "description": "Whether tenant systems collect or process personal data.",
+            },
+            {
+                "field": "processes_special_category_data",
+                "type": "boolean",
+                "description": "Whether special categories (health/biometric) are processed (§ 22 BDSG / Art 9 GDPR).",
+            },
+            {
+                "field": "has_physical_offices",
+                "type": "boolean",
+                "description": "Whether the organization operates physical offices vs. 100% remote operations.",
+            },
+            {
+                "field": "operates_own_datacenter",
+                "type": "boolean",
+                "description": "Whether organization operates its own server rooms/datacenters vs. public cloud hosting.",
+            },
+            {
+                "field": "involves_international_transfers",
+                "type": "boolean",
+                "description": "Whether personal data is transferred or accessible outside the EEA/EU.",
+            },
+            {
+                "field": "uses_subprocessors",
+                "type": "boolean",
+                "description": "Whether third-party sub-processors or external data vendors are engaged.",
+            },
+        ],
+        "evaluations": ["applicable", "not_applicable", "scoped_out"],
+    }
+
+
 # -----------------------------------------------------------------------------
 # Tenant Framework Endpoints
 # -----------------------------------------------------------------------------
@@ -860,6 +1059,23 @@ def adopt_framework_version(
     service: Annotated[FrameworkService, Depends(_svc)],
 ) -> TenantFrameworkAdoptionResponse:
     request_id = request.headers.get("x-request-id", "req-unknown")
+    version = service.get_version(
+        body.framework_version_id, is_platform_admin=principal.is_platform_admin
+    )
+    framework = service.get_framework(
+        version.framework_id, is_platform_admin=principal.is_platform_admin
+    )
+    pack_meta = get_pack_manifest_by_id(framework.slug)
+    if pack_meta and pack_meta.get("required_for_beta_status") == "OWNER_DECISION_REQUIRED":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Adoption blocked: Framework pack '{framework.slug}' is pending Product Owner confirmation",
+        )
+    if version.release_state != ReleaseState.RELEASED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"cannot adopt version in non-released state: {version.release_state}",
+        )
     try:
         a = service.adopt_framework_version(
             principal=principal,
@@ -983,6 +1199,55 @@ def delete_overlay(
     except AuthorizationDeniedError as err:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden") from err
     except ControlOverlayNotFoundError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err)) from err
+
+
+@tenant_router.post(
+    "/adoptions/{adoption_id}/evaluate-applicability",
+    response_model=list[TenantControlOverlayResponse],
+)
+def evaluate_adoption_applicability(
+    tenant_id: UUID,
+    adoption_id: UUID,
+    principal: CurrentPrincipal,
+    tenant_context: CurrentTenant,
+    body: TenantProfileContext,
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+) -> list[TenantControlOverlayResponse]:
+    """Deterministically evaluate profile parameters against framework controls and apply overlays."""
+    request_id = request.headers.get("x-request-id", "req-unknown")
+    try:
+        from conformly.authz.policy import authorize
+        from conformly.authz.roles import Capability
+
+        authorize(principal, tenant_context, Capability.FRAMEWORK_MANAGE)
+        overlays = evaluate_and_apply_adoption_applicability(
+            db,
+            tenant_id=tenant_id,
+            adoption_id=adoption_id,
+            profile=body,
+            principal=principal,
+            request_id=request_id,
+            tenant_context=tenant_context,
+        )
+        return [
+            TenantControlOverlayResponse(
+                id=o.id,
+                tenant_id=o.tenant_id,
+                adoption_id=o.adoption_id,
+                canonical_control_id=o.canonical_control_id,
+                applicability=o.applicability,
+                justification=o.justification,
+                internal_notes=o.internal_notes,
+                custom_guidance=o.custom_guidance,
+                created_at=o.created_at,
+            )
+            for o in overlays
+        ]
+    except AuthorizationDeniedError as err:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden") from err
+    except ValueError as err:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err)) from err
 
 

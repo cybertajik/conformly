@@ -1,0 +1,63 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "title": "API Request Rate (rps)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(conformly_http_requests_total[1m])) by (method, status)",
+          "legendFormat": "{{method}} {{status}}"
+        }
+      ]
+    },
+    {
+      "title": "API Latency p95 / p99",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "rate(conformly_http_request_duration_seconds_sum[1m]) / rate(conformly_http_request_duration_seconds_count[1m])",
+          "legendFormat": "avg latency (s)"
+        }
+      ]
+    },
+    {
+      "title": "4xx / 5xx Error Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(conformly_http_requests_total{status=~\"[45]..\"}[1m])) / sum(rate(conformly_http_requests_total[1m])) * 100",
+          "legendFormat": "error percentage %"
+        }
+      ]
+    },
+    {
+      "title": "Active Database Connections",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "conformly_database_connections_active",
+          "legendFormat": "Active Connections"
+        }
+      ]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "tags": ["conformly", "slo", "production"],
+  "timezone": "browser",
+  "title": "Conformly Operations & SLO Dashboard",
+  "version": 1
+}

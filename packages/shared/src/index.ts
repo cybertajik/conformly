@@ -68,6 +68,10 @@ export interface CanonicalControlSummary {
   guidance?: string | null;
   sort_order: number;
   created_at: string;
+  source_reference?: string | null;
+  why_evidence_requested?: string | null;
+  coverage_disposition?: string | null;
+  coverage_rationale?: string | null;
 }
 
 export interface FrameworkVersionSummary {
@@ -85,6 +89,13 @@ export interface FrameworkVersionSummary {
   retired_at?: string | null;
   created_at: string;
   controls?: CanonicalControlSummary[];
+  source_edition?: string | null;
+  content_revision?: string | null;
+  jurisdiction?: string | null;
+  declared_scope?: string | null;
+  profile?: string | null;
+  limitations?: string[];
+  is_blocked?: boolean;
 }
 
 export interface FrameworkSummary {
@@ -95,6 +106,13 @@ export interface FrameworkSummary {
   created_at: string;
   updated_at: string;
   versions?: FrameworkVersionSummary[];
+  source_edition?: string | null;
+  content_revision?: string | null;
+  jurisdiction?: string | null;
+  declared_scope?: string | null;
+  profile?: string | null;
+  limitations?: string[];
+  is_blocked?: boolean;
 }
 
 export interface TenantFrameworkAdoptionSummary {
@@ -511,6 +529,10 @@ export interface ReadinessScoreSummary {
   not_applicable_checks: number;
   pending_checks: number;
   open_findings: number;
+  scope_type?: string;
+  declared_scope?: string | null;
+  scope_limitations?: string[];
+  disclaimer?: string;
 }
 
 export interface PreAuditSummary {

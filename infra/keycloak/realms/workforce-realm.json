@@ -1,0 +1,89 @@
+{
+  "id": "conformly-workforce",
+  "realm": "conformly-workforce",
+  "displayName": "Conformly Workforce Operations Realm",
+  "enabled": true,
+  "sslRequired": "all",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "permanentLockout": true,
+  "maxFailureWaitSeconds": 1800,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 120,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": 3,
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA256",
+  "otpPolicyInitialCounter": 0,
+  "otpPolicyDigits": 6,
+  "otpPolicyLookAheadWindow": 1,
+  "otpPolicyPeriod": 30,
+  "otpSupportedApplications": [
+    "FreeOTP",
+    "Google Authenticator",
+    "YubiKey Authenticator"
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "workforce_operator",
+        "description": "Operations team member with audited break-glass"
+      },
+      {
+        "name": "incident_commander",
+        "description": "Authorized incident commander for Sev-1 responses"
+      },
+      {
+        "name": "platform_admin",
+        "description": "System administrator requiring mandatory hardware MFA"
+      }
+    ]
+  },
+  "defaultRoles": [
+    "workforce_operator"
+  ],
+  "requiredCredentials": [
+    "password",
+    "totp"
+  ],
+  "clients": [
+    {
+      "clientId": "conformly-workforce-console",
+      "name": "Workforce Operations Console",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "https://ops.conformly.de/*"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "access.token.lifespan": "900"
+      }
+    },
+    {
+      "clientId": "conformly-break-glass",
+      "name": "Break Glass Emergency Service",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "conformly-workforce-break-glass-secret",
+      "bearerOnly": false,
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "attributes": {
+        "access.token.lifespan": "300"
+      }
+    }
+  ]
+}

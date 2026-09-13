@@ -455,7 +455,9 @@ class ComplianceService:
         }
 
         if target_status == EvidenceStatus.ARCHIVED and evidence.legal_hold:
-            raise ComplianceLegalHoldActiveError("Cannot archive evidence item while under active legal hold")
+            raise ComplianceLegalHoldActiveError(
+                "Cannot archive evidence item while under active legal hold"
+            )
 
         if target_status not in valid_transitions.get(evidence.status, set()):
             raise InvalidStateTransitionError(
@@ -722,7 +724,9 @@ class ComplianceService:
         next_rev = (max_rev or 0) + 1
 
         file_ids = [str(fl.file_id) for fl in evidence.file_links] if evidence.file_links else []
-        control_ids = [str(cl.control_id) for cl in evidence.control_links] if evidence.control_links else []
+        control_ids = (
+            [str(cl.control_id) for cl in evidence.control_links] if evidence.control_links else []
+        )
 
         rev = EvidenceRevision(
             tenant_id=evidence.tenant_id,
@@ -2006,6 +2010,7 @@ class ComplianceService:
 
         if severity in (FindingSeverity.HIGH, FindingSeverity.CRITICAL) and control_id:
             from conformly.preaudit.service import auto_suspend_active_certificates
+
             auto_suspend_active_certificates(
                 self._session,
                 tenant_context.tenant_id,
@@ -2128,6 +2133,7 @@ class ComplianceService:
 
         if severity in (FindingSeverity.HIGH, FindingSeverity.CRITICAL) and finding.control_id:
             from conformly.preaudit.service import auto_suspend_active_certificates
+
             auto_suspend_active_certificates(
                 self._session,
                 tenant_context.tenant_id,
@@ -2269,6 +2275,7 @@ class ComplianceService:
 
         if status == ControlImplementationStatus.NOT_STARTED:
             from conformly.preaudit.service import auto_suspend_active_certificates
+
             auto_suspend_active_certificates(
                 self._session,
                 tenant_context.tenant_id,
@@ -2303,9 +2310,8 @@ class ComplianceService:
         authorize(principal, tenant_context, Capability.EVIDENCE_READ)
         self._set_rls(principal, tenant_context)
 
-        query = (
-            select(ControlStatusRecord)
-            .where(ControlStatusRecord.tenant_id == tenant_context.tenant_id)
+        query = select(ControlStatusRecord).where(
+            ControlStatusRecord.tenant_id == tenant_context.tenant_id
         )
         if tenant_context.role in (Role.REVIEWER, Role.AUDITOR):
             query = query.where(
@@ -2314,11 +2320,7 @@ class ComplianceService:
                     ControlStatusRecord.assessed_by_user_id == principal.user_id,
                 )
             )
-        return list(
-            self._session.scalars(
-                query.order_by(ControlStatusRecord.updated_at.desc())
-            )
-        )
+        return list(self._session.scalars(query.order_by(ControlStatusRecord.updated_at.desc())))
 
     # =========================================================================
     # USER NOTIFICATION PREFERENCES

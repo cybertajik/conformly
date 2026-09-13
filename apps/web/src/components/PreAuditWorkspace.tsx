@@ -567,6 +567,60 @@ export function PreAuditWorkspace({
           {/* Tab 1: Posture & Actions */}
           {activeTab === "posture" && (
             <div>
+              {/* Truthful Scope & Delimitation Banner */}
+              <div
+                className="card"
+                style={{
+                  marginBottom: "1.5rem",
+                  borderLeft: selectedAudit.score_summary?.scope_type === "profile_scoped" ? "4px solid #f59e0b" : "4px solid #2563eb",
+                  backgroundColor: selectedAudit.score_summary?.scope_type === "profile_scoped" ? "#fffbeb" : "#eff6ff",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.5rem" }}>
+                  <div>
+                    <span
+                      style={{
+                        display: "inline-block",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        padding: "0.2rem 0.5rem",
+                        borderRadius: "4px",
+                        backgroundColor: selectedAudit.score_summary?.scope_type === "profile_scoped" ? "#fef3c7" : "#dbeafe",
+                        color: selectedAudit.score_summary?.scope_type === "profile_scoped" ? "#b45309" : "#1e40af",
+                        marginBottom: "0.5rem",
+                      }}
+                    >
+                      {selectedAudit.score_summary?.scope_type === "profile_scoped"
+                        ? "Profile-Scoped Readiness"
+                        : "Full Standard Readiness"}
+                    </span>
+                    <h4 style={{ margin: "0 0 0.25rem", color: "#1e293b" }}>
+                      Declared Scope: {selectedAudit.score_summary?.declared_scope || "Framework Scope"}
+                    </h4>
+                    {selectedAudit.score_summary?.scope_limitations && selectedAudit.score_summary.scope_limitations.length > 0 && (
+                      <ul style={{ margin: "0.5rem 0 0", paddingLeft: "1.25rem", fontSize: "0.8125rem", color: "#64748b" }}>
+                        {selectedAudit.score_summary.scope_limitations.map((lim, idx) => (
+                          <li key={idx}>{lim}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    marginTop: "0.75rem",
+                    paddingTop: "0.75rem",
+                    borderTop: "1px solid rgba(0,0,0,0.06)",
+                    fontSize: "0.75rem",
+                    color: "#64748b",
+                    fontStyle: "italic",
+                  }}
+                >
+                  ℹ️ {selectedAudit.score_summary?.disclaimer || "Conformly is an audit-readiness and compliance operations platform, not an accredited certification body."}
+                </div>
+              </div>
+
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
                 <div className="card" style={{ textAlign: "center" }}>
                   <div style={{ fontSize: "0.8125rem", color: "var(--text-muted)", textTransform: "uppercase" }}>Overall Score</div>
@@ -898,6 +952,10 @@ export function PreAuditWorkspace({
                             <strong>Revoked:</strong> {new Date(cert.revoked_at).toLocaleDateString()} ({cert.revoked_reason})
                           </div>
                         )}
+                      </div>
+
+                      <div style={{ padding: "0.6rem 0.8rem", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "4px", fontSize: "0.75rem", color: "#64748b", fontStyle: "italic", marginBottom: "0.5rem" }}>
+                        ℹ️ Conformly Pre-Audit Readiness Badges represent automated internal evaluations of declared scope, not accredited third-party certifications.
                       </div>
 
                       {canManage && cert.status === "active" && (

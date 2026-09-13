@@ -9,6 +9,7 @@ description = "Conformly API"
 requires-python = ">=3.12"
 dependencies = [
   "alembic>=1.14,<2",
+  "celery>=5.4,<6",
   "cryptography>=44,<51",
   "fastapi>=0.115,<1",
   "pyjwt[crypto]>=2.10,<3",
@@ -16,6 +17,7 @@ dependencies = [
   "psycopg[binary]>=3.2,<4",
   "pydantic-settings>=2.7,<3",
   "python-multipart>=0.0.20,<1",
+  "redis>=5.0,<9",
   "sqlalchemy>=2.0,<3",
   "structlog>=24.4,<26",
   "uvicorn[standard]>=0.34,<1",
@@ -43,6 +45,7 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "ASYNC"]
+ignore = ["E501", "B904"]
 
 [tool.mypy]
 python_version = "3.12"

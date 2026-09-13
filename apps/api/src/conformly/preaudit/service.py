@@ -14,11 +14,16 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, object_session, selectinload
 
 from conformly.audit.models import AuditActorType, AuditOutcome
 from conformly.audit.service import record_audit_event
-from conformly.authz.policy import Principal, TenantContext, authorize
+from conformly.authz.policy import (
+    AuthorizationDeniedError,
+    Principal,
+    TenantContext,
+    authorize,
+)
 from conformly.authz.roles import Capability
 from conformly.compliance.models import (
     ControlStatusRecord,
@@ -31,11 +36,20 @@ from conformly.compliance.models import (
     RemediationStatus,
 )
 from conformly.frameworks.models import (
+    AdoptionStatus,
     CanonicalControl,
     ControlEntityType,
+    Framework,
+    FrameworkVersion,
+    ReleaseState,
     TenantControlOverlay,
     TenantFrameworkAdoption,
 )
+from conformly.frameworks.readiness import (
+    STRUCTURED_RULE_VERSION,
+    evaluate_specifications,
+)
+from conformly.frameworks.service import compute_version_content_digest
 from conformly.identity.models import Membership, MembershipStatus
 from conformly.preaudit.models import (
     PRE_AUDIT_TRANSITIONS,
@@ -118,19 +132,27 @@ class PreAuditService:
             tenant_verified=True,
         )
 
-    def _validate_member(self, context: TenantContext, user_id: UUID | None) -> None:
-        if (
-            user_id is not None
-            and self._session.scalar(
-                select(Membership.id).where(
-                    Membership.tenant_id == context.tenant_id,
-                    Membership.user_id == user_id,
-                    Membership.status == MembershipStatus.ACTIVE,
-                )
+    def _validate_member(
+        self,
+        context: TenantContext,
+        user_id: UUID | None,
+        *,
+        legal_entity_id: UUID | None = None,
+    ) -> None:
+        if user_id is None:
+            return
+        member = self._session.scalar(
+            select(Membership).where(
+                Membership.tenant_id == context.tenant_id,
+                Membership.user_id == user_id,
+                Membership.status == MembershipStatus.ACTIVE,
             )
-            is None
-        ):
+        )
+        if member is None:
             raise InvalidAdoptionReferenceError("Member unavailable in this tenant")
+        if legal_entity_id is not None and member.legal_entity_id is not None:
+            if member.legal_entity_id != legal_entity_id:
+                raise AuthorizationDeniedError("Member assigned to a different legal entity scope")
 
     def _get_pre_audit(
         self,
@@ -138,6 +160,7 @@ class PreAuditService:
         pre_audit_id: UUID,
         *,
         eager: bool = False,
+        tenant_context: TenantContext | None = None,
     ) -> PreAudit:
         stmt = select(PreAudit).where(
             PreAudit.id == pre_audit_id,
@@ -154,6 +177,12 @@ class PreAuditService:
         pa = self._session.scalar(stmt)
         if pa is None:
             raise PreAuditNotFoundError("Pre-audit not found")
+        if tenant_context is not None and tenant_context.legal_entity_id is not None:
+            if (
+                pa.legal_entity_id is not None
+                and pa.legal_entity_id != tenant_context.legal_entity_id
+            ):
+                raise AuthorizationDeniedError("Pre-audit is outside assigned legal entity scope")
         return pa
 
     def _transition(self, pa: PreAudit, target: PreAuditStatus) -> None:
@@ -173,10 +202,23 @@ class PreAuditService:
         description: str = "",
         framework_adoption_id: UUID,
         lead_user_id: UUID,
+        legal_entity_id: UUID | None = None,
     ) -> PreAudit:
         authorize(principal, tenant_context, Capability.PREAUDIT_MANAGE)
         self._set_rls(principal, tenant_context)
-        self._validate_member(tenant_context, lead_user_id)
+        effective_legal_entity_id: UUID | None
+        if tenant_context.legal_entity_id is not None:
+            if legal_entity_id is not None and legal_entity_id != tenant_context.legal_entity_id:
+                raise AuthorizationDeniedError(
+                    "Cannot create pre-audit outside assigned legal entity scope"
+                )
+            effective_legal_entity_id = tenant_context.legal_entity_id
+        else:
+            effective_legal_entity_id = legal_entity_id
+
+        self._validate_member(
+            tenant_context, lead_user_id, legal_entity_id=effective_legal_entity_id
+        )
 
         adoption = self._session.scalar(
             select(TenantFrameworkAdoption).where(
@@ -186,9 +228,18 @@ class PreAuditService:
         )
         if adoption is None:
             raise InvalidAdoptionReferenceError("Framework adoption not found in this tenant")
+        if adoption.status != AdoptionStatus.ACTIVE:
+            raise InvalidAdoptionReferenceError("Active framework adoption required")
+
+        fv = self._session.get(FrameworkVersion, adoption.framework_version_id)
+        if fv is None or fv.release_state != ReleaseState.RELEASED:
+            raise InvalidAdoptionReferenceError(
+                "Cannot create pre-audit for non-released framework version"
+            )
 
         pa = PreAudit(
             tenant_id=tenant_context.tenant_id,
+            legal_entity_id=effective_legal_entity_id,
             title=title,
             description=description,
             status=PreAuditStatus.PLANNING,
@@ -245,13 +296,13 @@ class PreAuditService:
     ) -> list[PreAudit]:
         authorize(principal, tenant_context, Capability.PREAUDIT_READ)
         self._set_rls(principal, tenant_context)
-        return list(
-            self._session.scalars(
-                select(PreAudit)
-                .where(PreAudit.tenant_id == tenant_context.tenant_id)
-                .order_by(PreAudit.created_at.desc())
+        stmt = select(PreAudit).where(PreAudit.tenant_id == tenant_context.tenant_id)
+        if tenant_context.legal_entity_id is not None:
+            stmt = stmt.where(
+                (PreAudit.legal_entity_id == tenant_context.legal_entity_id)
+                | (PreAudit.legal_entity_id.is_(None))
             )
-        )
+        return list(self._session.scalars(stmt.order_by(PreAudit.created_at.desc())))
 
     def get_pre_audit(
         self,
@@ -261,7 +312,9 @@ class PreAuditService:
     ) -> PreAudit:
         authorize(principal, tenant_context, Capability.PREAUDIT_READ)
         self._set_rls(principal, tenant_context)
-        return self._get_pre_audit(tenant_context.tenant_id, pre_audit_id, eager=True)
+        return self._get_pre_audit(
+            tenant_context.tenant_id, pre_audit_id, eager=True, tenant_context=tenant_context
+        )
 
     # ── Run deterministic checks ──────────────────────────────────────────
 
@@ -274,7 +327,9 @@ class PreAuditService:
         """Evaluate all in-scope controls against current compliance state."""
         authorize(principal, tenant_context, Capability.PREAUDIT_MANAGE)
         self._set_rls(principal, tenant_context)
-        pa = self._get_pre_audit(tenant_context.tenant_id, pre_audit_id, eager=True)
+        pa = self._get_pre_audit(
+            tenant_context.tenant_id, pre_audit_id, eager=True, tenant_context=tenant_context
+        )
 
         if pa.status == PreAuditStatus.PLANNING:
             self._transition(pa, PreAuditStatus.IN_PROGRESS)
@@ -289,6 +344,12 @@ class PreAuditService:
         all_results: list[tuple[CheckResult, float]] = []
 
         for scope in pa.scopes:
+            structured = evaluate_specifications(
+                self._session,
+                tenant_context.tenant_id,
+                pa.framework_adoption_id,
+                scope.framework_version_id,
+            )
             # Delete old checks for re-evaluation
             for old_check in list(scope.checks):
                 self._session.delete(old_check)
@@ -320,7 +381,11 @@ class PreAuditService:
             checked = 0
             for control in controls:
                 overlay = overlays_map.get(control.id)
-                if overlay is not None and overlay.applicability == "not_applicable":
+                if (
+                    not structured
+                    and overlay is not None
+                    and overlay.applicability == "not_applicable"
+                ):
                     check = PreAuditCheck(
                         tenant_id=tenant_context.tenant_id,
                         scope=scope,
@@ -343,6 +408,11 @@ class PreAuditService:
                 )
                 rule = get_rule_for_category(control.category)
                 result, score = evaluate_control_readiness(rule, inp)
+                if structured.get("blockers"):
+                    result, score = CheckResult.FAIL, 0.0
+                check_snapshot = snapshot_input(inp)
+                if structured:
+                    check_snapshot["structured_evidence"] = structured
 
                 check = PreAuditCheck(
                     tenant_id=tenant_context.tenant_id,
@@ -357,7 +427,7 @@ class PreAuditService:
                     implementation_status=inp.implementation_status,
                     score=score,
                     evaluated_at=datetime.now(UTC),
-                    snapshot_json=json.dumps(snapshot_input(inp), separators=(",", ":")),
+                    snapshot_json=json.dumps(check_snapshot, separators=(",", ":")),
                 )
                 self._session.add(check)
                 all_results.append((result, score))
@@ -508,7 +578,9 @@ class PreAuditService:
     ) -> PreAuditFinding:
         authorize(principal, tenant_context, Capability.PREAUDIT_MANAGE)
         self._set_rls(principal, tenant_context)
-        pa = self._get_pre_audit(tenant_context.tenant_id, pre_audit_id)
+        pa = self._get_pre_audit(
+            tenant_context.tenant_id, pre_audit_id, tenant_context=tenant_context
+        )
         if pa.status in (PreAuditStatus.COMPLETED, PreAuditStatus.CANCELLED):
             raise InvalidPreAuditTransitionError(
                 "Cannot add findings to a completed or cancelled pre-audit"
@@ -561,7 +633,7 @@ class PreAuditService:
     ) -> PreAuditFinding:
         authorize(principal, tenant_context, Capability.PREAUDIT_MANAGE)
         self._set_rls(principal, tenant_context)
-        self._get_pre_audit(tenant_context.tenant_id, pre_audit_id)
+        self._get_pre_audit(tenant_context.tenant_id, pre_audit_id, tenant_context=tenant_context)
 
         finding = self._session.scalar(
             select(PreAuditFinding).where(
@@ -574,7 +646,7 @@ class PreAuditService:
             raise PreAuditFindingNotFoundError("Pre-audit finding not found")
 
         if finding.version != expected_version:
-            raise PreAuditOptimisticLockError("Finding changed; reload and retry")
+            raise PreAuditOptimisticLockError("Pre-audit finding changed; reload and retry")
 
         if title is not None:
             finding.title = title
@@ -621,8 +693,10 @@ class PreAuditService:
     ) -> PreAudit:
         authorize(principal, tenant_context, Capability.PREAUDIT_MANAGE)
         self._set_rls(principal, tenant_context)
-        self._validate_member(tenant_context, reviewer_user_id)
-        pa = self._get_pre_audit(tenant_context.tenant_id, pre_audit_id)
+        pa = self._get_pre_audit(
+            tenant_context.tenant_id, pre_audit_id, tenant_context=tenant_context
+        )
+        self._validate_member(tenant_context, reviewer_user_id, legal_entity_id=pa.legal_entity_id)
 
         if pa.version != expected_version:
             raise PreAuditOptimisticLockError("Pre-audit changed; reload and retry")
@@ -662,7 +736,9 @@ class PreAuditService:
     ) -> PreAudit:
         authorize(principal, tenant_context, Capability.PREAUDIT_REVIEW)
         self._set_rls(principal, tenant_context)
-        pa = self._get_pre_audit(tenant_context.tenant_id, pre_audit_id)
+        pa = self._get_pre_audit(
+            tenant_context.tenant_id, pre_audit_id, tenant_context=tenant_context
+        )
 
         if pa.version != expected_version:
             raise PreAuditOptimisticLockError("Pre-audit changed; reload and retry")
@@ -708,7 +784,9 @@ class PreAuditService:
         notes: str | None = None,
     ) -> PreAudit:
         self._set_rls(principal, tenant_context)
-        pa = self._get_pre_audit(tenant_context.tenant_id, pre_audit_id)
+        pa = self._get_pre_audit(
+            tenant_context.tenant_id, pre_audit_id, tenant_context=tenant_context
+        )
 
         if pa.reviewer_user_id is not None and pa.reviewer_user_id == principal.user_id:
             raise ReviewerConflictError(
@@ -758,7 +836,9 @@ class PreAuditService:
     ) -> PreAudit:
         authorize(principal, tenant_context, Capability.PREAUDIT_MANAGE)
         self._set_rls(principal, tenant_context)
-        pa = self._get_pre_audit(tenant_context.tenant_id, pre_audit_id)
+        pa = self._get_pre_audit(
+            tenant_context.tenant_id, pre_audit_id, tenant_context=tenant_context
+        )
 
         if pa.version != expected_version:
             raise PreAuditOptimisticLockError("Pre-audit changed; reload and retry")
@@ -802,7 +882,9 @@ class PreAuditService:
         """
         authorize(principal, tenant_context, Capability.PREAUDIT_MANAGE)
         self._set_rls(principal, tenant_context)
-        pa = self._get_pre_audit(tenant_context.tenant_id, pre_audit_id)
+        pa = self._get_pre_audit(
+            tenant_context.tenant_id, pre_audit_id, tenant_context=tenant_context
+        )
 
         report = PreAuditReport(
             tenant_id=tenant_context.tenant_id,
@@ -851,7 +933,9 @@ class PreAuditService:
         """
         authorize(principal, tenant_context, Capability.PREAUDIT_MANAGE)
         self._set_rls(principal, tenant_context)
-        pa = self._get_pre_audit(tenant_context.tenant_id, pre_audit_id, eager=True)
+        pa = self._get_pre_audit(
+            tenant_context.tenant_id, pre_audit_id, eager=True, tenant_context=tenant_context
+        )
 
         manifest_hash = hashlib.sha256(manifest_content.encode("utf-8")).hexdigest()
 
@@ -907,7 +991,9 @@ class PreAuditService:
         """
         authorize(principal, tenant_context, Capability.PREAUDIT_MANAGE)
         self._set_rls(principal, tenant_context)
-        pa = self._get_pre_audit(tenant_context.tenant_id, pre_audit_id, eager=True)
+        pa = self._get_pre_audit(
+            tenant_context.tenant_id, pre_audit_id, eager=True, tenant_context=tenant_context
+        )
 
         if pa.status != PreAuditStatus.COMPLETED:
             raise CertificateIssuanceBlockedError(
@@ -925,7 +1011,9 @@ class PreAuditService:
             )
 
         all_checks = [c for s in pa.scopes for c in s.checks]
-        failed = [c for c in all_checks if c.result == CheckResult.FAIL]
+        failed = [
+            c for c in all_checks if c.result not in (CheckResult.PASS, CheckResult.NOT_APPLICABLE)
+        ]
         if failed:
             raise CertificateIssuanceBlockedError(
                 f"{len(failed)} check(s) failed; resolve all failures"
@@ -935,17 +1023,113 @@ class PreAuditService:
         if not all_checks:
             raise CertificateIssuanceBlockedError("No checks have been evaluated")
 
+        scopes_snapshot = []
+        for scope in pa.scopes:
+            fv = self._session.get(FrameworkVersion, scope.framework_version_id)
+            if fv is None or fv.release_state != ReleaseState.RELEASED:
+                raise CertificateIssuanceBlockedError(
+                    "Cannot issue certificate for draft or unreleased framework version"
+                )
+            fw = self._session.get(Framework, fv.framework_id) if fv else None
+            structured = evaluate_specifications(
+                self._session,
+                tenant_context.tenant_id,
+                pa.framework_adoption_id,
+                scope.framework_version_id,
+            )
+            if structured:
+                if structured["blockers"]:
+                    raise CertificateIssuanceBlockedError(
+                        "Structured evidence prerequisites are incomplete"
+                    )
+                for check in scope.checks:
+                    previous = json.loads(check.snapshot_json or "{}").get("structured_evidence")
+                    if previous != structured:
+                        raise CertificateIssuanceBlockedError(
+                            "Structured evidence or scope changed; a new assessment and review are required"
+                        )
+            scopes_snapshot.append(
+                {
+                    "framework_version_id": str(scope.framework_version_id),
+                    "framework_slug": fw.slug if fw else None,
+                    "content_digest": compute_version_content_digest(fv) if fv else None,
+                    "control_count": scope.control_count,
+                    "checked_count": scope.checked_count,
+                    "structured_evidence": structured,
+                    "checks": [
+                        {
+                            "id": str(c.id),
+                            "control_type": c.control_type.value,
+                            "control_id": str(c.control_id),
+                            "result": c.result.value,
+                            "score": c.score,
+                            "evidence_count": c.evidence_count,
+                            "policy_count": c.policy_count,
+                            "open_findings_count": c.open_findings_count,
+                            "implementation_status": (
+                                c.implementation_status.value if c.implementation_status else None
+                            ),
+                            "snapshot": json.loads(c.snapshot_json or "{}"),
+                        }
+                        for c in scope.checks
+                    ],
+                }
+            )
+
+        findings_snapshot = [
+            {
+                "id": str(f.id),
+                "title": f.title,
+                "severity": f.severity.value,
+                "remediation_status": f.remediation_status.value,
+                "recommendation": f.recommendation,
+                "version": f.version,
+            }
+            for f in pa.findings
+        ]
+
         # Supersede any currently active or suspended certificates for this pre-audit
         existing_active = self._session.scalars(
             select(PreAuditCertificate).where(
                 PreAuditCertificate.tenant_id == tenant_context.tenant_id,
                 PreAuditCertificate.pre_audit_id == pa.id,
-                PreAuditCertificate.status.in_([CertificateStatus.ACTIVE, CertificateStatus.SUSPENDED]),
+                PreAuditCertificate.status.in_(
+                    [CertificateStatus.ACTIVE, CertificateStatus.SUSPENDED]
+                ),
             )
         ).all()
 
         now = datetime.now(UTC)
         cert_number = f"CONF-RA-{now.strftime('%Y%m%d')}-{secrets.token_hex(4).upper()}"
+
+        issuance_package = {
+            "certificate_number": cert_number,
+            "pre_audit_id": str(pa.id),
+            "pre_audit_title": pa.title,
+            "organization_scope": {
+                "legal_entity_id": str(pa.legal_entity_id) if pa.legal_entity_id else None
+            },
+            "rule_versions": {
+                "pre_audit_rule_version": pa.rule_version,
+                "structured_rule_version": STRUCTURED_RULE_VERSION,
+            },
+            "overall_score": pa.overall_score,
+            "reviewer_decisions": {
+                "lead_user_id": str(pa.lead_user_id),
+                "reviewer_user_id": str(pa.reviewer_user_id) if pa.reviewer_user_id else None,
+                "reviewed_at": pa.reviewed_at.isoformat() if pa.reviewed_at else None,
+                "tenant_approved_by_user_id": (
+                    str(pa.tenant_approved_by_user_id) if pa.tenant_approved_by_user_id else None
+                ),
+                "tenant_approved_at": (
+                    pa.tenant_approved_at.isoformat() if pa.tenant_approved_at else None
+                ),
+            },
+            "scopes": scopes_snapshot,
+            "findings": findings_snapshot,
+            "issued_at": now.isoformat(),
+            "expires_at": (now + timedelta(days=validity_days)).isoformat(),
+        }
 
         cert = PreAuditCertificate(
             tenant_id=tenant_context.tenant_id,
@@ -954,6 +1138,7 @@ class PreAuditService:
             status=CertificateStatus.ACTIVE,
             issued_at=now,
             expires_at=now + timedelta(days=validity_days),
+            issuance_package_json=json.dumps(issuance_package, separators=(",", ":")),
         )
         self._session.add(cert)
         self._session.flush()
@@ -994,7 +1179,7 @@ class PreAuditService:
     ) -> PreAuditCertificate:
         authorize(principal, tenant_context, Capability.PREAUDIT_MANAGE)
         self._set_rls(principal, tenant_context)
-        self._get_pre_audit(tenant_context.tenant_id, pre_audit_id)
+        self._get_pre_audit(tenant_context.tenant_id, pre_audit_id, tenant_context=tenant_context)
 
         cert = self._session.scalar(
             select(PreAuditCertificate).where(
@@ -1044,7 +1229,7 @@ class PreAuditService:
     ) -> PreAuditCertificate:
         authorize(principal, tenant_context, Capability.PREAUDIT_MANAGE)
         self._set_rls(principal, tenant_context)
-        self._get_pre_audit(tenant_context.tenant_id, pre_audit_id)
+        self._get_pre_audit(tenant_context.tenant_id, pre_audit_id, tenant_context=tenant_context)
 
         cert = self._session.scalar(
             select(PreAuditCertificate).where(
@@ -1057,7 +1242,9 @@ class PreAuditService:
             raise CertificateNotFoundError("Certificate not found")
 
         if cert.status != CertificateStatus.ACTIVE:
-            raise InvalidPreAuditTransitionError(f"Cannot suspend certificate with status '{cert.status.value}'")
+            raise InvalidPreAuditTransitionError(
+                f"Cannot suspend certificate with status '{cert.status.value}'"
+            )
 
         now = datetime.now(UTC)
         cert.status = CertificateStatus.SUSPENDED
@@ -1108,7 +1295,9 @@ class PreAuditService:
             raise CertificateNotFoundError("Certificate not found")
 
         if cert.status != CertificateStatus.SUSPENDED:
-            raise InvalidPreAuditTransitionError(f"Cannot reinstate certificate with status '{cert.status.value}'")
+            raise InvalidPreAuditTransitionError(
+                f"Cannot reinstate certificate with status '{cert.status.value}'"
+            )
 
         all_checks = [c for s in pa.scopes for c in s.checks]
         failed = [c for c in all_checks if c.result == CheckResult.FAIL]
@@ -1155,6 +1344,51 @@ class PreAuditService:
             for f in pa.findings
             if f.remediation_status in (RemediationStatus.OPEN, RemediationStatus.IN_REMEDIATION)
         )
+        # Truthful scope classification and limitations
+        scope_type = "full_standard"
+        scope_limitations: list[str] = []
+        declared_scope: str | None = None
+
+        session = getattr(self, "_session", None) or object_session(pa)
+        if pa.scopes:
+            first_scope = pa.scopes[0]
+            fv = None
+            if session is not None:
+                fv = session.get(FrameworkVersion, first_scope.framework_version_id)
+            if not fv and hasattr(first_scope, "framework_version"):
+                fv = getattr(first_scope, "framework_version", None)
+
+            if fv and fv.framework:
+                slug = fv.framework.slug.lower()
+                from conformly.frameworks.manifest import get_pack_manifest_by_id
+
+                pack_meta = get_pack_manifest_by_id(slug)
+                if pack_meta:
+                    declared_scope = pack_meta.get("declared_scope")
+                    scope_limitations = list(pack_meta.get("blockers") or [])
+                    # Scoped profiles are explicitly delimited:
+                    if "ig1" in slug or "mvsp" in slug or "profile" in slug:
+                        scope_type = "profile_scoped"
+                        scope_limitations.insert(
+                            0,
+                            f"Delimited to {pack_meta.get('profile', 'declared profile')} scope. Does not represent whole-framework accredited certification.",
+                        )
+
+        if (
+            any(c.result == CheckResult.NOT_APPLICABLE for c in all_checks)
+            and scope_type == "full_standard"
+        ):
+            scope_type = "profile_scoped"
+            scope_limitations.append(
+                "Applicability exclusions applied; evaluated on applicable control overlay scope."
+            )
+
+        disclaimer = (
+            "Conformly is an audit-readiness and compliance operations platform, "
+            "not an accredited certification body. Pre-audit readiness badges represent "
+            "automated evaluations of declared scope, not accredited third-party certifications."
+        )
+
         return {
             "overall_score": pa.overall_score or 0.0,
             "total_checks": len(all_checks),
@@ -1163,6 +1397,10 @@ class PreAuditService:
             "not_applicable_checks": na,
             "pending_checks": pending,
             "open_findings": open_findings,
+            "scope_type": scope_type,
+            "declared_scope": declared_scope,
+            "scope_limitations": scope_limitations,
+            "disclaimer": disclaimer,
         }
 
 

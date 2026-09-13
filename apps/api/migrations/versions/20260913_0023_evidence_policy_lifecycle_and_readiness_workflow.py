@@ -21,9 +21,7 @@ def upgrade() -> None:
         batch_op.add_column(
             sa.Column("legal_hold", sa.Boolean(), server_default=sa.false(), nullable=False)
         )
-        batch_op.add_column(
-            sa.Column("retention_until", sa.DateTime(timezone=True), nullable=True)
-        )
+        batch_op.add_column(sa.Column("retention_until", sa.DateTime(timezone=True), nullable=True))
 
     # 2. Evidence revisions table
     op.create_table(
@@ -42,13 +40,19 @@ def upgrade() -> None:
         sa.Column("control_ids", sa.JSON(), server_default="[]", nullable=False),
         sa.Column("created_by_user_id", sa.Uuid(), nullable=False),
         sa.Column("change_summary", sa.Text(), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["evidence_id"], ["evidence_items.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["created_by_user_id"], ["users.id"], ondelete="RESTRICT"),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("tenant_id", "evidence_id", "revision_number", name="uq_evidence_revisions_number"),
+        sa.UniqueConstraint(
+            "tenant_id", "evidence_id", "revision_number", name="uq_evidence_revisions_number"
+        ),
     )
     op.create_index(
         "ix_evidence_revisions_tenant_evidence",
@@ -74,14 +78,20 @@ def upgrade() -> None:
         sa.Column("approved_by_user_id", sa.Uuid(), nullable=True),
         sa.Column("approved_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("change_summary", sa.Text(), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["policy_id"], ["policies.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["created_by_user_id"], ["users.id"], ondelete="RESTRICT"),
         sa.ForeignKeyConstraint(["approved_by_user_id"], ["users.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("tenant_id", "policy_id", "revision_number", name="uq_policy_revisions_number"),
+        sa.UniqueConstraint(
+            "tenant_id", "policy_id", "revision_number", name="uq_policy_revisions_number"
+        ),
     )
     op.create_index(
         "ix_policy_revisions_tenant_policy",
@@ -99,10 +109,16 @@ def upgrade() -> None:
         sa.Column("category", sa.String(100), nullable=False),
         sa.Column("description", sa.Text(), nullable=False),
         sa.Column("content_template", sa.Text(), nullable=False),
-        sa.Column("suggested_classification", sa.String(32), server_default="Internal", nullable=False),
+        sa.Column(
+            "suggested_classification", sa.String(32), server_default="Internal", nullable=False
+        ),
         sa.Column("is_canonical", sa.Boolean(), server_default=sa.true(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -128,16 +144,25 @@ def upgrade() -> None:
         sa.Column("acknowledged_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("ip_address", sa.String(45), nullable=True),
         sa.Column("user_agent", sa.String(255), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["policy_id"], ["policies.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["policy_revision_id"], ["policy_revisions.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(
+            ["policy_revision_id"], ["policy_revisions.id"], ondelete="SET NULL"
+        ),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="RESTRICT"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint(
-            "tenant_id", "policy_id", "user_id", "policy_revision_id",
-            name="uq_policy_acknowledgements_user_rev"
+            "tenant_id",
+            "policy_id",
+            "user_id",
+            "policy_revision_id",
+            name="uq_policy_acknowledgements_user_rev",
         ),
     )
     op.create_index(
@@ -153,9 +178,7 @@ def upgrade() -> None:
 
     # 6. Stored files: quarantine reason
     with op.batch_alter_table("stored_files") as batch_op:
-        batch_op.add_column(
-            sa.Column("quarantine_reason", sa.Text(), nullable=True)
-        )
+        batch_op.add_column(sa.Column("quarantine_reason", sa.Text(), nullable=True))
 
     # 7. Pre-audits: tenant approval
     with op.batch_alter_table("pre_audits") as batch_op:
@@ -163,20 +186,19 @@ def upgrade() -> None:
             sa.Column("tenant_approved_at", sa.DateTime(timezone=True), nullable=True)
         )
         batch_op.add_column(
-            sa.Column("tenant_approved_by_user_id", sa.Uuid(), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+            sa.Column(
+                "tenant_approved_by_user_id",
+                sa.Uuid(),
+                sa.ForeignKey("users.id", ondelete="SET NULL"),
+                nullable=True,
+            )
         )
 
     # 8. Pre-audit certificates: suspension & supersession
     with op.batch_alter_table("pre_audit_certificates") as batch_op:
-        batch_op.add_column(
-            sa.Column("suspended_at", sa.DateTime(timezone=True), nullable=True)
-        )
-        batch_op.add_column(
-            sa.Column("suspended_reason", sa.Text(), nullable=True)
-        )
-        batch_op.add_column(
-            sa.Column("superseded_at", sa.DateTime(timezone=True), nullable=True)
-        )
+        batch_op.add_column(sa.Column("suspended_at", sa.DateTime(timezone=True), nullable=True))
+        batch_op.add_column(sa.Column("suspended_reason", sa.Text(), nullable=True))
+        batch_op.add_column(sa.Column("superseded_at", sa.DateTime(timezone=True), nullable=True))
         batch_op.add_column(
             sa.Column(
                 "superseded_by_certificate_id",

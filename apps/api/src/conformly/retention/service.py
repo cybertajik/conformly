@@ -37,6 +37,7 @@ from conformly.exports.service import ExportService
 from conformly.frameworks.models import (
     ControlMapping,
     CustomControl,
+    TenantApplicabilityProfile,
     TenantControlOverlay,
     TenantFrameworkAdoption,
 )
@@ -65,9 +66,14 @@ from conformly.retention.models import (
 )
 from conformly.risks.models import Risk, RiskTreatment
 from conformly.storage.models import StoredFile
-from conformly.storage.service import LegalHoldActiveError, StorageService
-from conformly.vendors.models import Vendor
+from conformly.storage.service import (
+    LegalHoldActiveError as LegalHoldActiveError,
+)
+from conformly.storage.service import (
+    StorageService,
+)
 from conformly.tenancy.rls import set_rls_context
+from conformly.vendors.models import Vendor
 from conformly.whistleblower.models import (
     WhistleblowerAttachment,
     WhistleblowerCase,
@@ -491,6 +497,14 @@ class RetentionService:
                 self.session, delete(PreAudit).where(PreAudit.tenant_id == tid)
             )
 
+            # Requests contain relationship metadata only; existing evidence holds are checked above.
+            from conformly.frameworks.workflow import FrameworkEvidenceRequest
+
+            tables_purged["framework_evidence_requests"] = _exec_delete(
+                self.session,
+                delete(FrameworkEvidenceRequest).where(FrameworkEvidenceRequest.tenant_id == tid),
+            )
+
             # 4. Compliance workspace
             tables_purged["compliance_tasks"] = _exec_delete(
                 self.session, delete(ComplianceTask).where(ComplianceTask.tenant_id == tid)
@@ -542,6 +556,12 @@ class RetentionService:
             tables_purged["tenant_control_overlays"] = _exec_delete(
                 self.session,
                 delete(TenantControlOverlay).where(TenantControlOverlay.tenant_id == tid),
+            )
+            tables_purged["tenant_applicability_profiles"] = _exec_delete(
+                self.session,
+                delete(TenantApplicabilityProfile).where(
+                    TenantApplicabilityProfile.tenant_id == tid
+                ),
             )
             tables_purged["tenant_framework_adoptions"] = _exec_delete(
                 self.session,

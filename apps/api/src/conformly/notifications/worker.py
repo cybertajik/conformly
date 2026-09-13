@@ -1,16 +1,19 @@
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Protocol
+from typing import Any, Protocol
 
+import structlog
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from conformly.audit.models import AuditActorType, AuditOutcome
 from conformly.audit.service import record_audit_event
 from conformly.crypto.fields import EncryptedFieldCodec
 from conformly.notifications.models import NotificationOutbox, OutboxState
 from conformly.notifications.service import decrypt_notification_payload
+
+logger = structlog.get_logger(__name__)
 
 DEFAULT_BATCH_SIZE = 25
 MAX_DELIVERY_ATTEMPTS = 5
@@ -150,3 +153,231 @@ def process_notification_batch(
         retried=retried,
         failed=failed,
     )
+
+
+_RUNNING = True
+
+
+def _handle_signal(signum: int, frame: Any) -> None:
+    global _RUNNING
+    logger.info("notification_worker_stopping", signal=signum)
+    _RUNNING = False
+
+
+def run_worker_tick(
+    session_factory: sessionmaker[Session],
+    codec: EncryptedFieldCodec,
+    provider: NotificationProvider,
+    *,
+    now: datetime | None = None,
+    batch_size: int = DEFAULT_BATCH_SIZE,
+    run_compliance: bool = False,
+) -> dict[str, Any]:
+    """Execute one worker tick delivering outbox messages and optionally triggering compliance/retention jobs."""
+    current_time = now or datetime.now(UTC)
+
+    with session_factory() as session:
+        batch_result = process_notification_batch(
+            session,
+            codec,
+            provider,
+            now=current_time,
+            batch_size=batch_size,
+        )
+        session.commit()
+
+    summary: dict[str, Any] = {
+        "claimed": batch_result.claimed,
+        "delivered": batch_result.delivered,
+        "retried": batch_result.retried,
+        "failed": batch_result.failed,
+        "executed_at": current_time.isoformat(),
+        "compliance_run": False,
+    }
+
+    if run_compliance:
+        try:
+            from conformly.compliance.worker import run_compliance_worker_tick
+            from conformly.crypto.envelope import get_envelope_encryption_service
+            from conformly.identity.models import Tenant, TenantStatus
+            from conformly.retention.jobs import run_retention_lifecycle
+            from conformly.storage.providers import get_storage_provider
+            from conformly.storage.service import StorageService
+
+            compliance_summary = run_compliance_worker_tick(
+                session_factory,
+                codec,
+                notification_provider=provider,
+                now=current_time,
+            )
+            with session_factory() as retention_session:
+                storage_svc = StorageService(
+                    session=retention_session,
+                    storage_provider=get_storage_provider(),
+                    encryption_service=get_envelope_encryption_service(),
+                )
+                cancelling_tenants = retention_session.scalars(
+                    select(Tenant.id).where(
+                        Tenant.status.in_([TenantStatus.CANCELLING, TenantStatus.SUSPENDED])
+                    )
+                ).all()
+                suspended_total = 0
+                completed_total = 0
+                held_total = 0
+                failed_total = 0
+                for tid in cancelling_tenants:
+                    res = run_retention_lifecycle(
+                        retention_session,
+                        storage_svc,
+                        tenant_id=tid,
+                        now=current_time,
+                    )
+                    suspended_total += res.suspended_tenants
+                    completed_total += res.completed_deletions
+                    held_total += res.held_deletions
+                    failed_total += res.failed_deletions
+                retention_session.commit()
+                retention_summary = {
+                    "tenants_checked": len(cancelling_tenants),
+                    "suspended_tenants": suspended_total,
+                    "completed_deletions": completed_total,
+                    "held_deletions": held_total,
+                    "failed_deletions": failed_total,
+                }
+
+            summary["compliance_run"] = True
+            summary["compliance_summary"] = compliance_summary
+            summary["retention_summary"] = retention_summary
+        except Exception as error:
+            logger.error("worker_compliance_cycle_error", error=str(error))
+            summary["compliance_error"] = str(error)
+
+    if batch_result.claimed > 0 or summary["compliance_run"]:
+        logger.info("worker_tick_completed", **summary)
+
+    return summary
+
+
+def run_worker_loop(
+    session_factory: sessionmaker[Session],
+    codec: EncryptedFieldCodec,
+    provider: NotificationProvider,
+    *,
+    poll_interval: float = 5.0,
+    compliance_interval: int = 3600,
+    batch_size: int = DEFAULT_BATCH_SIZE,
+    once: bool = False,
+) -> None:
+    """Continuous worker execution loop with signal handling and periodic compliance checks."""
+    import time
+
+    global _RUNNING
+    _RUNNING = True
+
+    logger.info(
+        "notification_worker_started",
+        poll_interval=poll_interval,
+        compliance_interval=compliance_interval,
+        batch_size=batch_size,
+        once=once,
+    )
+
+    last_compliance_time = 0.0
+
+    while _RUNNING:
+        current_monotonic = time.monotonic()
+        run_compliance = (current_monotonic - last_compliance_time) >= compliance_interval
+
+        run_worker_tick(
+            session_factory,
+            codec,
+            provider,
+            batch_size=batch_size,
+            run_compliance=run_compliance,
+        )
+
+        if run_compliance:
+            last_compliance_time = current_monotonic
+
+        if once or not _RUNNING:
+            break
+
+        sleep_until = time.monotonic() + poll_interval
+        while _RUNNING and time.monotonic() < sleep_until:
+            time.sleep(0.2)
+
+    logger.info("notification_worker_exited_cleanly")
+
+
+def main() -> None:
+    import argparse
+    import signal
+    import sys
+
+    from conformly.config import get_settings
+    from conformly.crypto.fields import get_encrypted_field_codec
+    from conformly.db.session import SessionLocal
+    from conformly.notifications.providers import get_notification_provider
+
+    settings = get_settings()
+
+    parser = argparse.ArgumentParser(
+        description="Conformly Background Notification and Compliance Worker"
+    )
+    parser.add_argument(
+        "--interval",
+        type=float,
+        default=settings.worker_poll_interval_seconds,
+        help="Seconds between outbox polling ticks (default: 5.0)",
+    )
+    parser.add_argument(
+        "--compliance-interval",
+        type=int,
+        default=settings.worker_compliance_interval_seconds,
+        help="Seconds between continuous compliance cycles (default: 3600)",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=settings.worker_batch_size,
+        help="Max notification messages processed per tick (default: 25)",
+    )
+    parser.add_argument(
+        "--once",
+        action="store_true",
+        help="Process a single tick and exit immediately",
+    )
+    parser.add_argument(
+        "--celery",
+        action="store_true",
+        help="Launch the Celery worker process instead of the standalone polling loop",
+    )
+
+    args = parser.parse_args()
+
+    if args.celery:
+        logger.info("launching_celery_worker")
+        from conformly.jobs.celery import celery_app
+
+        celery_app.worker_main(argv=["worker", "--loglevel=info"])
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, _handle_signal)
+    signal.signal(signal.SIGTERM, _handle_signal)
+
+    codec = get_encrypted_field_codec()
+    provider = get_notification_provider(settings)
+
+    run_worker_loop(
+        SessionLocal,
+        codec,
+        provider,
+        poll_interval=args.interval,
+        compliance_interval=args.compliance_interval,
+        batch_size=args.batch_size,
+        once=args.once,
+    )
+
+
+if __name__ == "__main__":
+    main()

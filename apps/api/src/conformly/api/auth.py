@@ -24,7 +24,6 @@ from conformly.db.session import get_db
 router = APIRouter(prefix="/v1/auth", tags=["authentication"])
 
 
-
 class SessionBootstrapResponse(BaseModel):
     user_id: str
     email: str
@@ -132,7 +131,9 @@ class DevLoginResponse(BaseModel):
 
 
 @router.post("/dev-login", response_model=DevLoginResponse)
-def dev_login(request: Request, body: DevLoginRequest = DevLoginRequest()) -> DevLoginResponse:
+def dev_login(request: Request, body: DevLoginRequest | None = None) -> DevLoginResponse:
+    if body is None:
+        body = DevLoginRequest()
     settings = get_settings()
     if settings.environment not in ("development", "local", "test"):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="not found")
@@ -141,8 +142,9 @@ def dev_login(request: Request, body: DevLoginRequest = DevLoginRequest()) -> De
     token = mint_dev_token(
         email=body.email,
         subject="example-user" if body.email == "example-user@development.invalid" else body.email,
-        display_name="Example User" if body.email == "example-user@development.invalid" else body.email.split("@")[0],
+        display_name="Example User"
+        if body.email == "example-user@development.invalid"
+        else body.email.split("@")[0],
         secret=secret,
     )
     return DevLoginResponse(access_token=token)
-

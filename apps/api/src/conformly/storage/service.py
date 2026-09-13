@@ -19,7 +19,6 @@ from conformly.db.session import get_db
 from conformly.storage.models import StoredFile, StoredFileStatus
 from conformly.storage.providers import StorageProvider, get_storage_provider
 from conformly.storage.validation import (
-    BuiltinMalwareScanner,
     MalwareDetectedError,
     MalwareScanner,
     ProductionMalwareScanner,
@@ -124,7 +123,9 @@ class StorageService:
             payload = self.encryption.encrypt(content, context)
             ciphertext_sha256 = hashlib.sha256(payload.ciphertext).hexdigest()
             random_token = secrets.token_hex(16)
-            object_key = f"tenants/{tenant_context.tenant_id}/quarantine/{file_id}/{random_token}.enc"
+            object_key = (
+                f"tenants/{tenant_context.tenant_id}/quarantine/{file_id}/{random_token}.enc"
+            )
             self.storage_provider.put_object(
                 object_key, payload.ciphertext, content_type="application/octet-stream"
             )
@@ -195,7 +196,9 @@ class StorageService:
 
         from conformly.entitlements.service import check_storage_limit
 
-        check_storage_limit(self.session, tenant_context.tenant_id, additional_bytes=len(payload.ciphertext))
+        check_storage_limit(
+            self.session, tenant_context.tenant_id, additional_bytes=len(payload.ciphertext)
+        )
 
         random_token = secrets.token_hex(16)
         object_key = f"tenants/{tenant_context.tenant_id}/files/{file_id}/{random_token}.enc"
@@ -442,7 +445,9 @@ class StorageService:
             .limit(1)
         )
         if held is not None:
-            raise LegalHoldActiveError("Cannot delete file attached to evidence under active legal hold")
+            raise LegalHoldActiveError(
+                "Cannot delete file attached to evidence under active legal hold"
+            )
 
         # Commit this durable intent before irreversible object deletion.
         stored_file.status = StoredFileStatus.DELETE_PENDING
@@ -583,8 +588,15 @@ def get_storage_service(
         EnvelopeEncryptionService, Depends(get_envelope_encryption_service)
     ],
 ) -> StorageService:
+    settings = get_settings()
+    scanner = ProductionMalwareScanner(
+        clamav_host=settings.clamav_host,
+        clamav_port=settings.clamav_port,
+    )
     return StorageService(
         session=session,
         storage_provider=storage_provider,
         encryption_service=encryption_service,
+        malware_scanner=scanner,
+        max_file_size_bytes=settings.max_file_size_bytes,
     )

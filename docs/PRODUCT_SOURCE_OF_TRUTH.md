@@ -270,7 +270,7 @@ or OpenBao is deployment choice. Encryption: AES-256-GCM. Edge/ops: containers, 
 limits, OpenTelemetry, scrubbed logs/metrics/traces/alerts. Local containers also include mail
 catcher and malware scanner. Production data residency is Germany-only; provider is OPEN.
 
-Current React/Vite is a known deviation from locked Next.js and needs migration or approved change.
+Current React/Vite architecture has been formally approved via ADR D-056 as the production static SPA baseline served via Nginx (reconciling the previous Next.js deviation).
 
 API path: client/integration → HTTPS plus OIDC/service auth → edge → FastAPI → authz, tenant, and
 entitlement → domain service → DB/queue/object. Public APIs use `/api/v1`, explicit versions, opaque
@@ -408,7 +408,7 @@ least privilege, time-limited where practical, and audited.
 - Whistleblower was built in Core and exposed prominently despite V4's later separate boundary.
 - Legal entities, business units, risks, assets, vendors, LMS and API/webhooks are missing or
   underrepresented in the old “100%” claim.
-- Frontend is React/Vite while locked baseline is Next.js/React/TypeScript.
+- Frontend is React 19 + Vite + TypeScript static SPA served via Nginx, formally approved via ADR D-056 (resolving the previous Next.js deviation).
 - Completion must be recalculated against Section 15.
 
 Do not delete useful code to make documents look aligned. Inventory, preserve, disable where needed,

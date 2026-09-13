@@ -44,7 +44,9 @@ def get_entitlement_endpoint(
 ) -> TenantEntitlementResponse:
     request_id = getattr(request.state, "request_id", "req-entitlement-get")
     try:
-        entitlement = service.get_tenant_entitlement(database, principal, tenant_context, request_id)
+        entitlement = service.get_tenant_entitlement(
+            database, principal, tenant_context, request_id
+        )
         return TenantEntitlementResponse(
             id=entitlement.id,
             tenant_id=entitlement.tenant_id,
@@ -58,7 +60,8 @@ def get_entitlement_endpoint(
         )
     except AuthorizationDeniedError:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing entitlement:read capability"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing entitlement:read capability",
         )
 
 
@@ -98,5 +101,6 @@ def update_entitlement_endpoint(
         )
     except AuthorizationDeniedError:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing entitlement:manage capability"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing entitlement:manage capability",
         )

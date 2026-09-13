@@ -37,4 +37,5 @@ def authenticate_claims(
     return Principal(
         user_id=auth_session.user_id,
         is_platform_admin=auth_session.user.is_platform_admin,
+        mfa_verified=claims.mfa_verified,
     )

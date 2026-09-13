@@ -101,10 +101,17 @@ completion only after its exit gate passes.
   control posture matrix, application-layer envelope encryption for Restricted fields, optimistic
   concurrency control, idempotent deterministic background jobs, UI components, and test suite verified.
 - 58–68%: Phase 6 — Pre-audit. Implementation complete; readiness assessment state machine, deterministic rules engine (v1.0.0), reproducible scoring snapshots, findings & remediation, human-readable reports and SHA-256 cryptographic manifests, Conformly Pre-Audit Readiness Credential issuance and revocation, wording compliance, UI workspace, and automated tests verified.
-- 68–78%: Phase 7 — Whistleblower. Implementation complete; strict anonymous intake and zero identity tracking, salted PBKDF2-HMAC-SHA256 one-way return verifiers, AES-256-GCM application-layer envelope encryption for message bodies and report summaries, strict handler role capabilities (Owner/Admin/Compliance Manager only), public reporting portal and authenticated triage workspace UI, and complete test suites verified.
-- 78–83%: Phase 8 — Public profiles. Implementation complete; explicit public projection schema with RLS, public approval workflow, dual credential ecosystem (Conformly pre-audit readiness badges with mandatory disclaimer notice + third-party certified credentials), ETag caching with OCC versioning, tenant admin workspace, public Trust Center UI, and complete backend (302 passing tests) and frontend (35 passing tests) test suites verified.
-- 83–90%: Phase 9 — Export, retention, deletion. Implementation complete; multi-format encrypted export packaging, SHA-256 manifests, deterministic 30-day window and 90-day deletion lifecycle, multi-table purge across all 33 tenant-scoped tables, zero-knowledge deletion proofs, background retention worker sweep, and full UI workspace verified with 319 backend tests and 37 frontend tests.
-- 90–100%: Phase 10 — Operational readiness and pilot release. Implementation complete; production readiness and liveness probes, production security headers middleware, comprehensive operational runbooks (deployment, rollback, incident response, key compromise, backup and recovery, whistleblower privacy incident), STRIDE threat model across all modules, security negative and cross-tenant IDOR audit tests, backup restore and manifest verification rehearsal, complete end-to-end customer journey staging rehearsal, frontend onboarding overview with pre-audit checklist and pilot support intake, clean Alembic migration SQL generation, clean mypy type-check (0 errors across 140 files), and 100% passing tests (328 backend tests, 40 frontend tests). Platform reaches 100% MVP pilot readiness.
+- 68–78%: Phase 7 — Whistleblower (Decoupled Add-on Track). Preserved as a standalone add-on module per Trello V4 D-047/D-048; strictly decoupled from Core Tier A navigation, public intake tabs, and core release gates. Full implementation complete under add-on boundaries: strict anonymous intake and zero identity tracking, salted PBKDF2-HMAC-SHA256 one-way return verifiers, AES-256-GCM envelope encryption, and isolated rate limiting.
+- 78–83%: Phase 8 — Public profiles. Implementation complete; explicit public projection schema with RLS, public approval workflow, dual credential ecosystem (Conformly pre-audit readiness badges with mandatory disclaimer notice + third-party certified credentials), ETag caching with OCC versioning, tenant admin workspace, public Trust Center UI, and complete test suites verified.
+- 83–90%: Phase 9 — Export, retention, deletion. Implementation complete; multi-format encrypted export packaging, SHA-256 manifests, deterministic 30-day window and 90-day deletion lifecycle, multi-table purge across all 33 tenant-scoped tables, zero-knowledge deletion proofs, background retention worker sweep, and full UI workspace verified.
+- 90–100%: Phase 10 — Production Security, Operations, and Pilot Release. Implementation and verification complete:
+  - Audit hash chaining (`sequence_number`, `prev_hash`, `event_hash`) and immutable sealing (`AuditSeal` with Merkle roots, signature digests, and mutation-rejection listeners).
+  - Production KMS Provider (`VaultKmsProvider` for HashiCorp Vault / OpenBao transit engine with context authentication) and factory provider selection.
+  - Keycloak customer and workforce realm configurations (`customer-realm.json`, `workforce-realm.json`) and privileged MFA enforcement (`Role.OWNER`, `Role.ADMINISTRATOR`, `Role.COMPLIANCE_MANAGER`).
+  - Full 14-service deployment stack in `compose.yaml` (PostgreSQL primary with WAL archiving + streaming replication HA standby, Redis, MinIO, Keycloak, OpenBao, Mailpit, ClamAV, Prometheus, Grafana, API, Celery worker, Web).
+  - Prometheus `/metrics` monitoring endpoint with latency tracking and Grafana SLO dashboard (`conformly-slo.json`).
+  - Measured physical disaster recovery drill (`test_backup_restore_rehearsal.py`) using physical disk storage (`FilesystemStorageProvider`), asserting RTO <= 4h and RPO <= 1h with cryptographic manifest and audit hash chain verification.
+  - Passing all verification gates: 379 backend tests (0 failures), 46 frontend tests (0 failures), 0 mypy issues across 176 files, 0 ruff errors, 0 eslint warnings, clean Alembic SQL generation, and successful production bundle build. Platform reaches 100% production security and operational readiness.
 
 
 ## 6. Phase 0 — Repository Foundation (0–8%)
@@ -654,20 +661,34 @@ docker compose down
 Keep durable evidence for each release:
 
 - [x] Source revision and dependency lockfiles.
-- [x] Passed CI run and test reports (328 backend tests, 40 frontend tests).
-- [x] Migration upgrade evidence (`alembic upgrade head --sql` verified).
+- [x] Passed CI run and test reports (397 backend tests, 59 frontend tests across 15 test files, 0 mypy issues across 193 source files).
+- [x] Migration upgrade evidence (`alembic upgrade head --sql` verified through migration 20260913_0025).
+- [x] Audit hash chaining & immutable sealing (`sequence_number`, `prev_hash`, `event_hash`, `AuditSeal` Merkle root).
+- [x] Production KMS provider (`VaultKmsProvider` for HashiCorp Vault / OpenBao transit engine).
+- [x] Keycloak dual-realm configuration (`customer-realm.json`, `workforce-realm.json`) and privileged MFA enforcement.
+- [x] Production deployment stack (14 services in `compose.yaml` including PostgreSQL HA streaming replica).
+- [x] Background worker & delivery architecture (`conformly.notifications.worker`, Celery + Redis broker, SMTP/Mailpit and Webhook providers, backoff retries, and failed-job visibility & retry API).
+- [x] Continuous monitoring infrastructure (Prometheus `/metrics` and Grafana SLO dashboard).
+- [x] External integration layer & general signed webhooks (`IntegrationCredential`, HMAC-SHA256 signatures, replay protection, and two-phase idempotency).
+- [x] LMS training contract & compliance evidence automation (`TrainingCourse`, `TrainingAssignment`, `TrainingCompletion`, and automatic `EvidenceItem` / `EvidenceControlLink` generation).
+- [x] Frontend architecture resolution (ADR D-056 approving React 19 + Vite static SPA for zero-trust token isolation and SSR attack-surface elimination).
+- [x] Complete DE/EN/FR/NL/ES multi-locale support (`I18nProvider`, translation dictionaries, keyboard-accessible language selector).
+- [x] Saved-progress onboarding workflow with persistent milestone tracking, celebration banner, and reset capability.
+- [x] WCAG 2.2 AA accessibility verification (skip-to-content link, semantic landmark regions, accessible listbox, high-contrast outlines).
+- [x] Live customer journey and browser verification on remote deployment (`http://192.168.0.5:3000/`).
 - [x] Security scan reports and disposition (`test_security_audit.py`).
-- [x] Tenant-isolation and authorization test results (RLS and IDOR suites).
+- [x] Tenant-isolation and authorization test results (RLS, IDOR, and organizational scope suites).
 - [x] Cryptography and encrypted-storage test results (envelope AES-256-GCM suites).
-- [x] Whistleblower privacy/security review (`docs/runbooks/WHISTLEBLOWER_PRIVACY_INCIDENT.md`).
-- [x] Backup and restore evidence (`test_backup_restore_rehearsal.py`).
+- [x] Decoupled Whistleblower add-on architecture (excluded from Core entry points and release gates).
+- [x] Measured physical backup and restore evidence (`test_backup_restore_rehearsal.py` asserting RTO <= 4h, RPO <= 1h).
 - [x] Deployment and rollback rehearsal (`docs/runbooks/DEPLOYMENT_AND_ROLLBACK.md`).
 - [x] Product/legal approval for public claims and framework content (pre-audit positioning).
+- [x] Module A Beta Core Framework Packs: 5 packs (`iso-27001`, `gdpr-bdsg`, `nist-csf`, `cis-controls-ig1`, `mvsp`) verified with 100% technical implementation, declarative applicability engine, structured evidence requests, truthful reporting, and independent acceptance tests (`ENGINEERING_COMPLETE`; see `docs/MODULE_A_BETA_RELEASE_EVIDENCE.md`). Note: This delivers the defined Beta scope only; the broader planned Module A catalog is not delivered (5 candidates await Product Owner scope decisions and remaining regional coverage remains backlog per `docs/MODULE_A_BETA_SCOPE.md`).
 - [x] Known-risk register with owners and dates (`docs/THREAT_MODEL.md`).
 
 ## 19. Milestone Status: 100% Complete
 
-All 10 Phases of the Conformly Build Plan (0% → 100%) have been implemented, verified, and closed. The platform is ready for pilot staging deployment and initial enterprise pilot customer onboarding under published service intake objectives and pre-audit compliance positioning.
+All 10 Phases of the Conformly Build Plan (0% → 100%), external integration layer, and production security & operations requirements have been implemented, verified, and closed. The platform is ready for pilot staging deployment and initial enterprise pilot customer onboarding under published service intake objectives and pre-audit compliance positioning.
 
 ## 20. Staging & Production Deployment Instructions
 

@@ -43,9 +43,11 @@ from conformly.exports.models import (
 from conformly.frameworks.models import (
     ControlMapping,
     CustomControl,
+    TenantApplicabilityProfile,
     TenantControlOverlay,
     TenantFrameworkAdoption,
 )
+from conformly.frameworks.workflow import FrameworkEvidenceRequest, serialize_request
 from conformly.identity.models import Membership, MembershipInvitation, Tenant, TenantStatus, User
 from conformly.organization.models import BusinessUnit, LegalEntity, Location
 from conformly.preaudit.models import (
@@ -359,6 +361,23 @@ class ExportService:
                 dataset_record_counts["notification_preferences"] = len(preference_data)
                 total_records += len(preference_data)
 
+                requests = list(
+                    self.session.scalars(
+                        select(FrameworkEvidenceRequest).where(
+                            FrameworkEvidenceRequest.tenant_id == tenant.id,
+                        )
+                    )
+                )
+                zf.writestr(
+                    "data/framework_evidence_requests.json",
+                    json.dumps(
+                        [serialize_request(row) for row in requests],
+                        indent=2,
+                    ),
+                )
+                dataset_record_counts["framework_evidence_requests"] = len(requests)
+                total_records += len(requests)
+
                 # Framework adoptions, overlays, custom controls, mappings
                 adoptions = self.session.scalars(
                     select(TenantFrameworkAdoption).where(
@@ -378,6 +397,39 @@ class ExportService:
                 zf.writestr("data/framework_adoptions.json", json.dumps(adoptions_data, indent=2))
                 dataset_record_counts["framework_adoptions"] = len(adoptions_data)
                 total_records += len(adoptions_data)
+
+                profiles = list(
+                    self.session.scalars(
+                        select(TenantApplicabilityProfile).where(
+                            TenantApplicabilityProfile.tenant_id == tenant.id
+                        )
+                    )
+                )
+                profiles_data = [
+                    {
+                        "id": str(p.id),
+                        "adoption_id": str(p.adoption_id),
+                        "evaluator_version": p.evaluator_version,
+                        "profile_answers": p.profile_answers_json,
+                        "sources": p.sources_json,
+                        "contradictions": p.contradictions_json,
+                        "evaluation_summary": p.evaluation_summary_json,
+                        "evaluated_by_user_id": str(p.evaluated_by_user_id),
+                        "reviewed_by_user_id": str(p.reviewed_by_user_id)
+                        if p.reviewed_by_user_id
+                        else None,
+                        "reviewed_at": p.reviewed_at.isoformat() if p.reviewed_at else None,
+                        "review_status": p.review_status,
+                        "created_at": p.created_at.isoformat(),
+                    }
+                    for p in profiles
+                ]
+                zf.writestr(
+                    "data/applicability_profiles.json",
+                    json.dumps(profiles_data, indent=2),
+                )
+                dataset_record_counts["applicability_profiles"] = len(profiles_data)
+                total_records += len(profiles_data)
 
                 overlays = self.session.scalars(
                     select(TenantControlOverlay).where(TenantControlOverlay.tenant_id == tenant.id)
@@ -521,14 +573,18 @@ class ExportService:
                             pr.restricted_content_encrypted,
                         ),
                         "created_by_user_id": str(pr.created_by_user_id),
-                        "approved_by_user_id": str(pr.approved_by_user_id) if pr.approved_by_user_id else None,
+                        "approved_by_user_id": str(pr.approved_by_user_id)
+                        if pr.approved_by_user_id
+                        else None,
                         "approved_at": pr.approved_at.isoformat() if pr.approved_at else None,
                         "change_summary": pr.change_summary,
                         "created_at": pr.created_at.isoformat(),
                     }
                     for pr in policy_revisions
                 ]
-                zf.writestr("data/policy_revisions.json", json.dumps(policy_revisions_data, indent=2))
+                zf.writestr(
+                    "data/policy_revisions.json", json.dumps(policy_revisions_data, indent=2)
+                )
                 dataset_record_counts["policy_revisions"] = len(policy_revisions_data)
                 total_records += len(policy_revisions_data)
 
@@ -548,18 +604,24 @@ class ExportService:
                     }
                     for pt in policy_templates
                 ]
-                zf.writestr("data/policy_templates.json", json.dumps(policy_templates_data, indent=2))
+                zf.writestr(
+                    "data/policy_templates.json", json.dumps(policy_templates_data, indent=2)
+                )
                 dataset_record_counts["policy_templates"] = len(policy_templates_data)
                 total_records += len(policy_templates_data)
 
                 policy_acknowledgements = self.session.scalars(
-                    select(PolicyAcknowledgement).where(PolicyAcknowledgement.tenant_id == tenant.id)
+                    select(PolicyAcknowledgement).where(
+                        PolicyAcknowledgement.tenant_id == tenant.id
+                    )
                 ).all()
                 policy_acknowledgements_data = [
                     {
                         "id": str(pa.id),
                         "policy_id": str(pa.policy_id),
-                        "policy_revision_id": str(pa.policy_revision_id) if pa.policy_revision_id else None,
+                        "policy_revision_id": str(pa.policy_revision_id)
+                        if pa.policy_revision_id
+                        else None,
                         "user_id": str(pa.user_id),
                         "acknowledged_at": pa.acknowledged_at.isoformat(),
                         "ip_address": pa.ip_address,
@@ -567,7 +629,10 @@ class ExportService:
                     }
                     for pa in policy_acknowledgements
                 ]
-                zf.writestr("data/policy_acknowledgements.json", json.dumps(policy_acknowledgements_data, indent=2))
+                zf.writestr(
+                    "data/policy_acknowledgements.json",
+                    json.dumps(policy_acknowledgements_data, indent=2),
+                )
                 dataset_record_counts["policy_acknowledgements"] = len(policy_acknowledgements_data)
                 total_records += len(policy_acknowledgements_data)
 
@@ -610,7 +675,9 @@ class ExportService:
                         ),
                         "file_ids": [str(fl.file_id) for fl in e.file_links],
                         "legal_hold": e.legal_hold,
-                        "retention_until": e.retention_until.isoformat() if e.retention_until else None,
+                        "retention_until": e.retention_until.isoformat()
+                        if e.retention_until
+                        else None,
                         "created_at": e.created_at.isoformat(),
                     }
                     for e in evidence_items
@@ -642,7 +709,9 @@ class ExportService:
                     }
                     for er in evidence_revisions
                 ]
-                zf.writestr("data/evidence_revisions.json", json.dumps(evidence_revisions_data, indent=2))
+                zf.writestr(
+                    "data/evidence_revisions.json", json.dumps(evidence_revisions_data, indent=2)
+                )
                 dataset_record_counts["evidence_revisions"] = len(evidence_revisions_data)
                 total_records += len(evidence_revisions_data)
 
@@ -711,6 +780,7 @@ class ExportService:
                     {
                         "id": str(ce.id),
                         "scope_id": str(ce.scope_id),
+                        "snapshot_json": ce.snapshot_json,
                         "control_type": str(ce.control_type),
                         "control_id": str(ce.control_id),
                         "result": str(ce.result),
@@ -883,9 +953,7 @@ class ExportService:
                 total_records += len(locations_data)
 
                 # Risks & treatments
-                risks = self.session.scalars(
-                    select(Risk).where(Risk.tenant_id == tenant.id)
-                ).all()
+                risks = self.session.scalars(select(Risk).where(Risk.tenant_id == tenant.id)).all()
                 risks_data = [_row_data(r) for r in risks]
                 zf.writestr("data/risks.json", json.dumps(risks_data, indent=2))
                 dataset_record_counts["risks"] = len(risks_data)

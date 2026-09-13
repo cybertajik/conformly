@@ -10,12 +10,17 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
+from conformly.api.whistleblower import (
+    public_whistleblower_router,
+    whistleblower_router,
+)
 from conformly.auth.dependencies import get_current_principal, get_tenant_context
 from conformly.authz.policy import Principal, TenantContext
 from conformly.authz.roles import Role
 from conformly.crypto.fields import get_encrypted_field_codec
 from conformly.db.base import Base
 from conformly.db.session import get_db
+from conformly.entitlements.models import TenantEntitlement
 from conformly.identity.models import (
     Membership,
     MembershipStatus,
@@ -23,10 +28,14 @@ from conformly.identity.models import (
     TenantStatus,
     User,
 )
-from conformly.entitlements.models import TenantEntitlement
 from conformly.main import app
 from conformly.storage.models import StoredFile  # noqa: F401
 from conformly.whistleblower.rate_limit import anonymous_whistleblower_rate_limiter
+
+# Ensure add-on routes are available when running the whistleblower add-on test suite
+if not any(getattr(r, "path", None) == "/api/v1/whistleblower/cases" for r in app.routes):
+    app.include_router(public_whistleblower_router)
+    app.include_router(whistleblower_router)
 
 # ── Fixtures ───────────────────────────────────────────────────────────────
 

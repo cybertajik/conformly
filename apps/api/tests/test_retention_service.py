@@ -35,7 +35,13 @@ from conformly.retention.service import (
     LegalHoldActiveError,
     RetentionService,
 )
-from conformly.risks.models import Risk, RiskCategory, RiskStatus, RiskTreatment, RiskTreatmentStrategy
+from conformly.risks.models import (
+    Risk,
+    RiskCategory,
+    RiskStatus,
+    RiskTreatment,
+    RiskTreatmentStrategy,
+)
 from conformly.storage.models import StoredFile
 from conformly.storage.providers import MemoryStorageProvider
 from conformly.storage.service import StorageService
@@ -349,22 +355,24 @@ def test_execute_deletion_job_purges_all_tables_and_generates_proof(session: Ses
         )
         session.add(entitlement)
 
-    session.add_all([
-        policy,
-        task,
-        pre_audit,
-        pub_profile,
-        invitation,
-        preference,
-        notification,
-        legal_entity,
-        business_unit,
-        location,
-        risk,
-        treatment,
-        asset,
-        vendor,
-    ])
+    session.add_all(
+        [
+            policy,
+            task,
+            pre_audit,
+            pub_profile,
+            invitation,
+            preference,
+            notification,
+            legal_entity,
+            business_unit,
+            location,
+            risk,
+            treatment,
+            asset,
+            vendor,
+        ]
+    )
     session.flush()
 
     job = DeletionJob(
@@ -436,7 +444,10 @@ def test_execute_deletion_job_purges_all_tables_and_generates_proof(session: Ses
     assert session.scalar(select(Location).where(Location.tenant_id == tenant.id)) is None
     assert session.scalar(select(BusinessUnit).where(BusinessUnit.tenant_id == tenant.id)) is None
     assert session.scalar(select(LegalEntity).where(LegalEntity.tenant_id == tenant.id)) is None
-    assert session.scalar(select(TenantEntitlement).where(TenantEntitlement.tenant_id == tenant.id)) is None
+    assert (
+        session.scalar(select(TenantEntitlement).where(TenantEntitlement.tenant_id == tenant.id))
+        is None
+    )
     assert session.scalar(select(Membership).where(Membership.tenant_id == tenant.id)) is None
 
 

@@ -21,10 +21,7 @@ def list_legal_entities(
     request_id: str,
 ) -> list[LegalEntity]:
     authorize(principal, tenant_context, Capability.ORGANIZATION_READ)
-    stmt = (
-        select(LegalEntity)
-        .where(LegalEntity.tenant_id == tenant_context.tenant_id)
-    )
+    stmt = select(LegalEntity).where(LegalEntity.tenant_id == tenant_context.tenant_id)
     if tenant_context.legal_entity_id is not None:
         stmt = stmt.where(LegalEntity.id == tenant_context.legal_entity_id)
     stmt = stmt.order_by(LegalEntity.created_at.asc())
@@ -255,7 +252,9 @@ def get_legal_entity(
     request_id: str,
 ) -> LegalEntity:
     authorize(principal, tenant_context, Capability.ORGANIZATION_READ)
-    authorize_resource(principal, tenant_context, Capability.ORGANIZATION_READ, legal_entity_id=entity_id)
+    authorize_resource(
+        principal, tenant_context, Capability.ORGANIZATION_READ, legal_entity_id=entity_id
+    )
     entity = database.scalar(
         select(LegalEntity).where(
             LegalEntity.id == entity_id,
@@ -279,7 +278,9 @@ def update_legal_entity(
     request_id: str,
 ) -> LegalEntity:
     authorize(principal, tenant_context, Capability.ORGANIZATION_MANAGE)
-    authorize_resource(principal, tenant_context, Capability.ORGANIZATION_MANAGE, legal_entity_id=entity_id)
+    authorize_resource(
+        principal, tenant_context, Capability.ORGANIZATION_MANAGE, legal_entity_id=entity_id
+    )
     entity = get_legal_entity(database, principal, tenant_context, entity_id, request_id)
     entity.name = name.strip()
     entity.registration_number = registration_number.strip() if registration_number else None
@@ -309,7 +310,9 @@ def delete_legal_entity(
     request_id: str,
 ) -> None:
     authorize(principal, tenant_context, Capability.ORGANIZATION_MANAGE)
-    authorize_resource(principal, tenant_context, Capability.ORGANIZATION_MANAGE, legal_entity_id=entity_id)
+    authorize_resource(
+        principal, tenant_context, Capability.ORGANIZATION_MANAGE, legal_entity_id=entity_id
+    )
     entity = get_legal_entity(database, principal, tenant_context, entity_id, request_id)
     if entity.is_primary:
         raise ValueError("Cannot delete primary legal entity")

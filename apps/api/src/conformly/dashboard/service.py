@@ -1,16 +1,14 @@
 from datetime import UTC, datetime, timedelta
-from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from conformly.assets.models import Asset
 from conformly.audit.models import AuditActorType, AuditEvent, AuditOutcome
 from conformly.audit.service import record_audit_event
 from conformly.authz.policy import Principal, TenantContext
-from conformly.authz.roles import Capability, Role
+from conformly.authz.roles import Role
 from conformly.compliance.models import (
     ComplianceTask,
     ControlImplementationStatus,
@@ -122,7 +120,12 @@ def get_dashboard_summary(
     request_id: str,
 ) -> DashboardSummary:
     """Aggregate executive compliance readiness metrics or administrative overview with server-side RLS."""
-    set_rls_context(database, user_id=principal.user_id, tenant_id=tenant_context.tenant_id, tenant_verified=True)
+    set_rls_context(
+        database,
+        user_id=principal.user_id,
+        tenant_id=tenant_context.tenant_id,
+        tenant_verified=True,
+    )
     now = datetime.now(UTC)
     role = tenant_context.role
 
@@ -130,21 +133,39 @@ def get_dashboard_summary(
     is_admin = role == Role.ADMINISTRATOR
     if is_admin:
         # Gather Admin Metrics
-        total_members = database.scalar(
-            select(func.count(Membership.id)).where(
-                Membership.tenant_id == tenant_context.tenant_id,
-                Membership.status == MembershipStatus.ACTIVE,
+        total_members = (
+            database.scalar(
+                select(func.count(Membership.id)).where(
+                    Membership.tenant_id == tenant_context.tenant_id,
+                    Membership.status == MembershipStatus.ACTIVE,
+                )
             )
-        ) or 0
-        legal_entities = database.scalar(
-            select(func.count(LegalEntity.id)).where(LegalEntity.tenant_id == tenant_context.tenant_id)
-        ) or 0
-        business_units = database.scalar(
-            select(func.count(BusinessUnit.id)).where(BusinessUnit.tenant_id == tenant_context.tenant_id)
-        ) or 0
-        locations = database.scalar(
-            select(func.count(Location.id)).where(Location.tenant_id == tenant_context.tenant_id)
-        ) or 0
+            or 0
+        )
+        legal_entities = (
+            database.scalar(
+                select(func.count(LegalEntity.id)).where(
+                    LegalEntity.tenant_id == tenant_context.tenant_id
+                )
+            )
+            or 0
+        )
+        business_units = (
+            database.scalar(
+                select(func.count(BusinessUnit.id)).where(
+                    BusinessUnit.tenant_id == tenant_context.tenant_id
+                )
+            )
+            or 0
+        )
+        locations = (
+            database.scalar(
+                select(func.count(Location.id)).where(
+                    Location.tenant_id == tenant_context.tenant_id
+                )
+            )
+            or 0
+        )
         entitlement = database.scalar(
             select(TenantEntitlement).where(TenantEntitlement.tenant_id == tenant_context.tenant_id)
         )
@@ -183,7 +204,9 @@ def get_dashboard_summary(
 
         return DashboardSummary(
             readiness_score=0,
-            controls_summary=DashboardControlsSummary(total=0, implemented=0, in_progress=0, not_started=0),
+            controls_summary=DashboardControlsSummary(
+                total=0, implemented=0, in_progress=0, not_started=0
+            ),
             frameworks_adopted=[],
             expiring_evidence=[],
             review_due_policies=[],
@@ -197,7 +220,9 @@ def get_dashboard_summary(
                     id=e.id,
                     action=e.action,
                     resource_type=e.resource_type,
-                    actor_type=e.actor_type.value if hasattr(e.actor_type, "value") else str(e.actor_type),
+                    actor_type=e.actor_type.value
+                    if hasattr(e.actor_type, "value")
+                    else str(e.actor_type),
                     occurred_at=e.occurred_at,
                 )
                 for e in recent_events
@@ -208,8 +233,7 @@ def get_dashboard_summary(
 
     # 1. Frameworks & Controls Posture
     active_adoptions = database.scalars(
-        select(TenantFrameworkAdoption)
-        .where(
+        select(TenantFrameworkAdoption).where(
             TenantFrameworkAdoption.tenant_id == tenant_context.tenant_id,
             TenantFrameworkAdoption.status == AdoptionStatus.ACTIVE,
         )
@@ -249,15 +273,17 @@ def get_dashboard_summary(
 
     total_controls = len(all_control_ids)
     implemented_count = sum(
-        1 for cid in all_control_ids if status_map.get(cid) == ControlImplementationStatus.IMPLEMENTED
+        1
+        for cid in all_control_ids
+        if status_map.get(cid) == ControlImplementationStatus.IMPLEMENTED
     )
     in_progress_count = sum(
-        1 for cid in all_control_ids if status_map.get(cid) == ControlImplementationStatus.IN_PROGRESS
+        1
+        for cid in all_control_ids
+        if status_map.get(cid) == ControlImplementationStatus.IN_PROGRESS
     )
     not_started_count = total_controls - (implemented_count + in_progress_count)
-    readiness_score = (
-        round((implemented_count / total_controls) * 100) if total_controls > 0 else 0
-    )
+    readiness_score = round((implemented_count / total_controls) * 100) if total_controls > 0 else 0
 
     controls_summary = DashboardControlsSummary(
         total=total_controls,
@@ -283,7 +309,9 @@ def get_dashboard_summary(
             id=ev.id,
             title=ev.title,
             expires_at=ev.valid_until or now,
-            days_remaining=max(0, (ev.valid_until.date() - now.date()).days) if ev.valid_until else 0,
+            days_remaining=max(0, (ev.valid_until.date() - now.date()).days)
+            if ev.valid_until
+            else 0,
             classification=ev.classification,
         )
         for ev in expiring_evidence_rows
@@ -305,7 +333,9 @@ def get_dashboard_summary(
             id=p.id,
             title=p.title,
             review_due_at=p.next_review_due or now,
-            days_remaining=max(0, (p.next_review_due.date() - now.date()).days) if p.next_review_due else 0,
+            days_remaining=max(0, (p.next_review_due.date() - now.date()).days)
+            if p.next_review_due
+            else 0,
         )
         for p in review_due_policy_rows
     ]

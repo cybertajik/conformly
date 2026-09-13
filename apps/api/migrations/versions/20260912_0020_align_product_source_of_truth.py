@@ -82,9 +82,7 @@ def upgrade() -> None:
         ),
     )
     op.create_index("ix_business_units_tenant_id", "business_units", ["tenant_id"])
-    op.create_index(
-        "ix_business_units_legal_entity_id", "business_units", ["legal_entity_id"]
-    )
+    op.create_index("ix_business_units_legal_entity_id", "business_units", ["legal_entity_id"])
 
     # ── 3. locations ───────────────────────────────────────────────────────
     op.create_table(

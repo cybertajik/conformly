@@ -10,9 +10,7 @@ class LegalEntity(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     """A registered legal corporation or entity belonging to a tenant."""
 
     __tablename__ = "legal_entities"
-    __table_args__ = (
-        Index("ix_legal_entities_tenant_id", "tenant_id"),
-    )
+    __table_args__ = (Index("ix_legal_entities_tenant_id", "tenant_id"),)
 
     tenant_id: Mapped[UUID] = mapped_column(
         ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False

@@ -274,6 +274,34 @@ export function deleteTenantOverlay(
   );
 }
 
+export interface TenantProfileContextData {
+  entity_role?: "controller" | "processor" | "both";
+  deployment_model?: "cloud_saas" | "hybrid" | "on_premise";
+  employee_count?: number;
+  processes_personal_data?: boolean;
+  processes_special_category_data?: boolean;
+  has_physical_offices?: boolean;
+  operates_own_datacenter?: boolean;
+  involves_international_transfers?: boolean;
+  uses_subprocessors?: boolean;
+}
+
+export function evaluateAdoptionApplicability(
+  token: string,
+  tenantId: string,
+  adoptionId: string,
+  profile: TenantProfileContextData
+): Promise<TenantControlOverlaySummary[]> {
+  return apiRequest(
+    `/v1/tenants/${encodeURIComponent(tenantId)}/frameworks/adoptions/${encodeURIComponent(adoptionId)}/evaluate-applicability`,
+    token,
+    {
+      method: "POST",
+      body: JSON.stringify(profile),
+    }
+  );
+}
+
 // Tenant Custom Controls
 export function listCustomControls(
   token: string,

@@ -8,7 +8,13 @@ from conformly.audit.models import AuditActorType, AuditOutcome
 from conformly.audit.service import record_audit_event
 from conformly.authz.policy import Principal, TenantContext, authorize, authorize_resource
 from conformly.authz.roles import Capability
-from conformly.risks.models import Risk, RiskCategory, RiskStatus, RiskTreatment, RiskTreatmentStrategy
+from conformly.risks.models import (
+    Risk,
+    RiskCategory,
+    RiskStatus,
+    RiskTreatment,
+    RiskTreatmentStrategy,
+)
 
 
 class RiskNotFoundError(Exception):
@@ -28,10 +34,7 @@ def list_risks(
     status: RiskStatus | None = None,
 ) -> list[Risk]:
     authorize(principal, tenant_context, Capability.RISK_READ)
-    stmt = (
-        select(Risk)
-        .where(Risk.tenant_id == tenant_context.tenant_id)
-    )
+    stmt = select(Risk).where(Risk.tenant_id == tenant_context.tenant_id)
     if tenant_context.legal_entity_id is not None:
         stmt = stmt.where(Risk.legal_entity_id == tenant_context.legal_entity_id)
     if tenant_context.business_unit_id is not None:

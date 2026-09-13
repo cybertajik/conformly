@@ -11,7 +11,12 @@ from conformly.authz.policy import AuthorizationDeniedError
 from conformly.db.session import get_db
 from conformly.entitlements.dependencies import require_module
 from conformly.risks import service
-from conformly.risks.models import Risk, RiskCategory, RiskStatus, RiskTreatment, RiskTreatmentStrategy
+from conformly.risks.models import (
+    Risk,
+    RiskCategory,
+    RiskStatus,
+    RiskTreatmentStrategy,
+)
 
 router = APIRouter(
     prefix="/v1/tenants/{tenant_id}/risks",
@@ -155,7 +160,9 @@ def list_risks_endpoint(
         )
         return [_to_risk_response(r) for r in risks]
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing risk:read capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing risk:read capability"
+        )
 
 
 @router.get("/{risk_id}", response_model=RiskResponse)
@@ -171,7 +178,9 @@ def get_risk_endpoint(
         risk = service.get_risk(database, principal, tenant_context, risk_id, request_id)
         return _to_risk_response(risk)
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing risk:read capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing risk:read capability"
+        )
     except service.RiskNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
@@ -205,7 +214,10 @@ def create_risk_endpoint(
         database.commit()
         return _to_risk_response(risk)
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing risk:manage capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing risk:manage capability",
+        )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
 
@@ -243,7 +255,10 @@ def update_risk_endpoint(
         database.commit()
         return _to_risk_response(risk)
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing risk:manage capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing risk:manage capability",
+        )
     except service.RiskNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     except ValueError as exc:
@@ -272,7 +287,10 @@ def complete_risk_review_endpoint(
         database.commit()
         return _to_risk_response(risk)
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing risk:manage capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing risk:manage capability",
+        )
     except service.RiskNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
@@ -290,12 +308,19 @@ def delete_risk_endpoint(
         service.delete_risk(database, principal, tenant_context, risk_id, request_id)
         database.commit()
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing risk:manage capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing risk:manage capability",
+        )
     except service.RiskNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
 
-@router.post("/{risk_id}/treatments", response_model=RiskTreatmentResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{risk_id}/treatments",
+    response_model=RiskTreatmentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def add_treatment_endpoint(
     risk_id: UUID,
     payload: RiskTreatmentCreateRequest,
@@ -328,7 +353,10 @@ def add_treatment_endpoint(
             created_at=treatment.created_at,
         )
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing risk:manage capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing risk:manage capability",
+        )
     except service.RiskNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
@@ -367,7 +395,9 @@ def update_treatment_endpoint(
             created_at=treatment.created_at,
         )
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing risk:manage capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing risk:manage capability",
+        )
     except service.TreatmentNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
-

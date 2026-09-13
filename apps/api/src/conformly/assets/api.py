@@ -111,7 +111,9 @@ def list_assets_endpoint(
         )
         return [_to_asset_response(a) for a in assets]
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing asset:read capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing asset:read capability"
+        )
 
 
 @router.get("/{asset_id}", response_model=AssetResponse)
@@ -127,7 +129,9 @@ def get_asset_endpoint(
         asset = service.get_asset(database, principal, tenant_context, asset_id, request_id)
         return _to_asset_response(asset)
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing asset:read capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing asset:read capability"
+        )
     except service.AssetNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
@@ -160,7 +164,10 @@ def create_asset_endpoint(
         database.commit()
         return _to_asset_response(asset)
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing asset:manage capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing asset:manage capability",
+        )
 
 
 @router.put("/{asset_id}", response_model=AssetResponse)
@@ -194,7 +201,10 @@ def update_asset_endpoint(
         database.commit()
         return _to_asset_response(asset)
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing asset:manage capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing asset:manage capability",
+        )
     except service.AssetNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
@@ -221,7 +231,10 @@ def complete_asset_review_endpoint(
         database.commit()
         return _to_asset_response(asset)
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing asset:manage capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing asset:manage capability",
+        )
     except service.AssetNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
@@ -239,7 +252,9 @@ def delete_asset_endpoint(
         service.delete_asset(database, principal, tenant_context, asset_id, request_id)
         database.commit()
     except AuthorizationDeniedError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: missing asset:manage capability")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: missing asset:manage capability",
+        )
     except service.AssetNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
-

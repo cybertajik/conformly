@@ -315,6 +315,175 @@ Pre-audits are tenant-scoped readiness assessments that evaluate compliance work
    - Staff / Workforce users (`is_workforce=True`) have **no standing access** to customer tenant data. Access requires an active, unexpired engagement (`expires_at > now`).
    - Expired engagements immediately fail closed during tenant context resolution (`TenantContextError`) and central authorization (`AuthorizationDeniedError`).
 
+## D-049 — Audit Hash Chaining and Immutable Sealing (Trello Section 12)
+
+1. **Deterministic SHA-256 Hash Chaining:**
+   - Every tenant audit event is sequentially numbered per tenant (`sequence_number`) and bound cryptographically to its direct predecessor (`prev_hash`) using SHA-256 over normalized canonical attributes (`sequence_number`, `occurred_at`, `tenant_id`, `actor_type`, `actor_id`, `action`, `resource_type`, `resource_id`, `request_id`, `outcome`, `metadata`, `prev_hash`).
+   - The first tenant record links to the genesis zero hash (`0000000000000000000000000000000000000000000000000000000000000000`).
+2. **Immutable Audit Seals & Merkle Tree Rooting:**
+   - Introduced `AuditSeal` model with PostgreSQL Row-Level Security. Seals group sequences of audit events into tamper-evident batches with calculated Merkle roots and cryptographic signature digests.
+   - Seals verify both backward event-hash chains and batch Merkle integrity.
+3. **Immutability Enforcement:**
+   - Registered SQLAlchemy ORM listeners (`before_update`, `before_delete`) to reject mutation or deletion of committed `AuditEvent` and `AuditSeal` rows with `AuditImmutabilityError`.
+   - Any manual or out-of-band SQL tampering invalidates the cryptographic verification function `verify_audit_chain`.
+
+## D-050 — Production Key Management Service Provider (Vault / OpenBao)
+
+1. **Vault / OpenBao Transit Engine Provider:**
+   - Implemented `VaultKmsProvider` implementing the `KeyManagementProvider` protocol, supporting remote envelope key wrapping (`transit/encrypt`) and unwrapping (`transit/decrypt`) with base64 ciphertext and context-bound authenticated encryption.
+   - Provider factory `get_kms_provider(settings)` dynamically selects between `LocalKeyManagementProvider` (dev/test) and `VaultKmsProvider` (production) based on `CONFORMLY_KMS_PROVIDER`.
+2. **Key Lifecycle & Crypto-Agility:**
+   - Key rotation occurs via Vault key-version advancement (`vault_key_name: str = "conformly-master-key"`). Envelope decryption supports multiple key versions without requiring immediate re-encryption of existing ciphertext.
+
+## D-051 — Keycloak Customer and Workforce Realms & Privileged MFA Enforcement
+
+1. **Dual-Realm Keycloak Topology:**
+   - `customer-realm.json`: Configured for multi-tenant customer users with configurable OTP policies, PKCE authentication, OIDC client definitions, and AMR/ACR claim mappers.
+   - `workforce-realm.json`: Configured for internal workforce personnel with mandatory TOTP execution, break-glass admin accounts, and strict session limits.
+2. **Privileged Role Multi-Factor Authentication Enforcement:**
+   - Privileged roles (`Role.OWNER`, `Role.ADMINISTRATOR`, `Role.COMPLIANCE_MANAGER`) must possess verified MFA in their token claims (`amr` containing `otp`, `totp`, `mfa`, or `webauthn`, or ACR equivalent).
+   - Privileged requests lacking verified MFA are rejected at `get_tenant_context` with HTTP 403 `MFA enforcement: privileged role requires multi-factor authentication`. Non-privileged roles (`EMPLOYEE`, `REVIEWER`, `CONTROL_OWNER`) can access their assigned scope without mandatory MFA.
+
+## D-052 — Complete Production Deployment Topology (compose.yaml, Prometheus, Grafana)
+
+1. **Full 14-Service Stack:**
+   - Fully expanded `compose.yaml` with production-grade topology: `postgres` (primary with WAL archiving and replication privileges), `postgres-replica` (streaming standby HA), `redis` (task and cache broker), `minio` + `minio-init` (S3 storage), `keycloak` (identity), `openbao` (KMS transit engine), `mailpit` (mock SMTP), `clamav` (malware scanning), `prometheus` (metrics scraping), `grafana` (SLO dashboard), `migrate` (alembic), `api` (FastAPI), `worker` (Celery background tasks), and `web` (React/Vite).
+2. **Continuous Monitoring & Metric Collection:**
+   - API exposes `/metrics` Prometheus endpoint tracking HTTP request totals, latency distributions, active database connections, and backup timestamps.
+   - Preconfigured `prometheus.yml` scrape configuration and Grafana SLO dashboard (`conformly-slo.json`) displaying latency p99, error rates, and backup status.
+
+## D-053 — Measured Disaster Recovery & Streaming HA Standby (RTO/RPO Verification)
+
+1. **Physical Storage Rehearsal:**
+   - Upgraded disaster recovery drill (`test_backup_restore_rehearsal.py`) to run against actual disk storage (`FilesystemStorageProvider`), removing the previous mock `MemoryStorageProvider`.
+2. **Measured Recovery Metrics:**
+   - Validated end-to-end physical backup creation, file encryption, ZIP bundle export, and full restoration with measured Recovery Time Objective (RTO <= 4 hours) and Recovery Point Objective (RPO <= 1 hour) asserting against pilot objectives.
+   - Reconstructed tenant verifies manifest SHA-256 digest, original file byte matching, and cryptographic audit hash chain integrity after restoration.
+
+## D-054 — Background Jobs, Delivery Providers, Celery Integration & Failed-Job Remediation
+
+1. **Dual-Mode Worker Runtime:**
+   - Worker entry point `conformly.notifications.worker` (`python -m conformly.notifications.worker`) runs either as a standalone tick-based polling loop with signal handling (`SIGINT`/`SIGTERM`) or as a Celery worker daemon (`--celery`).
+   - Integrated with Compose stack: `compose.yaml` executes `python -m conformly.notifications.worker` with dependency on healthy `postgres`, `redis`, and `mailpit`.
+2. **Actual Delivery Providers & Routing:**
+   - RFC 5322 MIME message formatting via `SmtpNotificationProvider` delivering to Mailpit in development and authenticated TLS SMTP in production.
+   - HMAC-SHA256 signed HTTP delivery via `WebhookNotificationProvider` with timestamp, signature, and idempotency headers.
+   - `CompositeNotificationProvider` routes to SMTP or Webhooks dynamically based on payload contents (`recipient_email`/`email` vs `webhook_url`), with `LoggingNotificationProvider` fallback.
+3. **Deterministic Exponential Backoff & Terminal Failure:**
+   - Transient errors (connection refused, timeouts) retry up to `MAX_DELIVERY_ATTEMPTS = 5` with bounded exponential delays (`1m`, `2m`, `4m`, `8m`, `16m`).
+   - Terminal errors (recipient refused, authentication failure) immediately transition to `FAILED` status with an error code and failure audit event.
+4. **Failed-Job Visibility & Management API:**
+   - Dedicated REST endpoints under `/v1/tenants/{tenant_id}/jobs`:
+     - `GET /v1/tenants/{tenant_id}/jobs/failed`: returns failure counts and recent failures.
+     - `GET /v1/tenants/{tenant_id}/jobs/outbox`: lists messages with pagination and state filtering.
+     - `GET /v1/tenants/{tenant_id}/jobs/outbox/{message_id}`: message status detail.
+     - `POST /v1/tenants/{tenant_id}/jobs/outbox/{message_id}/retry`: privileged manual retry resetting state to `PENDING` and logging `notification.retry` audit events.
+   - Access restricted to privileged tenant roles (`Role.OWNER`, `Role.ADMINISTRATOR`, `Role.COMPLIANCE_MANAGER`).
+5. **Celery & Redis Architecture:**
+   - `conformly.jobs.celery` defines `celery_app` backed by Redis broker/result-backend.
+   - Celery tasks: `conformly.deliver_notifications` (outbox batch), `conformly.continuous_compliance_cycle` (periodic compliance checks), and `conformly.retention_sweep` (tenant cancellation and deletion lifecycle).
+   - Celery Beat schedule configures recurring delivery (every 10s), continuous compliance checks (hourly), and daily retention sweeps.
+
+## D-055 — External Integration Layer, Signed Webhooks & LMS Training Contract
+
+1. **External Integration Architecture & Security Boundaries:**
+   - Multi-tenant integration credentials (`IntegrationCredential`) with PBKDF2-HMAC-SHA256 client secret hashing (100,000 rounds) and AES-256-GCM application-layer envelope encryption for signing secrets.
+   - Credentials strictly tenant-scoped with PostgreSQL Row-Level Security (RLS) enforcement.
+   - Plaintext credentials and signing secrets returned only once upon generation; secrets never logged or stored unencrypted.
+2. **General Signed-Webhook Subsystem:**
+   - Inbound webhook authentication via `X-Conformly-Key-Id`, `X-Conformly-Signature`, `X-Conformly-Timestamp`, and `X-Conformly-Idempotency-Key` headers.
+   - HMAC-SHA256 signature verification computed over `${timestamp}.${raw_body}`.
+   - Replay protection enforcing strict tolerance window (`abs(now - timestamp) <= 300` seconds).
+   - Two-phase idempotency tracking (`InboundWebhookEvent`) with atomic duplicate delivery detection, concurrency locking, and cached response replay.
+   - Outbound webhook subscriptions (`WebhookSubscription`) supporting tenant isolation, topic filtering, and application-layer encrypted secrets.
+3. **LMS Integration Contract & Separation of Responsibilities:**
+   - As mandated by `docs/PRODUCT_SOURCE_OF_TRUTH.md` (Items 18 & 22) and Trello DEU, Conformly does not embed or rebuild an LMS runtime.
+   - Conformly owns:
+     - Course catalog metadata (`TrainingCourse`)
+     - Workforce training assignments, role mappings, and due dates (`TrainingAssignment`)
+     - Automatic compliance evidence generation (`EvidenceItem`) and control linking (`EvidenceControlLink`) upon completion
+     - Audit trail and encrypted raw payload preservation for legal defensibility
+   - External LMS owns: SCORM content, lesson tracking, interactive player, quizzes, and learner assessment.
+   - Verifiable webhook contract (`LmsContract` / `LmsCompletionPayload` / `LmsPartnerSimulator`) prevents spoofing: no browser redirect can mark compliance controls as satisfied.
+
+## D-056 — Frontend Architecture: React 19 + Vite Static SPA Approval
+
+1. **Resolution of Frontend Framework Baseline:**
+   - Evaluated the documented divergence between `Next.js/React/TypeScript` (in earlier Trello baseline) and the active `React 19 + Vite + TypeScript` implementation (`apps/web`).
+   - Formally approved **React 19 + Vite + TypeScript Static SPA** served via Nginx containers as the production frontend architecture, closing the repository deviation noted in `docs/PRODUCT_SOURCE_OF_TRUTH.md`.
+2. **Security & Zero-Trust Client Model Justification:**
+   - Conformly is an authenticated B2B SaaS platform where all API communication is secured via client-side OIDC/PKCE bearer tokens with Keycloak and FastAPI.
+   - Deploying pre-compiled static HTML/JS/CSS assets behind Nginx eliminates Node.js server-side execution attack surfaces (e.g. multi-tenant token leakage in SSR process memory, server-side prototype pollution, Node CVEs).
+   - Eliminates unnecessary SSR complexity since all compliance operations require authenticated, tenant-isolated API access.
+3. **Operational, Performance & Testing Alignment:**
+   - Static compilation produces sub-300ms Vite builds and instant client-side routing.
+   - Fully unified with the established Vitest + Testing Library test suite (46+ component and journey tests) and Docker multi-stage Nginx production container (`apps/web/Dockerfile`).
+   - Supports required WCAG 2.2 AA accessibility standards and client-side multi-lingual localization (DE/EN/FR/NL/ES).
+
+## D-057 — Tier A Framework Packs Selection, Licensing, and Release Model
+
+1. **Initial Tier A Foundation Framework Selection:**
+   - Selected five foundational compliance and security framework packs as the initial Tier A core release:
+     1. `iso-27001` (ISO/IEC 27001:2022 ISMS Pre-Audit Readiness Pack): Information security management system readiness clauses (4–10) and Annex A controls (A.5 Organizational, A.6 People, A.7 Physical, A.8 Technological).
+     2. `gdpr-bdsg` (EU GDPR & German BDSG Privacy Operations Pack): Data protection principles, lawful basis, data subject rights, processing records (VVT Art 30), technical and organizational measures (TOMs Art 32), 72-hour breach notification (Art 33/34), DPIA (Art 35), DPO requirements (Art 37-39, BDSG § 38), and employee data safeguards (BDSG § 26).
+     3. `nist-csf` (NIST Cybersecurity Framework 2.0 Pack): Core cybersecurity outcomes structured across Govern (GV), Identify (ID), Protect (PR), Detect (DE), Respond (RS), and Recover (RC).
+     4. `cis-controls-ig1` (CIS Critical Security Controls v8 - Implementation Group 1): Foundational cyber hygiene safeguards covering asset/software inventory, data protection, secure configurations, account management, access control, vulnerability management, audit logs, malware defense, backups, awareness training, and incident response.
+     5. `mvsp` (Minimum Viable Secure Product v2.0): B2B SaaS application and vendor security baseline across Business controls, Application security, Operational security, and Physical security.
+
+2. **Content Rights, Copyright & Licensing Strategy:**
+   - **GDPR & BDSG:** Official legislative acts of the European Union (Regulation 2016/679) and the Federal Republic of Germany (Bundesdatenschutzgesetz) are in the public domain (German § 5 Abs. 1 UrhG: "Gesetze, Verordnungen, amtliche Erlasse und Bekanntmachungen... genießen keinen urheberrechtlichen Schutz").
+   - **NIST CSF 2.0:** Work of the United States Federal Government, placed into the public domain worldwide (17 U.S.C. § 105).
+   - **CIS Controls v8 IG1:** Licensed and utilized under fair-use implementation taxonomy and public cyber hygiene guidance.
+   - **MVSP 2.0:** Openly published under the Creative Commons Attribution 4.0 International license (CC BY 4.0).
+   - **ISO/IEC 27001:2022:** Conformly respects ISO/IEC intellectual property. Conformly does not reproduce proprietary or paywalled ISO normative text verbatim. Instead, Conformly authors proprietary, actionable pre-audit readiness requirements, operational controls, implementation guidance, and evidence collection requests aligned with standard clause structures.
+   - **Positioning Boundary:** Conformly pre-audit readiness scores, badges, and reports strictly state that they assess readiness and compliance operations and do not constitute accredited third-party certification.
+
+3. **Deterministic Applicability Evaluation Rules Engine:**
+   - Framework packs are augmented with a deterministic applicability engine (`TenantProfileContext` → `OverlayApplicability`) that evaluates tenant characteristics (Controller vs Processor, 100% remote vs physical facilities, datacenter ownership, employee count >= 20 for German DPO obligations under § 38 BDSG, special category data under Art 9 / § 22 BDSG, and international data transfers).
+   - Produces auditable justification records (`TenantControlOverlay`) explaining why specific controls are `APPLICABLE`, `NOT_APPLICABLE`, or `SCOPED_OUT`.
+
+4. **Independent Second-Person Approval & Immutability:**
+   - Framework packs are governed by the canonical `FrameworkService` lifecycle:
+     - `create_framework()`
+     - `create_version_draft()` authored by platform administrator
+     - `add_canonical_control()` for all requirements and evidence guidance
+     - `submit_version_for_review()` → `IN_REVIEW`
+     - `record_legal_review()`
+     - `approve_version()` by independent second-person approver (enforcing `approver_id != author_id` and `approver_id != reviewer_id`)
+     - `release_version()` → `RELEASED`
+   - Non-draft versions (`IN_REVIEW`, `APPROVED`, `RELEASED`, `RETIRED`) are strictly immutable. Content revisions require returning the version to `DRAFT` via `return_version_to_draft()`.
+
+5. **Global Catalog Backlog Scope:**
+   - The global catalog (`docs/GLOBAL_FRAMEWORK_CATALOG.md`) formally maintains Tier B (SOC 2, ISO 27701, ISO 22301), Tier C (NIS2, DORA, EU AI Act), and Tier D (FedRAMP, CMMC) as the future planning backlog, preserving clear boundaries between released Tier A core and future packaging proposals.
+
+## D-058 — Framework Content Immutability Enforcement, Return-to-Draft Lifecycle, and Truthful Draft Pack Documentation
+
+1. **Context & Motivation:**
+   - Verification highlighted two concerns:
+     1. Mutation of canonical framework content while under review (`IN_REVIEW`) or approved (`APPROVED`) must strictly fail closed. In earlier code, `ReleaseState.APPROVED` was omitted from check tuples in several mutation methods, and tests relied on raw ORM attribute manipulation (`ver.release_state = ReleaseState.DRAFT`) rather than an audited service lifecycle transition.
+     2. Documentation across `GLOBAL_FRAMEWORK_CATALOG.md` and `FRAMEWORK_PACKS_TIER_A.md` previously claimed launch packs were released/approved, directly contradicting `manifest.json` which designates all five packs as `DRAFT_REVISION_UNDERWAY` / `CONTENT_REVIEW_PENDING` awaiting independent human review.
+2. **Fail-Closed Immutability Enforcement:**
+   - Standardized all 7 canonical framework mutation methods in `FrameworkService`:
+     - `add_canonical_control`
+     - `update_canonical_control`
+     - `delete_canonical_control`
+     - `add_source_requirement`
+     - `add_requirement_control_mapping`
+     - `add_evidence_specification`
+     - `set_coverage_ledger_entry`
+   - Every method strictly checks `if version.release_state != ReleaseState.DRAFT: raise ImmutableCanonicalVersionError(...)`. No mutation is permitted when a version is in `IN_REVIEW`, `APPROVED`, `RELEASED`, or `RETIRED`.
+3. **Explicit Audited Return-to-Draft Service & API:**
+   - Implemented `return_version_to_draft(principal, version_id, reason, request_id)` in `FrameworkService` and exposed `POST /v1/frameworks/{framework_id}/versions/{version_id}/return-draft`:
+     - Requires platform administrator privileges and verified MFA.
+     - Accepts versions in `IN_REVIEW` or `APPROVED` only (released versions cannot be returned to draft; they must be superseded).
+     - Resets `release_state` to `DRAFT`.
+     - Completely invalidates existing legal review records (`legal_reviewed_by_user_id`, `legal_reviewed_at`, `legal_review_notes`) and second-person approval records (`approved_by_user_id`, `approved_at`, `approval_notes`).
+     - Emits structured audit event `canonical_framework_version.returned_to_draft`.
+4. **Documentation & Manifest Truthfulness:**
+   - Reconciled documentation across `GLOBAL_FRAMEWORK_CATALOG.md`, `FRAMEWORK_PACKS_TIER_A.md`, and `PILOT_RELEASE_SIGNOFF_2026.md` to truthfully reflect that all five Tier A framework packs (`iso-27001`, `gdpr-bdsg`, `nist-csf`, `cis-controls-ig1`, `mvsp`) are technical engineering drafts in review (`CONTENT_REVIEW_PENDING`), matching `manifest.json`.
+
+
+
 ## Decision Process
 
 ### Planning record — 2026-09-13: global framework and add-on expansion
@@ -330,6 +499,31 @@ Pre-audits are tenant-scoped readiness assessments that evaluate compliance work
   human-reviewed deterministic readiness workflows. Geographic coverage is not hosting approval.
 - **Implementation boundary:** no application changes in this planning task. Items 1–4 are being
   implemented elsewhere according to the Product Owner and must still pass their own verification.
+
+
+## D-059 — ISO 9001:2015 Admitted to Module A Beta
+
+**Date:** 2026-09-13  
+**Decision Source:** Explicit Product Owner instruction.  
+**Prior Status:** `OWNER_DECISION_REQUIRED` (recorded in `manifest.json` and `MODULE_A_BETA_SCOPE.md`, Section 4).
+
+**Decision:** ISO 9001:2015 Quality Management System is promoted from `OWNER_DECISION_REQUIRED` to `REQUIRED_BETA`. It is now a full, production-grade Tier A framework pack subject to all the same content, schema, applicability, independent review, and testing gates as the original five packs.
+
+**Rationale:** Product Owner explicitly instructed engineering to "add ISO 9001 to the module A and code it."
+
+**Implementation:**
+- New pack module: `apps/api/src/conformly/frameworks/packs/iso_9001.py`
+- All addressable subclauses of Clauses 4–10 implemented (~60+ controls)
+- Conditional applicability rules added to `applicability.py`: Clause 8.3 (D&D), Clause 8.4 (External Providers), Clause 8.5.5 (Post-Delivery)
+- Three new `TenantProfileContext` fields: `performs_design_and_development`, `has_external_providers`, `has_post_delivery_activities`
+- `TIER_A_PACKS` expanded from 5 to 6 entries
+- `manifest.json` `required_beta_count` updated from 5 to 6
+- Draft skeleton removed from `owner_decision_drafts.py`
+- `MODULE_A_BETA_SCOPE.md` Section 3 updated to 6 packs; Section 4 reduced to 4 remaining candidates
+
+**Legal Gate Preserved:** ISO 9001:2015 is a proprietary standard (copyright ISO/TC 176/SC 2). The pack contains original Conformly pre-audit guidance only; no verbatim ISO text is reproduced. Independent IP counsel review is required prior to production customer issuance (same gate as ISO 27001). Pack `approval_notes` records this requirement.
+
+**Default for `performs_design_and_development`:** `False`. Service-only organizations commonly exclude Clause 8.3 from scope. Conservative default requires explicit opt-in for D&D applicability.
 - **Gate:** reconcile specific packaging changes on Trello DEU; verify authoritative sources,
   content rights, applicability and versions; obtain legal/compliance and independent approval;
   test packs before marking them released. A discovery entry is not supported framework content.

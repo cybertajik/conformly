@@ -285,5 +285,6 @@ def test_risks_assets_vendors_lifecycle_and_isolation(session: Session) -> None:
     )
     # Trying to read risk belonging to legal_entity from scoped_context should raise AuthorizationDeniedError
     with pytest.raises(AuthorizationDeniedError):
-        risk_service.get_risk(session, principal_a, scoped_context, risk_a.id, request_id="req-scope-check")
-
+        risk_service.get_risk(
+            session, principal_a, scoped_context, risk_a.id, request_id="req-scope-check"
+        )

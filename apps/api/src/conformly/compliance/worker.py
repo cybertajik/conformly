@@ -43,9 +43,7 @@ def run_compliance_worker_tick(
     # 1. Enumerate active tenant IDs from privileged control-plane context
     with session_factory() as control_session:
         active_tenant_ids: list[UUID] = list(
-            control_session.scalars(
-                select(Tenant.id).where(Tenant.status == TenantStatus.ACTIVE)
-            )
+            control_session.scalars(select(Tenant.id).where(Tenant.status == TenantStatus.ACTIVE))
         )
 
     results: list[ContinuousComplianceResult] = []

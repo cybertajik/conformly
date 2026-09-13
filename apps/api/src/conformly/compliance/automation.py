@@ -69,9 +69,7 @@ def _has_active_task_for_policy(session: Session, tenant_id: UUID, policy_id: UU
     return session.scalar(statement) is not None
 
 
-def _has_active_task_by_title_prefix(
-    session: Session, tenant_id: UUID, title_prefix: str
-) -> bool:
+def _has_active_task_by_title_prefix(session: Session, tenant_id: UUID, title_prefix: str) -> bool:
     statement = select(ComplianceTask.id).where(
         ComplianceTask.tenant_id == tenant_id,
         ComplianceTask.title.startswith(title_prefix),
@@ -108,9 +106,7 @@ def check_expiring_evidence(
         idempotency_ref = f"evidence_expiring_soon:{item.id}:{valid_until_str}"
 
         exists = session.scalar(
-            select(NotificationOutbox).where(
-                NotificationOutbox.idempotency_key == idempotency_ref
-            )
+            select(NotificationOutbox).where(NotificationOutbox.idempotency_key == idempotency_ref)
         )
         if not exists:
             enqueue_encrypted_notification(
@@ -193,15 +189,11 @@ def enforce_expired_evidence(
             occurred_at=now,
         )
 
-        valid_until_str = (
-            item.valid_until.date().isoformat() if item.valid_until else "unknown"
-        )
+        valid_until_str = item.valid_until.date().isoformat() if item.valid_until else "unknown"
         idempotency_ref = f"evidence_expired:{item.id}:{valid_until_str}"
 
         exists = session.scalar(
-            select(NotificationOutbox).where(
-                NotificationOutbox.idempotency_key == idempotency_ref
-            )
+            select(NotificationOutbox).where(NotificationOutbox.idempotency_key == idempotency_ref)
         )
         if not exists:
             enqueue_encrypted_notification(
@@ -286,9 +278,7 @@ def escalate_overdue_tasks(
         idempotency_ref = f"task_overdue:{task.id}:{due_date_str}"
 
         exists = session.scalar(
-            select(NotificationOutbox).where(
-                NotificationOutbox.idempotency_key == idempotency_ref
-            )
+            select(NotificationOutbox).where(NotificationOutbox.idempotency_key == idempotency_ref)
         )
         if not exists:
             enqueue_encrypted_notification(
@@ -339,9 +329,7 @@ def check_policy_reviews(
         idempotency_ref = f"policy_review:{policy.id}:{due_date_str}"
 
         exists = session.scalar(
-            select(NotificationOutbox).where(
-                NotificationOutbox.idempotency_key == idempotency_ref
-            )
+            select(NotificationOutbox).where(NotificationOutbox.idempotency_key == idempotency_ref)
         )
         if not exists:
             enqueue_encrypted_notification(
@@ -438,8 +426,7 @@ def check_vendor_cadence(
             if not _has_active_task_by_title_prefix(session, tenant_id, task_prefix):
                 priority = (
                     TaskPriority.HIGH
-                    if vendor.criticality
-                    in [VendorCriticality.HIGH, VendorCriticality.CRITICAL]
+                    if vendor.criticality in [VendorCriticality.HIGH, VendorCriticality.CRITICAL]
                     else TaskPriority.MEDIUM
                 )
                 task = ComplianceTask(
@@ -556,15 +543,9 @@ def run_continuous_compliance_cycle(
         vendor_tasks,
     ) = check_vendor_cadence(session, codec, tenant_id, current_time)
 
-    total_tasks_created = (
-        exp_warn_tasks + expired_tasks + policy_rev_tasks + vendor_tasks
-    )
+    total_tasks_created = exp_warn_tasks + expired_tasks + policy_rev_tasks + vendor_tasks
     total_notifications = (
-        exp_warn_alerts
-        + expired_alerts
-        + overdue_alerts
-        + policy_rev_alerts
-        + vendor_alerts
+        exp_warn_alerts + expired_alerts + overdue_alerts + policy_rev_alerts + vendor_alerts
     )
 
     session.flush()

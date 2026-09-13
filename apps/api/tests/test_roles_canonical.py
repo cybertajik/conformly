@@ -1,5 +1,7 @@
 from uuid import uuid4
+
 import pytest
+
 from conformly.authz.policy import AuthorizationDeniedError, Principal, TenantContext, authorize
 from conformly.authz.roles import Capability, Role
 
@@ -59,7 +61,9 @@ def test_compliance_manager_authorized_for_compliance_operations():
     tenant_id = uuid4()
     user_id = uuid4()
     principal = Principal(user_id=user_id, is_platform_admin=False)
-    tenant_context = TenantContext(tenant_id=tenant_id, user_id=user_id, role=Role.COMPLIANCE_MANAGER)
+    tenant_context = TenantContext(
+        tenant_id=tenant_id, user_id=user_id, role=Role.COMPLIANCE_MANAGER
+    )
 
     authorize(principal, tenant_context, Capability.FRAMEWORK_MANAGE)
     authorize(principal, tenant_context, Capability.EVIDENCE_MANAGE)

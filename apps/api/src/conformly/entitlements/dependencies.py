@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Annotated, Callable
+from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session

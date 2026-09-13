@@ -140,6 +140,52 @@ def test_canonical_framework_api_lifecycle(session: Session, client: TestClient)
     assert res.status_code == 200
     assert res.json()["release_state"] == "in_review"
 
+    # 5a. Mutating controls while under review must fail with 400
+    res = client.post(
+        f"/v1/frameworks/{fw_id}/versions/{v_id}/controls",
+        headers={"Authorization": "Bearer test"},
+        json={
+            "identifier": "A.5.2",
+            "title": "Information security roles",
+            "description": "Defined roles",
+            "category": "Organizational",
+            "sort_order": 2,
+        },
+    )
+    assert res.status_code == 400
+    assert "cannot add controls to version in in_review state" in res.json()["detail"]
+
+    # 5b. Return version to draft for amendments
+    res = client.post(
+        f"/v1/frameworks/{fw_id}/versions/{v_id}/return-draft",
+        headers={"Authorization": "Bearer test"},
+        json={"reason": "Adding additional control before legal review"},
+    )
+    assert res.status_code == 200
+    assert res.json()["release_state"] == "draft"
+
+    # Now adding control succeeds in draft
+    res = client.post(
+        f"/v1/frameworks/{fw_id}/versions/{v_id}/controls",
+        headers={"Authorization": "Bearer test"},
+        json={
+            "identifier": "A.5.2",
+            "title": "Information security roles",
+            "description": "Defined roles",
+            "category": "Organizational",
+            "sort_order": 2,
+        },
+    )
+    assert res.status_code == 201
+
+    # Re-submit for review
+    res = client.post(
+        f"/v1/frameworks/{fw_id}/versions/{v_id}/submit-review",
+        headers={"Authorization": "Bearer test"},
+    )
+    assert res.status_code == 200
+    assert res.json()["release_state"] == "in_review"
+
     # 6. Legal review
     res = client.post(
         f"/v1/frameworks/{fw_id}/versions/{v_id}/legal-review",
