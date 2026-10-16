@@ -8,7 +8,7 @@ import { canManageMemberships } from "./permissions";
 describe("App", () => {
   it("shows the authentication entry point", async () => {
     render(<App />);
-    expect(await screen.findByRole("heading", { name: "Conformly" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Welcome to your workspace" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
   });
 

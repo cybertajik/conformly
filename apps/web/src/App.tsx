@@ -1,5 +1,5 @@
 import type { TenantMembershipSummary } from "@conformly/shared";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 
 import {
   AccessDeniedError,
@@ -17,19 +17,22 @@ import {
   isOidcCallback,
 } from "./auth";
 import { AssetWorkspace } from "./components/AssetWorkspace";
-import { ComplianceWorkspace } from "./components/ComplianceWorkspace";
-import { DataLifecycleWorkspace } from "./components/DataLifecycleWorkspace";
+const ComplianceWorkspace = lazy(() => import("./components/ComplianceWorkspace").then(module => ({ default: module.ComplianceWorkspace })));
+const DataLifecycleWorkspace = lazy(() => import("./components/DataLifecycleWorkspace").then(module => ({ default: module.DataLifecycleWorkspace })));
 import { ExecutiveDashboard } from "./components/ExecutiveDashboard";
-import { FrameworkCatalog } from "./components/FrameworkCatalog";
+const FrameworkCatalog = lazy(() => import("./components/FrameworkCatalog").then(module => ({ default: module.FrameworkCatalog })));
+import { WorkspaceShell, Brand } from "./components/WorkspaceShell";
+import { ArrowUpRight, Check, Layers3, LockKeyhole } from "lucide-react";
 import { LanguageSelector } from "./components/LanguageSelector";
 import { MembersWorkspace } from "./components/MembersWorkspace";
 import { OnboardingOverview } from "./components/OnboardingOverview";
-import { OrganizationWorkspace } from "./components/OrganizationWorkspace";
-import { PreAuditWorkspace } from "./components/PreAuditWorkspace";
-import { PublicProfileView } from "./components/PublicProfileView";
-import { PublicProfileWorkspace } from "./components/PublicProfileWorkspace";
+const OrganizationWorkspace = lazy(() => import("./components/OrganizationWorkspace").then(module => ({ default: module.OrganizationWorkspace })));
+const PreAuditWorkspace = lazy(() => import("./components/PreAuditWorkspace").then(module => ({ default: module.PreAuditWorkspace })));
+const PublicProfileView = lazy(() => import("./components/PublicProfileView").then(module => ({ default: module.PublicProfileView })));
+const PublicProfileWorkspace = lazy(() => import("./components/PublicProfileWorkspace").then(module => ({ default: module.PublicProfileWorkspace })));
 import { RiskWorkspace } from "./components/RiskWorkspace";
 import { VendorWorkspace } from "./components/VendorWorkspace";
+import { workspaceCopy } from "./i18n/workspaceCopy";
 import { I18nProvider, useTranslation } from "./i18n/I18nContext";
 import {
   canManageMemberships,
@@ -64,7 +67,8 @@ type AppState = "loading" | "signed_out" | "ready" | "expired" | "denied" | "err
 const SELECTED_TENANT_KEY = "conformly.selected_tenant";
 
 function AppContent() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const copy = workspaceCopy[locale];
   const [state, setState] = useState<AppState>("loading");
   const [tab, setTab] = useState<Tab>("overview");
   const [message, setMessage] = useState("");
@@ -169,34 +173,11 @@ function AppContent() {
   }
   if (state === "signed_out") {
     return (
-      <Status eyebrow={t("status.eyebrow")} title={t("status.signedOutTitle")} detail={t("status.signedOutDetail")}>
+      <Status eyebrow={t("status.eyebrow")} title={copy.welcome} detail={t("status.signedOutDetail")}>
         <div className="status-actions">
-          <button className="btn-primary" onClick={() => void beginOidcLogin()}>
+          <button className="primary" onClick={() => void beginOidcLogin().catch(error => { setMessage(error instanceof Error ? error.message : "Sign-in failed. Please try again."); setState("error"); })}>
             {t("status.signInBtn")}
           </button>
-        </div>
-        <div className="status-features">
-          <div className="status-feature">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" />
-            </svg>
-            <strong>Evidence &amp; controls</strong>
-            <span>Track controls, evidence, and readiness in one place.</span>
-          </div>
-          <div className="status-feature">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <strong>Pre-audit ready</strong>
-            <span>Deterministic checks surface gaps before your audit.</span>
-          </div>
-          <div className="status-feature">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
-            </svg>
-            <strong>Multi-tenant secure</strong>
-            <span>Strict tenant isolation with application-layer encryption.</span>
-          </div>
         </div>
         <div className="status-lang">
           <LanguageSelector />
@@ -206,13 +187,13 @@ function AppContent() {
   }
 
   if (state === "expired") {
-    return <Status eyebrow={t("status.eyebrow")} title={t("status.expiredTitle")} detail={t("status.expiredDetail")} />;
+    return <Status eyebrow={t("status.eyebrow")} title={t("status.expiredTitle")} detail={t("status.expiredDetail")}><button className="primary" onClick={() => setState("signed_out")}>{copy.retry}</button></Status>;
   }
   if (state === "denied") {
     return <Status eyebrow={t("status.eyebrow")} title={t("status.deniedTitle")} detail={t("status.deniedDetail")} />;
   }
   if (state === "error") {
-    return <Status eyebrow={t("status.eyebrow")} title="Unable to sign in" detail={message} />;
+    return <Status eyebrow={t("status.eyebrow")} title="Unable to sign in" detail={message}><button className="primary" onClick={() => setState("signed_out")}>{copy.retry}</button></Status>;
   }
   if (!selected) {
     return (
@@ -226,98 +207,27 @@ function AppContent() {
 
   const effectiveToken = token || (getAccessToken() ?? "");
 
-  const navItems: { id: Tab; label: string; icon: string; check?: () => boolean }[] = [
-    { id: "overview", label: t("nav.overview"), icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1" },
-    { id: "onboarding", label: t("nav.onboarding"), icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" },
-    { id: "organization", label: t("nav.organization"), icon: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4", check: () => canReadOrganization(selected.role) },
-    { id: "frameworks", label: t("nav.frameworks"), icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10", check: () => canReadFrameworks(selected.role) },
-    { id: "compliance", label: t("nav.compliance"), icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z", check: () => canReadEvidence(selected.role) || canReadPolicies(selected.role) },
-    { id: "risks", label: t("nav.risks"), icon: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z", check: () => canReadRisks(selected.role) },
-    { id: "assets", label: t("nav.assets"), icon: "M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01", check: () => canReadAssets(selected.role) },
-    { id: "vendors", label: t("nav.vendors"), icon: "M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z", check: () => canReadVendors(selected.role) },
-    { id: "preaudit", label: t("nav.preaudit"), icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4", check: () => canReadPreAudit(selected.role) },
-    { id: "public_profile", label: t("nav.trustCenter"), icon: "M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064", check: () => canReadPublicProfile(selected.role) },
-    { id: "lifecycle", label: t("nav.lifecycle"), icon: "M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4", check: () => canReadExport(selected.role) },
-    { id: "members", label: t("nav.members"), icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z", check: () => canManageMemberships(selected.role) },
+  const navItems: { id: Tab; label: string; check?: () => boolean }[] = [
+    { id: "overview", label: t("nav.overview") },
+    { id: "onboarding", label: t("nav.onboarding") },
+    { id: "organization", label: t("nav.organization"), check: () => canReadOrganization(selected.role) },
+    { id: "frameworks", label: t("nav.frameworks"), check: () => canReadFrameworks(selected.role) },
+    { id: "compliance", label: t("nav.compliance"), check: () => canReadEvidence(selected.role) || canReadPolicies(selected.role) },
+    { id: "risks", label: t("nav.risks"), check: () => canReadRisks(selected.role) },
+    { id: "assets", label: t("nav.assets"), check: () => canReadAssets(selected.role) },
+    { id: "vendors", label: t("nav.vendors"), check: () => canReadVendors(selected.role) },
+    { id: "preaudit", label: t("nav.preaudit"), check: () => canReadPreAudit(selected.role) },
+    { id: "public_profile", label: t("nav.trustCenter"), check: () => canReadPublicProfile(selected.role) },
+    { id: "lifecycle", label: t("nav.lifecycle"), check: () => canReadExport(selected.role) },
+    { id: "members", label: t("nav.members"), check: () => canManageMemberships(selected.role) },
   ];
 
   const visibleNavItems = navItems.filter((item) => !item.check || item.check());
-  const userInitials = (selected.tenant_name || "U").substring(0, 2).toUpperCase();
+
 
   return (
-    <div className="app-shell">
-      {/* ─── Skip Link for Accessibility ─── */}
-      <a href="#main-content" className="skip-to-content">
-        Skip to main content
-      </a>
-
-      {/* ─── Sidebar ─── */}
-      <aside className="sidebar" aria-label="Sidebar">
-        <div className="sidebar-brand">
-          <div className="brand-icon">C</div>
-          <span className="brand-name">Conformly</span>
-        </div>
-
-        <div className="sidebar-org">
-          <label htmlFor="tenant-selector">{t("nav.organizationLabel")}</label>
-          <select
-            id="tenant-selector"
-            value={selected.tenant_id}
-            onChange={(event) => void chooseTenant(event.target.value)}
-          >
-            {tenants.map((tenant) => (
-              <option key={tenant.tenant_id} value={tenant.tenant_id}>
-                {tenant.tenant_name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <nav className="sidebar-nav" aria-label="Primary navigation">
-          <div className="sidebar-section-label">{t("nav.platform")}</div>
-          {visibleNavItems.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={`nav-item${tab === item.id ? " active" : ""}`}
-              onClick={() => setTab(item.id)}
-            >
-              <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d={item.icon} />
-              </svg>
-              {item.label}
-            </button>
-          ))}
-        </nav>
-
-        <div className="sidebar-footer">
-          <div className="sidebar-lang-row">
-            <LanguageSelector compact />
-          </div>
-          <div className="sidebar-user">
-            <div className="user-avatar">{userInitials}</div>
-            <div className="user-info">
-              <div className="user-name">{selected.tenant_name}</div>
-              <div className="user-email">{selected.role.replaceAll("_", " ")}</div>
-            </div>
-            <button
-              className="ghost icon-only"
-              onClick={() => void signOut()}
-              title={t("nav.signOut")}
-              aria-label={t("nav.signOut")}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      {/* ─── Main Content ─── */}
-      <main id="main-content" className="main-content" tabIndex={-1}>
+    <WorkspaceShell items={visibleNavItems} tab={tab} navigate={setTab} tenants={tenants} selected={selected} chooseTenant={id => void chooseTenant(id)} signOut={() => void signOut()}>
+      <Suspense fallback={<div className="loading-state" role="status">{t("common.loading")}</div>}>
         {tab === "overview" && (
           <ExecutiveDashboard
             token={effectiveToken}
@@ -404,15 +314,15 @@ function AppContent() {
             currentUserId={userId}
           />
         )}
-      </main>
-    </div>
+      </Suspense>
+    </WorkspaceShell>
   );
 }
 
 export function App() {
   return (
     <I18nProvider>
-      <AppContent />
+      <Suspense fallback={<Status title="Loading workspace…" />}><AppContent /></Suspense>
     </I18nProvider>
   );
 }
@@ -428,14 +338,18 @@ function Status({
   eyebrow?: string;
   children?: React.ReactNode;
 }) {
+  const { locale } = useTranslation();
+  const copy = workspaceCopy[locale];
   return (
-    <main className="status-page">
-      <section aria-labelledby="page-title">
-        <p className="eyebrow">{eyebrow || "Secure compliance operations"}</p>
-        <h1 id="page-title">{title}</h1>
-        {detail && <p style={{ fontSize: "1.1rem", marginTop: "0.75rem" }}>{detail}</p>}
-        {children}
+    <main className="entry-page">
+      <section className="entry-story" aria-label="About Conformly">
+        <Brand/>
+        <div className="entry-story-copy"><span className="entry-kicker"><span/> {copy.kicker}</span><h2>{copy.less}<br/><em>{copy.more}</em></h2><p>{copy.story}</p></div>
+        <div className="entry-illustration" aria-hidden="true"><div className="illustration-label"><Layers3 size={17}/> {copy.connected}</div><div className="illustration-node node-framework">{copy.frameworks} <span>01</span></div><div className="illustration-line"/><div className="illustration-node node-evidence"><Check size={18}/> {copy.evidence} <span>02</span></div><div className="illustration-line"/><div className="illustration-node node-readiness"><ShieldMark/> {copy.readiness} <ArrowUpRight size={20}/></div><div className="illustration-caption">{copy.caption}</div></div>
+        <div className="entry-story-footer"><span>{copy.built}</span><span>Conformly © {new Date().getFullYear()}</span></div>
       </section>
+      <section className="entry-form" aria-labelledby="page-title"><div className="entry-form-inner"><span className="entry-lock"><LockKeyhole size={23}/></span><p className="eyebrow">{eyebrow || copy.awaits}</p><h1 id="page-title">{title}</h1>{detail && <p className="entry-detail">{detail}</p>}{children}<div className="entry-assurance"><LockKeyhole size={14}/><span>{copy.secure}</span></div></div><p className="entry-disclaimer">{copy.operations}<br/>{copy.disclaimer}</p></section>
     </main>
   );
 }
+function ShieldMark() { return <span className="illustration-check"><Check size={20}/></span>; }

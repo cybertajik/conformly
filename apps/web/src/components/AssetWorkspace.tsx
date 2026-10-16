@@ -1,3 +1,4 @@
+import { Modal } from "./Modal";
 import type {
   AssetCriticality,
   AssetItemSummary,
@@ -146,7 +147,7 @@ export function AssetWorkspace({ tenantId, userRole }: AssetWorkspaceProps) {
       {successMessage && <div className="success-banner">{successMessage}</div>}
 
       {/* Metrics Row */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 150px), 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
         <div className="metric-card">
           <span className="metric-label">Total Assets</span>
           <span className="metric-value">{assets.length}</span>
@@ -252,7 +253,7 @@ export function AssetWorkspace({ tenantId, userRole }: AssetWorkspaceProps) {
 
       {/* Register New Asset Modal */}
       {showCreateModal && (
-        <div className="modal-backdrop">
+        <Modal label="Register New Asset" onClose={() => setShowCreateModal(false)}>
           <div className="modal-content">
             <div className="modal-header">
               <h3>Register New Asset</h3>
@@ -260,8 +261,8 @@ export function AssetWorkspace({ tenantId, userRole }: AssetWorkspaceProps) {
             </div>
             <form onSubmit={handleCreateAsset}>
               <div className="form-group">
-                <label>Asset Name *</label>
-                <input
+                <label htmlFor="assetworkspace-field-1">Asset Name *</label>
+                <input id="assetworkspace-field-1"
                   type="text"
                   required
                   placeholder="e.g., Production PostgreSQL Cluster"
@@ -270,18 +271,18 @@ export function AssetWorkspace({ tenantId, userRole }: AssetWorkspaceProps) {
                 />
               </div>
               <div className="form-group">
-                <label>Asset Identifier / Tag</label>
-                <input
+                <label htmlFor="assetworkspace-field-2">Asset Identifier / Tag</label>
+                <input id="assetworkspace-field-2"
                   type="text"
                   placeholder="e.g., DB-PROD-01"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                 />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: "1rem" }}>
                 <div className="form-group">
-                  <label>Asset Type *</label>
-                  <select value={assetType} onChange={(e) => setAssetType(e.target.value as AssetType)}>
+                  <label htmlFor="assetworkspace-field-3">Asset Type *</label>
+                  <select id="assetworkspace-field-3" value={assetType} onChange={(e) => setAssetType(e.target.value as AssetType)}>
                     <option value="cloud_service">Cloud Service</option>
                     <option value="software">Software / Application</option>
                     <option value="hardware">Hardware / Server</option>
@@ -290,8 +291,8 @@ export function AssetWorkspace({ tenantId, userRole }: AssetWorkspaceProps) {
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Criticality *</label>
-                  <select value={criticality} onChange={(e) => setCriticality(e.target.value as AssetCriticality)}>
+                  <label htmlFor="assetworkspace-field-4">Criticality *</label>
+                  <select id="assetworkspace-field-4" value={criticality} onChange={(e) => setCriticality(e.target.value as AssetCriticality)}>
                     <option value="critical">Critical</option>
                     <option value="high">High</option>
                     <option value="medium">Medium</option>
@@ -299,10 +300,10 @@ export function AssetWorkspace({ tenantId, userRole }: AssetWorkspaceProps) {
                   </select>
                 </div>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: "1rem" }}>
                 <div className="form-group">
-                  <label>Data Classification *</label>
-                  <select value={classification} onChange={(e) => setClassification(e.target.value as DataClassification)}>
+                  <label htmlFor="assetworkspace-field-5">Data Classification *</label>
+                  <select id="assetworkspace-field-5" value={classification} onChange={(e) => setClassification(e.target.value as DataClassification)}>
                     <option value="Restricted">Restricted</option>
                     <option value="Confidential">Confidential</option>
                     <option value="Internal">Internal</option>
@@ -310,8 +311,8 @@ export function AssetWorkspace({ tenantId, userRole }: AssetWorkspaceProps) {
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Location / Cloud Region</label>
-                  <input
+                  <label htmlFor="assetworkspace-field-6">Location / Cloud Region</label>
+                  <input id="assetworkspace-field-6"
                     type="text"
                     placeholder="e.g., AWS eu-central-1"
                     value={location}
@@ -320,8 +321,8 @@ export function AssetWorkspace({ tenantId, userRole }: AssetWorkspaceProps) {
                 </div>
               </div>
               <div className="form-group">
-                <label>Description</label>
-                <textarea
+                <label htmlFor="assetworkspace-field-7">Description</label>
+                <textarea id="assetworkspace-field-7"
                   rows={2}
                   placeholder="Primary role, purpose, and dependencies"
                   value={description}
@@ -338,7 +339,7 @@ export function AssetWorkspace({ tenantId, userRole }: AssetWorkspaceProps) {
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

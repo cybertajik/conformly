@@ -66,11 +66,11 @@ export function PublicProfileView({
     return (
       <div
         data-testid="trust-center-loading"
-        className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 p-6"
+        className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-900 p-6"
       >
         <div className="text-center space-y-3">
           <div className="animate-spin w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto" />
-          <p className="text-slate-400 text-sm">
+          <p className="text-slate-500 text-sm">
             Verifying compliance records and credentials...
           </p>
         </div>
@@ -82,16 +82,16 @@ export function PublicProfileView({
     return (
       <div
         data-testid="trust-center-error"
-        className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 p-6"
+        className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-900 p-6"
       >
-        <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center space-y-5 shadow-2xl">
-          <div className="w-14 h-14 rounded-full bg-slate-800 border border-slate-700 text-slate-400 flex items-center justify-center mx-auto text-2xl font-bold">
+        <div className="max-w-md w-full bg-white border border-slate-200 rounded-2xl p-8 text-center space-y-5 shadow-2xl">
+          <div className="w-14 h-14 rounded-full bg-slate-50 border border-slate-200 text-slate-500 flex items-center justify-center mx-auto text-2xl font-bold">
             🔒
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
             Trust Center Unavailable
           </h2>
-          <p className="text-sm text-slate-400 leading-relaxed">
+          <p className="text-sm text-slate-500 leading-relaxed">
             {error || "This organization has not published an active public compliance trust center."}
           </p>
           {onBackToApp && (
@@ -116,26 +116,26 @@ export function PublicProfileView({
   return (
     <div
       data-testid="trust-center-view"
-      className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8 selection:bg-indigo-500 selection:text-white"
+      className="min-h-screen bg-slate-50 text-slate-900 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8 selection:bg-indigo-500 selection:text-white"
     >
       <div className="max-w-4xl w-full space-y-10">
         {/* Navigation / Header bar */}
         {onBackToApp && (
-          <div className="flex justify-between items-center pb-2 border-b border-slate-800/80">
+          <div className="flex justify-between items-center pb-2 border-b border-slate-200/80">
             <button
               onClick={onBackToApp}
-              className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-indigo-400 transition"
+              className="inline-flex items-center gap-2 text-xs font-medium text-slate-500 hover:text-indigo-600 transition"
             >
               ← Return to Conformly App
             </button>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-slate-800/80 text-slate-400 border border-slate-700/50">
+            <span className="text-xs px-2.5 py-1 rounded-full bg-slate-50/80 text-slate-500 border border-slate-200/50">
               Live Public Trust Center
             </span>
           </div>
         )}
 
         {/* Company Branding & Hero */}
-        <header className="bg-gradient-to-b from-slate-900/90 to-slate-900/40 border border-slate-800/80 rounded-2xl p-8 sm:p-10 backdrop-blur-md shadow-2xl relative overflow-hidden">
+        <header className="bg-white border border-slate-200/80 rounded-2xl p-8 sm:p-10 backdrop-blur-md shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
           <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between relative z-10">
             <div className="flex items-center gap-5">
@@ -143,7 +143,7 @@ export function PublicProfileView({
                 <img
                   src={profile.logo_url}
                   alt={`${profile.display_name} logo`}
-                  className="w-20 h-20 rounded-2xl object-cover border-2 border-slate-700/60 shadow-md bg-slate-800"
+                  className="w-20 h-20 rounded-2xl object-cover border-2 border-slate-200/60 shadow-md bg-slate-50"
                 />
               ) : (
                 <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-3xl font-extrabold text-white shadow-lg shadow-indigo-500/20">
@@ -152,13 +152,13 @@ export function PublicProfileView({
               )}
               <div>
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                  <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                     {profile.display_name}
                   </h1>
                   {profile.conformly_verified && (
                     <span
                       data-testid="conformly-verified-badge"
-                      className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 text-xs font-semibold"
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       Verified Pre-Audit
@@ -166,7 +166,7 @@ export function PublicProfileView({
                   )}
                 </div>
                 {profile.description && (
-                  <p className="text-slate-400 text-sm mt-2 max-w-xl leading-relaxed">
+                  <p className="text-slate-500 text-sm mt-2 max-w-xl leading-relaxed">
                     {profile.description}
                   </p>
                 )}
@@ -174,13 +174,13 @@ export function PublicProfileView({
             </div>
 
             {/* Links & Contact */}
-            <div className="flex flex-col sm:items-end gap-2 text-xs text-slate-400 border-t sm:border-t-0 pt-4 sm:pt-0 border-slate-800/80 w-full sm:w-auto">
+            <div className="flex flex-col sm:items-end gap-2 text-xs text-slate-500 border-t sm:border-t-0 pt-4 sm:pt-0 border-slate-200/80 w-full sm:w-auto">
               {profile.website_url && (
                 <a
                   href={profile.website_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 transition"
+                  className="inline-flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 transition"
                 >
                   🌐 {profile.website_url.replace(/^https?:\/\//, "")} ↗
                 </a>
@@ -188,7 +188,7 @@ export function PublicProfileView({
               {profile.primary_contact_email && (
                 <a
                   href={`mailto:${profile.primary_contact_email}`}
-                  className="inline-flex items-center gap-1.5 text-slate-300 hover:text-white transition"
+                  className="inline-flex items-center gap-1.5 text-slate-600 hover:text-slate-900 transition"
                 >
                   ✉️ {profile.primary_contact_email}
                 </a>
@@ -207,7 +207,7 @@ export function PublicProfileView({
         >
           <div className="text-xl shrink-0 mt-0.5">ℹ️</div>
           <div>
-            <strong className="text-amber-300 block font-semibold mb-1">
+            <strong className="text-amber-700 block font-semibold mb-1">
               Important Compliance Notice
             </strong>
             <p className="text-amber-200/80">{profile.disclaimer}</p>
@@ -218,22 +218,22 @@ export function PublicProfileView({
         <section className="space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold text-white tracking-tight">
+              <h2 className="text-xl font-bold text-slate-900 tracking-tight">
                 Verified Credentials & Certifications
               </h2>
-              <p className="text-slate-400 text-xs mt-1">
+              <p className="text-slate-500 text-xs mt-1">
                 Audited readiness assessments and third-party industry attestations.
               </p>
             </div>
 
             {/* Filter buttons */}
-            <div className="inline-flex p-1 bg-slate-900 border border-slate-800 rounded-xl text-xs">
+            <div className="inline-flex p-1 bg-white border border-slate-200 rounded-xl text-xs">
               <button
                 onClick={() => setActiveFilter("all")}
                 className={`px-3 py-1.5 rounded-lg transition font-medium ${
                   activeFilter === "all"
                     ? "bg-indigo-600 text-white shadow"
-                    : "text-slate-400 hover:text-white"
+                    : "text-slate-500 hover:text-white"
                 }`}
               >
                 All ({profile.credentials.length})
@@ -243,7 +243,7 @@ export function PublicProfileView({
                 className={`px-3 py-1.5 rounded-lg transition font-medium ${
                   activeFilter === "conformly"
                     ? "bg-indigo-600 text-white shadow"
-                    : "text-slate-400 hover:text-white"
+                    : "text-slate-500 hover:text-white"
                 }`}
               >
                 Conformly Badges
@@ -253,7 +253,7 @@ export function PublicProfileView({
                 className={`px-3 py-1.5 rounded-lg transition font-medium ${
                   activeFilter === "third_party"
                     ? "bg-indigo-600 text-white shadow"
-                    : "text-slate-400 hover:text-white"
+                    : "text-slate-500 hover:text-white"
                 }`}
               >
                 3rd-Party Certifications
@@ -262,7 +262,7 @@ export function PublicProfileView({
           </div>
 
           {filteredCredentials.length === 0 ? (
-            <div className="bg-slate-900/50 border border-dashed border-slate-800 rounded-xl p-10 text-center text-slate-500 text-sm">
+            <div className="bg-white/50 border border-dashed border-slate-200 rounded-xl p-10 text-center text-slate-500 text-sm">
               No credentials found for this category.
             </div>
           ) : (
@@ -273,7 +273,7 @@ export function PublicProfileView({
                   <article
                     key={cred.id}
                     data-testid={`credential-card-${cred.id}`}
-                    className="bg-slate-900/70 border border-slate-800 hover:border-slate-700/80 rounded-xl p-6 transition flex flex-col justify-between space-y-4 hover:shadow-xl group"
+                    className="bg-white/70 border border-slate-200 hover:border-slate-200/80 rounded-xl p-6 transition flex flex-col justify-between space-y-4 hover:shadow-xl group"
                   >
                     <div className="space-y-3">
                       <div className="flex items-start justify-between gap-3">
@@ -281,8 +281,8 @@ export function PublicProfileView({
                           <div
                             className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold shadow ${
                               isConformly
-                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                                : "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
+                                ? "bg-emerald-500/10 text-emerald-700 border border-emerald-500/20"
+                                : "bg-indigo-500/10 text-indigo-600 border border-indigo-500/20"
                             }`}
                           >
                             {isConformly ? "🛡️" : "📜"}
@@ -291,35 +291,35 @@ export function PublicProfileView({
                             <span
                               className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${
                                 isConformly
-                                  ? "bg-emerald-500/10 text-emerald-400"
-                                  : "bg-indigo-500/10 text-indigo-400"
+                                  ? "bg-emerald-500/10 text-emerald-700"
+                                  : "bg-indigo-500/10 text-indigo-600"
                               }`}
                             >
                               {isConformly ? "Conformly Readiness" : "3rd-Party Certification"}
                             </span>
-                            <h3 className="text-base font-semibold text-white mt-1 group-hover:text-indigo-300 transition">
+                            <h3 className="text-base font-semibold text-slate-900 mt-1 group-hover:text-indigo-700 transition">
                               {cred.title}
                             </h3>
                           </div>
                         </div>
-                        <span className="shrink-0 text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                        <span className="shrink-0 text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/30">
                           Active
                         </span>
                       </div>
 
-                      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                      <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
                         {cred.scope_description}
                       </p>
                     </div>
 
-                    <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+                    <div className="pt-3 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-500">
                       <div>
                         <span className="text-slate-500 block">Issuer</span>
-                        <span className="text-slate-300 font-medium">{cred.issuer_name}</span>
+                        <span className="text-slate-600 font-medium">{cred.issuer_name}</span>
                       </div>
                       <button
                         onClick={() => setSelectedCredential(cred)}
-                        className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition font-medium"
+                        className="px-3 py-1 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-lg transition font-medium"
                       >
                         Details →
                       </button>
@@ -335,10 +335,10 @@ export function PublicProfileView({
         {profile.statements.length > 0 && (
           <section className="space-y-5">
             <div>
-              <h2 className="text-xl font-bold text-white tracking-tight">
+              <h2 className="text-xl font-bold text-slate-900 tracking-tight">
                 Compliance Commitments & Policies
               </h2>
-              <p className="text-slate-400 text-xs mt-1">
+              <p className="text-slate-500 text-xs mt-1">
                 Executive pledges and mandatory security baselines.
               </p>
             </div>
@@ -348,12 +348,12 @@ export function PublicProfileView({
                 <div
                   key={stmt.id}
                   data-testid={`statement-card-${stmt.id}`}
-                  className="bg-slate-900/60 border border-slate-800 rounded-xl p-6 space-y-2"
+                  className="bg-white/60 border border-slate-200 rounded-xl p-6 space-y-2"
                 >
-                  <h3 className="text-base font-semibold text-white flex items-center gap-2">
-                    <span className="text-indigo-400">§</span> {stmt.title}
+                  <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2">
+                    <span className="text-indigo-600">§</span> {stmt.title}
                   </h3>
-                  <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">
+                  <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
                     {stmt.statement_content}
                   </p>
                 </div>
@@ -370,7 +370,7 @@ export function PublicProfileView({
               href="https://conformly.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-slate-400 hover:text-white underline transition"
+              className="text-slate-500 hover:text-slate-900 underline transition"
             >
               Conformly Compliance SaaS
             </a>{" "}
@@ -386,67 +386,67 @@ export function PublicProfileView({
       {selectedCredential && (
         <div
           data-testid="credential-detail-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-50/80 backdrop-blur-sm animate-fade-in"
         >
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1">
                 <span
                   className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${
                     selectedCredential.credential_type === "conformly_readiness"
-                      ? "bg-emerald-500/10 text-emerald-400"
-                      : "bg-indigo-500/10 text-indigo-400"
+                      ? "bg-emerald-500/10 text-emerald-700"
+                      : "bg-indigo-500/10 text-indigo-600"
                   }`}
                 >
                   {selectedCredential.credential_type === "conformly_readiness"
                     ? "Conformly Readiness Badge"
                     : "Third-Party Certification"}
                 </span>
-                <h3 className="text-xl font-bold text-white">
+                <h3 className="text-xl font-bold text-slate-900">
                   {selectedCredential.title}
                 </h3>
               </div>
               <button
                 onClick={() => setSelectedCredential(null)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+                className="text-slate-500 hover:text-slate-900 p-1 rounded-lg hover:bg-slate-50 transition"
               >
                 ✕
               </button>
             </div>
 
             <div className="space-y-4 text-xs">
-              <div className="bg-slate-950/60 rounded-xl p-4 space-y-3 border border-slate-800/80">
+              <div className="bg-slate-50/60 rounded-xl p-4 space-y-3 border border-slate-200/80">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Issuer:</span>
-                  <span className="text-slate-200 font-semibold">
+                  <span className="text-slate-800 font-semibold">
                     {selectedCredential.issuer_name}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Issued On:</span>
-                  <span className="text-slate-200">
+                  <span className="text-slate-800">
                     {new Date(selectedCredential.issued_at).toLocaleDateString()}
                   </span>
                 </div>
                 {selectedCredential.valid_until && (
                   <div className="flex justify-between">
                     <span className="text-slate-500">Valid Until:</span>
-                    <span className="text-slate-200">
+                    <span className="text-slate-800">
                       {new Date(selectedCredential.valid_until).toLocaleDateString()}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between items-center">
                   <span className="text-slate-500">Status:</span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-medium">
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 font-medium">
                     Verified Active
                   </span>
                 </div>
               </div>
 
               <div>
-                <h4 className="text-slate-400 font-semibold mb-1">Scope & Details:</h4>
-                <p className="text-slate-300 leading-relaxed bg-slate-950/40 p-3 rounded-lg border border-slate-800/50">
+                <h4 className="text-slate-500 font-semibold mb-1">Scope & Details:</h4>
+                <p className="text-slate-600 leading-relaxed bg-slate-50/40 p-3 rounded-lg border border-slate-200/50">
                   {selectedCredential.scope_description}
                 </p>
               </div>
@@ -468,7 +468,7 @@ export function PublicProfileView({
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setSelectedCredential(null)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition"
+                className="px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-medium transition"
               >
                 Close
               </button>

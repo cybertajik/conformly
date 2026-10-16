@@ -1,3 +1,4 @@
+import { Modal } from "./Modal";
 import type {
   RiskCategory,
   RiskItemSummary,
@@ -160,7 +161,7 @@ export function RiskWorkspace({ tenantId, userRole }: RiskWorkspaceProps) {
       {successMessage && <div className="success-banner">{successMessage}</div>}
 
       {/* Metrics Row */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 150px), 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
         <div className="metric-card">
           <span className="metric-label">Total Risks</span>
           <span className="metric-value">{risks.length}</span>
@@ -295,7 +296,7 @@ export function RiskWorkspace({ tenantId, userRole }: RiskWorkspaceProps) {
 
       {/* Register New Risk Modal */}
       {showCreateModal && (
-        <div className="modal-backdrop">
+        <Modal label="Register New Risk" onClose={() => setShowCreateModal(false)}>
           <div className="modal-content">
             <div className="modal-header">
               <h3>Register New Risk</h3>
@@ -303,8 +304,8 @@ export function RiskWorkspace({ tenantId, userRole }: RiskWorkspaceProps) {
             </div>
             <form onSubmit={handleCreateRisk}>
               <div className="form-group">
-                <label>Risk Title *</label>
-                <input
+                <label htmlFor="riskworkspace-field-1">Risk Title *</label>
+                <input id="riskworkspace-field-1"
                   type="text"
                   required
                   placeholder="e.g., Unauthorized Cloud Infrastructure Access"
@@ -313,8 +314,8 @@ export function RiskWorkspace({ tenantId, userRole }: RiskWorkspaceProps) {
                 />
               </div>
               <div className="form-group">
-                <label>Category *</label>
-                <select value={newCategory} onChange={(e) => setNewCategory(e.target.value as RiskCategory)}>
+                <label htmlFor="riskworkspace-field-2">Category *</label>
+                <select id="riskworkspace-field-2" value={newCategory} onChange={(e) => setNewCategory(e.target.value as RiskCategory)}>
                   <option value="security">Security</option>
                   <option value="compliance">Compliance</option>
                   <option value="operational">Operational</option>
@@ -322,10 +323,10 @@ export function RiskWorkspace({ tenantId, userRole }: RiskWorkspaceProps) {
                   <option value="strategic">Strategic</option>
                 </select>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: "1rem" }}>
                 <div className="form-group">
-                  <label>Inherent Likelihood (1–5) *</label>
-                  <select value={newLikelihood} onChange={(e) => setNewLikelihood(Number(e.target.value))}>
+                  <label htmlFor="riskworkspace-field-3">Inherent Likelihood (1–5) *</label>
+                  <select id="riskworkspace-field-3" value={newLikelihood} onChange={(e) => setNewLikelihood(Number(e.target.value))}>
                     <option value={1}>1 - Rare</option>
                     <option value={2}>2 - Unlikely</option>
                     <option value={3}>3 - Moderate</option>
@@ -334,8 +335,8 @@ export function RiskWorkspace({ tenantId, userRole }: RiskWorkspaceProps) {
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Inherent Impact (1–5) *</label>
-                  <select value={newImpact} onChange={(e) => setNewImpact(Number(e.target.value))}>
+                  <label htmlFor="riskworkspace-field-4">Inherent Impact (1–5) *</label>
+                  <select id="riskworkspace-field-4" value={newImpact} onChange={(e) => setNewImpact(Number(e.target.value))}>
                     <option value={1}>1 - Insignificant</option>
                     <option value={2}>2 - Minor</option>
                     <option value={3}>3 - Moderate</option>
@@ -345,8 +346,8 @@ export function RiskWorkspace({ tenantId, userRole }: RiskWorkspaceProps) {
                 </div>
               </div>
               <div className="form-group">
-                <label>Description / Risk Context</label>
-                <textarea
+                <label htmlFor="riskworkspace-field-5">Description / Risk Context</label>
+                <textarea id="riskworkspace-field-5"
                   rows={3}
                   placeholder="Describe the threat scenario, vulnerabilities, and potential consequences."
                   value={newDescription}
@@ -363,12 +364,12 @@ export function RiskWorkspace({ tenantId, userRole }: RiskWorkspaceProps) {
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* Edit Treatment Modal */}
       {editingRisk && (
-        <div className="modal-backdrop">
+        <Modal label="Treat Risk" onClose={() => setEditingRisk(null)}>
           <div className="modal-content">
             <div className="modal-header">
               <h3>Treat Risk: {editingRisk.title}</h3>
@@ -376,8 +377,8 @@ export function RiskWorkspace({ tenantId, userRole }: RiskWorkspaceProps) {
             </div>
             <form onSubmit={handleUpdateTreatment}>
               <div className="form-group">
-                <label>Status *</label>
-                <select value={editStatus} onChange={(e) => setEditStatus(e.target.value as RiskStatus)}>
+                <label htmlFor="riskworkspace-field-6">Status *</label>
+                <select id="riskworkspace-field-6" value={editStatus} onChange={(e) => setEditStatus(e.target.value as RiskStatus)}>
                   <option value="identified">Identified</option>
                   <option value="assessed">Assessed</option>
                   <option value="treating">Treating</option>
@@ -386,18 +387,18 @@ export function RiskWorkspace({ tenantId, userRole }: RiskWorkspaceProps) {
                 </select>
               </div>
               <div className="form-group">
-                <label>Treatment Strategy *</label>
-                <select value={editStrategy} onChange={(e) => setEditStrategy(e.target.value as RiskTreatmentStrategy)}>
+                <label htmlFor="riskworkspace-field-7">Treatment Strategy *</label>
+                <select id="riskworkspace-field-7" value={editStrategy} onChange={(e) => setEditStrategy(e.target.value as RiskTreatmentStrategy)}>
                   <option value="mitigate">Mitigate (Implement technical/organizational controls)</option>
                   <option value="accept">Accept (Risk within appetite)</option>
                   <option value="transfer">Transfer (Cyber insurance / Vendor agreement)</option>
                   <option value="avoid">Avoid (Eliminate activity)</option>
                 </select>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: "1rem" }}>
                 <div className="form-group">
-                  <label>Residual Likelihood (1–5)</label>
-                  <select value={editResidualLikelihood} onChange={(e) => setEditResidualLikelihood(Number(e.target.value))}>
+                  <label htmlFor="riskworkspace-field-8">Residual Likelihood (1–5)</label>
+                  <select id="riskworkspace-field-8" value={editResidualLikelihood} onChange={(e) => setEditResidualLikelihood(Number(e.target.value))}>
                     <option value={1}>1 - Rare</option>
                     <option value={2}>2 - Unlikely</option>
                     <option value={3}>3 - Moderate</option>
@@ -406,8 +407,8 @@ export function RiskWorkspace({ tenantId, userRole }: RiskWorkspaceProps) {
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Residual Impact (1–5)</label>
-                  <select value={editResidualImpact} onChange={(e) => setEditResidualImpact(Number(e.target.value))}>
+                  <label htmlFor="riskworkspace-field-9">Residual Impact (1–5)</label>
+                  <select id="riskworkspace-field-9" value={editResidualImpact} onChange={(e) => setEditResidualImpact(Number(e.target.value))}>
                     <option value={1}>1 - Insignificant</option>
                     <option value={2}>2 - Minor</option>
                     <option value={3}>3 - Moderate</option>
@@ -417,8 +418,8 @@ export function RiskWorkspace({ tenantId, userRole }: RiskWorkspaceProps) {
                 </div>
               </div>
               <div className="form-group">
-                <label>Treatment Plan / Action Items</label>
-                <textarea
+                <label htmlFor="riskworkspace-field-10">Treatment Plan / Action Items</label>
+                <textarea id="riskworkspace-field-10"
                   rows={3}
                   placeholder="Detail the controls, automated policies, or mitigations applied."
                   value={editPlan}
@@ -435,7 +436,7 @@ export function RiskWorkspace({ tenantId, userRole }: RiskWorkspaceProps) {
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

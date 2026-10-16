@@ -55,11 +55,11 @@ describe("OnboardingOverview", () => {
       />
     );
 
-    expect(screen.getByText(/1\. Adopt Canonical Compliance Framework/i)).toBeInTheDocument();
-    expect(screen.getByText(/2\. Implement Controls & Collect Evidence/i)).toBeInTheDocument();
-    expect(screen.getByText(/3\. Run Pre-Audit Readiness Check/i)).toBeInTheDocument();
-    expect(screen.getByText(/4\. Publish Public Trust Center/i)).toBeInTheDocument();
-    expect(screen.getByText(/5\. Configure Anonymous Whistleblower Channel/i)).toBeInTheDocument();
+    expect(screen.getByText(/Adopt Canonical Compliance Framework/i)).toBeInTheDocument();
+    expect(screen.getByText(/Implement Controls & Collect Evidence/i)).toBeInTheDocument();
+    expect(screen.getByText(/Run Pre-Audit Readiness Check/i)).toBeInTheDocument();
+    expect(screen.getByText(/Publish Public Trust Center/i)).toBeInTheDocument();
+    expect(screen.getByText(/Configure Anonymous Whistleblower Channel/i)).toBeInTheDocument();
 
     // Click navigation button
     const frameworkBtn = screen.getByRole("button", { name: /View Catalog/i });

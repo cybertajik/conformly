@@ -1,3 +1,4 @@
+import { Modal } from "./Modal";
 import type {
   ComplianceTaskSummary,
   ControlEntityType,
@@ -1590,7 +1591,7 @@ export function ComplianceWorkspace({
 
       {/* TAB 6: PREFERENCES & DETERMINISTIC AUTOMATION */}
       {activeTab === "automation" && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: "2rem" }}>
           {/* User Preferences Form */}
           <div className="card">
             <h3 style={{ margin: "0 0 1rem" }}>Notification Preferences</h3>
@@ -1699,7 +1700,7 @@ export function ComplianceWorkspace({
             {lastJobResult && (
               <div style={{ background: "var(--bg-card)", padding: "1rem", borderRadius: "0.5rem", border: "1px solid var(--border-default)", fontSize: "0.875rem" }}>
                 <strong style={{ color: "var(--accent)" }}>Last Run Summary:</strong>
-                <div style={{ marginTop: "0.5rem", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+                <div style={{ marginTop: "0.5rem", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: "0.5rem" }}>
                   <div>Evidence Checked: <strong>{lastJobResult.expired_evidence.processed_count}</strong></div>
                   <div>Evidence Alerts: <strong>{lastJobResult.expired_evidence.alerts_enqueued}</strong></div>
                   <div>Tasks Checked: <strong>{lastJobResult.overdue_tasks.processed_count}</strong></div>
@@ -1723,7 +1724,7 @@ export function ComplianceWorkspace({
 
       {/* MODAL: POSTURE UPDATE */}
       {selectedControlForPosture && (
-        <div className="modal-backdrop">
+        <Modal label="Update Posture" onClose={() => setSelectedControlForPosture(null)}>
           <div className="modal-dialog">
             <h3>Update Posture: {selectedControlForPosture.identifier}</h3>
             <p style={{ color: "#6b7280", fontSize: "0.875rem", margin: "0 0 1rem" }}>
@@ -1772,12 +1773,12 @@ export function ComplianceWorkspace({
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* MODAL: CREATE EVIDENCE */}
       {showCreateEvidence && (
-        <div className="modal-backdrop">
+        <Modal label="Create Evidence Item" onClose={() => setShowCreateEvidence(false)}>
           <div className="modal-dialog">
             <h3>Create Evidence Item</h3>
             <form onSubmit={(e) => void handleCreateEvidence(e)}>
@@ -1813,7 +1814,7 @@ export function ComplianceWorkspace({
                 <option value="Restricted">Restricted (Envelope Encrypted)</option>
               </select>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: "1rem" }}>
                 <div>
                   <label htmlFor="ev-from">Valid From</label>
                   <input
@@ -1855,12 +1856,12 @@ export function ComplianceWorkspace({
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* MODAL: INSPECT & MANAGE EVIDENCE */}
       {selectedEvidenceForDetail && (
-        <div className="modal-backdrop">
+        <Modal label="Evidence" onClose={() => setSelectedEvidenceForDetail(null)}>
           <div className="modal-dialog" style={{ width: "min(100%, 46rem)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
               <div>
@@ -2076,12 +2077,12 @@ export function ComplianceWorkspace({
               </div>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* MODAL: CREATE POLICY */}
       {showCreatePolicy && (
-        <div className="modal-backdrop">
+        <Modal label="Create Policy" onClose={() => setShowCreatePolicy(false)}>
           <div className="modal-dialog">
             <h3>Create Policy</h3>
             <form onSubmit={(e) => void handleCreatePolicy(e)}>
@@ -2105,7 +2106,7 @@ export function ComplianceWorkspace({
                 placeholder="High-level policy summary and intent"
               />
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: "1rem" }}>
                 <div>
                   <label htmlFor="pol-ver">Version Label</label>
                   <input
@@ -2169,12 +2170,12 @@ export function ComplianceWorkspace({
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* MODAL: POLICY CONTROL LINKS */}
       {selectedPolicyForDetail && (
-        <div className="modal-backdrop">
+        <Modal label="Policy Controls" onClose={() => setSelectedPolicyForDetail(null)}>
           <div className="modal-dialog">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
               <div>
@@ -2252,12 +2253,12 @@ export function ComplianceWorkspace({
               </div>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* MODAL: CREATE TASK */}
       {showCreateTask && (
-        <div className="modal-backdrop">
+        <Modal label="Create Compliance Task" onClose={() => setShowCreateTask(false)}>
           <div className="modal-dialog">
             <h3>Create Compliance Task</h3>
             <form onSubmit={(e) => void handleCreateTask(e)}>
@@ -2281,7 +2282,7 @@ export function ComplianceWorkspace({
                 placeholder="Actionable steps and required evidence deliverable"
               />
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: "1rem" }}>
                 <div>
                   <label htmlFor="tsk-due">Due Date *</label>
                   <input
@@ -2328,12 +2329,12 @@ export function ComplianceWorkspace({
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* MODAL: CREATE FINDING */}
       {showCreateFinding && (
-        <div className="modal-backdrop">
+        <Modal label="Report Compliance Finding" onClose={() => setShowCreateFinding(false)}>
           <div className="modal-dialog">
             <h3>Report Compliance Finding</h3>
             <form onSubmit={(e) => void handleCreateFinding(e)}>
@@ -2357,7 +2358,7 @@ export function ComplianceWorkspace({
                 placeholder="Root cause, risk analysis, and observed deviation"
               />
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: "1rem" }}>
                 <div>
                   <label htmlFor="fnd-sev">Severity</label>
                   <select
@@ -2403,12 +2404,12 @@ export function ComplianceWorkspace({
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* MODAL: REMEDIATE FINDING */}
       {selectedFindingForRemediation && (
-        <div className="modal-backdrop">
+        <Modal label="Remediate Finding" onClose={() => setSelectedFindingForRemediation(null)}>
           <div className="modal-dialog">
             <h3>Remediate Finding: {selectedFindingForRemediation.title}</h3>
             <form onSubmit={(e) => void handleRemediateFinding(e)}>
@@ -2446,7 +2447,7 @@ export function ComplianceWorkspace({
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

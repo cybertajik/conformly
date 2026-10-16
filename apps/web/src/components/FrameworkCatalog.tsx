@@ -333,7 +333,7 @@ export function FrameworkCatalog({ tenantId, userRole }: FrameworkCatalogProps) 
       )}
 
       {/* Framework Selector & Active Adoption Status */}
-      <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: "1.5rem" }}>
+      <div className="catalog-layout">
         {/* Left: Frameworks list */}
         <div className="card" style={{ padding: "1rem" }}>
           <h3 style={{ margin: "0 0 1rem", fontSize: "1rem", fontWeight: 600 }}>Compliance Catalogs</h3>
