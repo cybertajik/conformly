@@ -1,3 +1,4 @@
+import { Modal } from "./Modal";
 import type {
   TenantRole,
   VendorItemSummary,
@@ -143,7 +144,7 @@ export function VendorWorkspace({ tenantId, userRole }: VendorWorkspaceProps) {
       {successMessage && <div className="success-banner">{successMessage}</div>}
 
       {/* Metrics Row */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 150px), 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
         <div className="metric-card">
           <span className="metric-label">Total Vendors</span>
           <span className="metric-value">{vendors.length}</span>
@@ -261,7 +262,7 @@ export function VendorWorkspace({ tenantId, userRole }: VendorWorkspaceProps) {
 
       {/* Register New Vendor Modal */}
       {showCreateModal && (
-        <div className="modal-backdrop">
+        <Modal label="Register Third-Party Vendor" onClose={() => setShowCreateModal(false)}>
           <div className="modal-content">
             <div className="modal-header">
               <h3>Register Third-Party Vendor</h3>
@@ -269,8 +270,8 @@ export function VendorWorkspace({ tenantId, userRole }: VendorWorkspaceProps) {
             </div>
             <form onSubmit={handleCreateVendor}>
               <div className="form-group">
-                <label>Vendor Name *</label>
-                <input
+                <label htmlFor="vendorworkspace-field-1">Vendor Name *</label>
+                <input id="vendorworkspace-field-1"
                   type="text"
                   required
                   placeholder="e.g., Amazon Web Services EMEA SARL"
@@ -279,16 +280,16 @@ export function VendorWorkspace({ tenantId, userRole }: VendorWorkspaceProps) {
                 />
               </div>
               <div className="form-group">
-                <label>Risk Tier *</label>
-                <select value={riskTier} onChange={(e) => setRiskTier(e.target.value as VendorRiskTier)}>
+                <label htmlFor="vendorworkspace-field-2">Risk Tier *</label>
+                <select id="vendorworkspace-field-2" value={riskTier} onChange={(e) => setRiskTier(e.target.value as VendorRiskTier)}>
                   <option value="tier_1_critical">Tier 1 Critical (Processes customer/restricted data)</option>
                   <option value="tier_2_significant">Tier 2 Significant (Operational dependence)</option>
                   <option value="tier_3_low">Tier 3 Low (Commodity service / Public data)</option>
                 </select>
               </div>
               <div className="form-group">
-                <label>Service Description</label>
-                <input
+                <label htmlFor="vendorworkspace-field-3">Service Description</label>
+                <input id="vendorworkspace-field-3"
                   type="text"
                   placeholder="Cloud hosting and compute infrastructure"
                   value={serviceDescription}
@@ -304,18 +305,18 @@ export function VendorWorkspace({ tenantId, userRole }: VendorWorkspaceProps) {
                 />
                 <label htmlFor="dpa_check" style={{ marginBottom: 0 }}>Data Processing Agreement (DPA) Executed</label>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: "1rem" }}>
                 <div className="form-group">
-                  <label>Security Review Date</label>
-                  <input
+                  <label htmlFor="vendorworkspace-field-4">Security Review Date</label>
+                  <input id="vendorworkspace-field-4"
                     type="date"
                     value={securityReviewDate}
                     onChange={(e) => setSecurityReviewDate(e.target.value)}
                   />
                 </div>
                 <div className="form-group">
-                  <label>Next Assessment Due</label>
-                  <input
+                  <label htmlFor="vendorworkspace-field-5">Next Assessment Due</label>
+                  <input id="vendorworkspace-field-5"
                     type="date"
                     value={nextAssessmentDue}
                     onChange={(e) => setNextAssessmentDue(e.target.value)}
@@ -332,7 +333,7 @@ export function VendorWorkspace({ tenantId, userRole }: VendorWorkspaceProps) {
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

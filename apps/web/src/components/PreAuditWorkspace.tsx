@@ -1,3 +1,4 @@
+import { Modal } from "./Modal";
 import type {
   FindingSeverity,
   PreAuditCheckResult,
@@ -1039,7 +1040,7 @@ export function PreAuditWorkspace({
                         </div>
                       </div>
 
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", margin: "1rem 0", fontSize: "0.875rem" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: "1rem", margin: "1rem 0", fontSize: "0.875rem" }}>
                         <div><strong>Issued:</strong> {new Date(cert.issued_at).toLocaleDateString()}</div>
                         <div><strong>Expires:</strong> {new Date(cert.expires_at).toLocaleDateString()}</div>
                         {cert.revoked_at && (
@@ -1130,7 +1131,7 @@ export function PreAuditWorkspace({
 
       {/* Modal: Create Pre-Audit */}
       {showCreateModal && (
-        <div className="modal-backdrop" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", placeItems: "center", justifyContent: "center", zIndex: 1000 }}>
+        <Modal label="New Readiness Assessment" onClose={() => setShowCreateModal(false)}>
           <div className="card" style={{ width: "min(90vw, 32rem)", background: "var(--bg-surface)", padding: "1.5rem" }}>
             <h3 style={{ marginTop: 0 }}>New Readiness Assessment</h3>
             <form onSubmit={(e) => void handleCreatePreAudit(e)}>
@@ -1200,12 +1201,12 @@ export function PreAuditWorkspace({
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* Modal: Add Finding */}
       {showFindingModal && (
-        <div className="modal-backdrop" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", placeItems: "center", justifyContent: "center", zIndex: 1000 }}>
+        <Modal label="Record Readiness Gap" onClose={() => setShowFindingModal(false)}>
           <div className="card" style={{ width: "min(90vw, 32rem)", background: "var(--bg-surface)", padding: "1.5rem" }}>
             <h3 style={{ marginTop: 0 }}>Record Readiness Gap</h3>
             <form onSubmit={(e) => void handleAddFinding(e)}>
@@ -1263,12 +1264,12 @@ export function PreAuditWorkspace({
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* Modal: Submit for Review */}
       {showReviewModal && (
-        <div className="modal-backdrop" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", placeItems: "center", justifyContent: "center", zIndex: 1000 }}>
+        <Modal label="Submit Assessment for Review" onClose={() => setShowReviewModal(false)}>
           <div className="card" style={{ width: "min(90vw, 28rem)", background: "var(--bg-surface)", padding: "1.5rem" }}>
             <h3 style={{ marginTop: 0 }}>Submit Assessment for Review</h3>
             <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
@@ -1318,12 +1319,12 @@ export function PreAuditWorkspace({
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* Modal: Revoke Certificate */}
       {showRevokeModal && (
-        <div className="modal-backdrop" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", placeItems: "center", justifyContent: "center", zIndex: 1000 }}>
+        <Modal label="Revoke Credential" onClose={() => setShowRevokeModal(false)}>
           <div className="card" style={{ width: "min(90vw, 28rem)", background: "var(--bg-surface)", padding: "1.5rem" }}>
             <h3 style={{ marginTop: 0, color: "#dc2626" }}>Revoke Credential</h3>
             <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
@@ -1358,12 +1359,12 @@ export function PreAuditWorkspace({
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* Modal: Snapshot Inspector */}
       {snapshotModalCheck && (
-        <div className="modal-backdrop" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", placeItems: "center", justifyContent: "center", zIndex: 1000 }}>
+        <Modal label="Deterministic Evaluation Snapshot" onClose={() => setSnapshotModalCheck(null)}>
           <div className="card" style={{ width: "min(90vw, 36rem)", background: "var(--bg-surface)", padding: "1.5rem" }}>
             <h3 style={{ marginTop: 0 }}>Deterministic Evaluation Snapshot</h3>
             <pre style={{ background: "#f8fafc", padding: "1rem", borderRadius: "0.5rem", overflowX: "auto", fontSize: "0.75rem" }}>
@@ -1382,7 +1383,7 @@ export function PreAuditWorkspace({
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

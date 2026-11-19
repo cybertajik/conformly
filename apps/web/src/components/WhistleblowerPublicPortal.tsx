@@ -145,10 +145,10 @@ export function WhistleblowerPublicPortal({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-slate-100 p-6">
+      <div className="min-h-screen flex items-center justify-center bg-white text-slate-900 p-6">
         <div className="text-center space-y-3">
           <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto" />
-          <p className="text-slate-400 text-sm">Loading secure anonymous portal...</p>
+          <p className="text-slate-500 text-sm">Loading secure anonymous portal...</p>
         </div>
       </div>
     );
@@ -156,17 +156,17 @@ export function WhistleblowerPublicPortal({
 
   if (error && !portal) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-slate-100 p-6">
-        <div className="max-w-md w-full bg-slate-800 border border-rose-500/30 rounded-xl p-8 text-center space-y-4">
-          <div className="w-12 h-12 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto text-xl font-bold">
+      <div className="min-h-screen flex items-center justify-center bg-white text-slate-900 p-6">
+        <div className="max-w-md w-full bg-slate-50 border border-rose-500/30 rounded-xl p-8 text-center space-y-4">
+          <div className="w-12 h-12 rounded-full bg-rose-500/10 text-rose-700 flex items-center justify-center mx-auto text-xl font-bold">
             !
           </div>
-          <h2 className="text-xl font-semibold text-white">Portal Unavailable</h2>
-          <p className="text-sm text-slate-400">{error}</p>
+          <h2 className="text-xl font-semibold text-slate-900">Portal Unavailable</h2>
+          <p className="text-sm text-slate-500">{error}</p>
           {onBackToApp && (
             <button
               onClick={onBackToApp}
-              className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm text-slate-200 transition"
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-600 rounded-lg text-sm text-slate-800 transition"
             >
               Return to Workspace
             </button>
@@ -177,18 +177,18 @@ export function WhistleblowerPublicPortal({
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center py-10 px-4 sm:px-6">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col items-center py-10 px-4 sm:px-6">
       <div className="max-w-2xl w-full space-y-8">
         {/* Header with anonymity guarantees */}
         <div className="text-center space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 text-xs font-semibold uppercase tracking-wider">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             100% Anonymous • Zero Identity Tracking
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
             {portal?.title || "Whistleblower Reporting Channel"}
           </h1>
-          <p className="text-slate-400 text-sm max-w-lg mx-auto leading-relaxed">
+          <p className="text-slate-500 text-sm max-w-lg mx-auto leading-relaxed">
             {portal?.welcome_text ||
               "Your report is protected with application-layer encryption. We do not track IP addresses, browser fingerprints, or cookies."}
           </p>
@@ -196,7 +196,7 @@ export function WhistleblowerPublicPortal({
             <div className="pt-2">
               <button
                 onClick={onBackToApp}
-                className="text-xs text-indigo-400 hover:text-indigo-300 underline transition"
+                className="text-xs text-indigo-600 hover:text-indigo-700 underline transition"
               >
                 ← Return to Internal Workspace
               </button>
@@ -213,36 +213,36 @@ export function WhistleblowerPublicPortal({
 
         {/* Successful Submission View */}
         {submissionResult ? (
-          <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-8 space-y-6 shadow-2xl">
-            <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-2xl mx-auto">
+          <div className="bg-white border border-emerald-500/30 rounded-2xl p-8 space-y-6 shadow-2xl">
+            <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-700 flex items-center justify-center text-2xl mx-auto">
               ✓
             </div>
             <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold text-white">Report Successfully Submitted</h2>
-              <p className="text-slate-400 text-sm">
+              <h2 className="text-2xl font-bold text-slate-900">Report Successfully Submitted</h2>
+              <p className="text-slate-500 text-sm">
                 Your report has been encrypted and securely delivered to the compliance committee.
               </p>
             </div>
 
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-4">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4">
               <div>
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Public Case ID
                 </label>
-                <div className="text-xl font-mono font-bold text-emerald-400 mt-1">
+                <div className="text-xl font-mono font-bold text-emerald-700 mt-1">
                   {submissionResult.public_case_id}
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Secret Return Key
                 </label>
                 <div className="flex items-center gap-2 mt-1">
                   <input
                     readOnly
                     value={submissionResult.return_secret}
-                    className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-amber-300 selection:bg-amber-500/30"
+                    className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono text-amber-700 selection:bg-amber-500/30"
                   />
                   <button
                     onClick={copySecretToClipboard}
@@ -256,7 +256,7 @@ export function WhistleblowerPublicPortal({
 
             <div className="bg-amber-950/30 border border-amber-500/30 rounded-lg p-4 text-xs text-amber-200 space-y-1">
               <p className="font-semibold">⚠️ CRITICAL: Save your Secret Return Key now</p>
-              <p className="text-amber-300/80">
+              <p className="text-amber-700/80">
                 To protect your identity, this secret is hashed with a salted one-way function. It is
                 never stored in plaintext on any server and cannot be recovered if lost. You will need
                 both your Case ID and this Secret to check for replies.
@@ -277,7 +277,7 @@ export function WhistleblowerPublicPortal({
               </button>
               <button
                 onClick={() => setSubmissionResult(null)}
-                className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-semibold transition"
+                className="px-5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-sm font-semibold transition"
               >
                 Submit Another Report
               </button>
@@ -285,15 +285,15 @@ export function WhistleblowerPublicPortal({
           </div>
         ) : (
           /* Tab Navigation & Form Panels */
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-            <div className="grid grid-cols-2 border-b border-slate-800 text-center font-medium text-sm">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
+            <div className="grid grid-cols-2 border-b border-slate-200 text-center font-medium text-sm">
               <button
                 type="button"
                 onClick={() => setActiveTab("submit")}
                 className={`py-4 transition border-b-2 ${
                   activeTab === "submit"
-                    ? "border-emerald-500 text-emerald-400 bg-slate-800/40 font-semibold"
-                    : "border-transparent text-slate-400 hover:text-slate-200"
+                    ? "border-emerald-500 text-emerald-700 bg-slate-50/40 font-semibold"
+                    : "border-transparent text-slate-500 hover:text-slate-800"
                 }`}
               >
                 Submit Anonymous Report
@@ -303,8 +303,8 @@ export function WhistleblowerPublicPortal({
                 onClick={() => setActiveTab("track")}
                 className={`py-4 transition border-b-2 ${
                   activeTab === "track"
-                    ? "border-emerald-500 text-emerald-400 bg-slate-800/40 font-semibold"
-                    : "border-transparent text-slate-400 hover:text-slate-200"
+                    ? "border-emerald-500 text-emerald-700 bg-slate-50/40 font-semibold"
+                    : "border-transparent text-slate-500 hover:text-slate-800"
                 }`}
               >
                 Track Existing Report
@@ -316,13 +316,13 @@ export function WhistleblowerPublicPortal({
                 /* Submit Report Form */
                 <form onSubmit={handleSubmitReport} className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <label className="block text-sm font-medium text-slate-600 mb-2">
                       Report Category
                     </label>
                     <select
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     >
                       {CATEGORIES.map((cat) => (
                         <option key={cat.value} value={cat.value}>
@@ -333,7 +333,7 @@ export function WhistleblowerPublicPortal({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <label className="block text-sm font-medium text-slate-600 mb-2">
                       Report Subject / Title
                     </label>
                     <input
@@ -342,12 +342,12 @@ export function WhistleblowerPublicPortal({
                       placeholder="Concise overview of the concern"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <label className="block text-sm font-medium text-slate-600 mb-2">
                       Detailed Summary & Evidence
                     </label>
                     <textarea
@@ -356,7 +356,7 @@ export function WhistleblowerPublicPortal({
                       placeholder="Provide specific dates, departments, names, or transaction details. Do not include your personal identity if you wish to remain anonymous."
                       value={summary}
                       onChange={(e) => setSummary(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"
                     />
                   </div>
 
@@ -383,7 +383,7 @@ export function WhistleblowerPublicPortal({
                   {!caseView ? (
                     <form onSubmit={handleAccessCase} className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                        <label className="block text-sm font-medium text-slate-600 mb-2">
                           Public Case ID
                         </label>
                         <input
@@ -392,12 +392,12 @@ export function WhistleblowerPublicPortal({
                           placeholder="e.g. WB-2026-A1B2C3"
                           value={trackCaseId}
                           onChange={(e) => setTrackCaseId(e.target.value)}
-                          className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                        <label className="block text-sm font-medium text-slate-600 mb-2">
                           Secret Return Key
                         </label>
                         <input
@@ -406,7 +406,7 @@ export function WhistleblowerPublicPortal({
                           placeholder="wb_..."
                           value={trackSecret}
                           onChange={(e) => setTrackSecret(e.target.value)}
-                          className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
                         />
                       </div>
 
@@ -421,15 +421,15 @@ export function WhistleblowerPublicPortal({
                   ) : (
                     /* Active Case View & Secure Messaging */
                     <div className="space-y-6">
-                      <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                      <div className="flex items-center justify-between pb-4 border-b border-slate-200">
                         <div>
-                          <div className="text-xs font-mono text-slate-400">
+                          <div className="text-xs font-mono text-slate-500">
                             {caseView.public_case_id}
                           </div>
-                          <h2 className="text-lg font-bold text-white mt-0.5">
+                          <h2 className="text-lg font-bold text-slate-900 mt-0.5">
                             {caseView.title}
                           </h2>
-                          <div className="text-xs text-slate-400 mt-1 capitalize">
+                          <div className="text-xs text-slate-500 mt-1 capitalize">
                             Category: {caseView.category.replace("_", " ")}
                           </div>
                         </div>
@@ -437,17 +437,17 @@ export function WhistleblowerPublicPortal({
                           <span
                             className={`px-2.5 py-1 rounded-full text-xs font-medium uppercase tracking-wider ${
                               caseView.status === "resolved"
-                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                ? "bg-emerald-500/20 text-emerald-700 border border-emerald-500/30"
                                 : caseView.status === "dismissed"
-                                  ? "bg-slate-700 text-slate-300"
-                                  : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                                  ? "bg-slate-100 text-slate-600"
+                                  : "bg-amber-500/20 text-amber-700 border border-amber-500/30"
                             }`}
                           >
                             {caseView.status.replace("_", " ")}
                           </span>
                           <button
                             onClick={() => setCaseView(null)}
-                            className="text-xs text-slate-400 hover:text-slate-200 underline"
+                            className="text-xs text-slate-500 hover:text-slate-800 underline"
                           >
                             Sign Out of Case
                           </button>
@@ -461,16 +461,16 @@ export function WhistleblowerPublicPortal({
                             key={m.id}
                             className={`p-4 rounded-xl text-sm leading-relaxed ${
                               m.sender_type === "reporter"
-                                ? "bg-slate-800/80 border border-slate-700 ml-6"
+                                ? "bg-slate-50/80 border border-slate-200 ml-6"
                                 : "bg-indigo-950/40 border border-indigo-500/30 mr-6"
                             }`}
                           >
-                            <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+                            <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
                               <span
                                 className={`font-semibold ${
                                   m.sender_type === "reporter"
-                                    ? "text-emerald-400"
-                                    : "text-indigo-300"
+                                    ? "text-emerald-700"
+                                    : "text-indigo-700"
                                 }`}
                               >
                                 {m.sender_type === "reporter"
@@ -479,7 +479,7 @@ export function WhistleblowerPublicPortal({
                               </span>
                               <span>{new Date(m.created_at).toLocaleString()}</span>
                             </div>
-                            <div className="text-slate-200 whitespace-pre-wrap">{m.body}</div>
+                            <div className="text-slate-800 whitespace-pre-wrap">{m.body}</div>
                           </div>
                         ))}
                       </div>
@@ -487,7 +487,7 @@ export function WhistleblowerPublicPortal({
                       {/* Reply Box (if not closed) */}
                       {caseView.status !== "resolved" && caseView.status !== "dismissed" ? (
                         <form onSubmit={handleSendReply} className="space-y-3 pt-2">
-                          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
                             Post Follow-Up Message
                           </label>
                           <textarea
@@ -496,7 +496,7 @@ export function WhistleblowerPublicPortal({
                             placeholder="Add additional facts, clarify questions, or reply to compliance committee..."
                             value={replyBody}
                             onChange={(e) => setReplyBody(e.target.value)}
-                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                           />
                           <button
                             type="submit"
@@ -507,7 +507,7 @@ export function WhistleblowerPublicPortal({
                           </button>
                         </form>
                       ) : (
-                        <div className="bg-slate-950 border border-slate-800 p-4 rounded-lg text-center text-xs text-slate-400">
+                        <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg text-center text-xs text-slate-500">
                           This case has been closed ({caseView.status}). New messages can no longer
                           be posted to this thread.
                         </div>

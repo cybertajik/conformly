@@ -1,8 +1,9 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ExecutiveDashboard } from "./ExecutiveDashboard";
+import { I18nProvider } from "../i18n/I18nContext";
 import * as api from "../api";
 import type { DashboardSummary } from "@conformly/shared";
 
@@ -67,10 +68,66 @@ const mockSummary: DashboardSummary = {
   recent_activity: [
     {
       id: "act-1",
+      action: "policy.create",
+      resource_type: "policy",
+      actor_type: "user",
+      occurred_at: "2026-09-12T20:00:00Z",
+    },
+    {
+      id: "act-2",
+      action: "evidence.create",
+      resource_type: "evidence_item",
+      actor_type: "user",
+      occurred_at: "2026-09-12T21:00:00Z",
+    },
+    {
+      id: "act-3",
+      action: "evidence.update",
+      resource_type: "evidence_item",
+      actor_type: "user",
+      occurred_at: "2026-09-12T21:30:00Z",
+    },
+    {
+      id: "act-4",
+      action: "evidence.transition_status",
+      resource_type: "evidence_item",
+      actor_type: "user",
+      occurred_at: "2026-09-12T22:00:00Z",
+    },
+    {
+      id: "act-5",
+      action: "task.create",
+      resource_type: "compliance_task",
+      actor_type: "user",
+      occurred_at: "2026-09-12T22:30:00Z",
+    },
+    {
+      id: "act-extra",
       action: "evidence.upload",
       resource_type: "evidence_item",
       actor_type: "user",
       occurred_at: "2026-09-12T20:00:00Z",
+    },
+    {
+      id: "act-membership",
+      action: "membership.invite",
+      resource_type: "membership",
+      actor_type: "user",
+      occurred_at: "2026-09-12T23:00:00Z",
+    },
+    {
+      id: "act-unmapped-verb",
+      action: "membership.unmapped_security_review",
+      resource_type: "membership",
+      actor_type: "user",
+      occurred_at: "2026-09-12T23:15:00Z",
+    },
+    {
+      id: "act-arbitrary-event",
+      action: "custom_integration.unmapped_ping",
+      resource_type: "unmapped_device",
+      actor_type: "user",
+      occurred_at: "2026-09-12T23:30:00Z",
     },
   ],
   is_administrator_view: false,
@@ -106,7 +163,8 @@ describe("ExecutiveDashboard", () => {
       expect(screen.getByText("85%")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Audit Ready")).toBeInTheDocument();
+    expect(screen.getByText("Readiness score")).toBeInTheDocument();
+    expect(screen.queryByText("Audit Ready")).not.toBeInTheDocument();
     expect(screen.getByText("Acme Security")).toBeInTheDocument();
     expect(screen.getByText("ISO/IEC 27001:2022")).toBeInTheDocument();
 
@@ -116,12 +174,41 @@ describe("ExecutiveDashboard", () => {
     expect(handleNavigate).toHaveBeenCalledWith("preaudit");
 
     // Click Expiring tab
-    const expiringTab = screen.getByRole("tab", { name: /What Expires Next/i });
+    const expiringTab = screen.getByRole("button", { name: /Upcoming reviews/i });
     fireEvent.click(expiringTab);
 
     expect(screen.getByText("Annual SOC 2 Type II Report")).toBeInTheDocument();
     expect(screen.getByText("Information Security Policy")).toBeInTheDocument();
     expect(screen.getByText("13 days")).toBeInTheDocument();
+
+    // Click Tasks tab and verify translated English priority and status
+    const navBar = screen.getByRole("navigation", { name: /Dashboard sections/i });
+    const tasksTab = within(navBar).getByRole("button", { name: /Action items/i });
+    fireEvent.click(tasksTab);
+    expect(screen.getByText("Critical")).toBeInTheDocument();
+    expect(screen.getByText("Pending")).toBeInTheDocument();
+
+    // Click Registers tab and verify translated English risk status
+    const registersTab = within(navBar).getByRole("button", { name: /Risk & vendors/i });
+    fireEvent.click(registersTab);
+    expect(screen.getByText("Treated")).toBeInTheDocument();
+
+    // Click Activity tab and verify translated English action and resource
+    const activityTab = within(navBar).getByRole("button", { name: /Activity/i });
+    fireEvent.click(activityTab);
+    expect(screen.getByText("Evidence uploaded")).toBeInTheDocument();
+    expect(screen.getAllByText("Evidence item").length).toBeGreaterThan(0);
+    expect(screen.getByText("Evidence created")).toBeInTheDocument();
+    expect(screen.getByText("Evidence updated")).toBeInTheDocument();
+    expect(screen.getByText("Evidence status changed")).toBeInTheDocument();
+    expect(screen.getByText("Task created")).toBeInTheDocument();
+    expect(screen.getByText("Task")).toBeInTheDocument();
+    expect(screen.getByText("Member invitation sent")).toBeInTheDocument();
+    expect(screen.getAllByText("Member").length).toBeGreaterThan(0);
+    expect(screen.getByText("Member · Activity")).toBeInTheDocument();
+    expect(screen.getByText("System activity")).toBeInTheDocument();
+    expect(screen.getByText("Resource")).toBeInTheDocument();
+    expect(screen.queryByText(/membership · invite/i)).not.toBeInTheDocument();
   });
 
   it("renders separation-of-duties view for Tenant Administrator", async () => {
@@ -214,6 +301,70 @@ describe("ExecutiveDashboard", () => {
     expect(
       screen.getByText(/3 remediation task\(s\) created/i)
     ).toBeInTheDocument();
+  });
+
+  it("renders localized labels, tabs, and dates for German locale", async () => {
+    vi.spyOn(api, "getDashboardSummary").mockResolvedValue(mockSummary);
+    const handleNavigate = vi.fn();
+
+    render(
+      <I18nProvider initialLocale="de">
+        <ExecutiveDashboard
+          token="test-token"
+          tenantId="t-123"
+          tenantName="Acme Security"
+          tenantSlug="acme-security"
+          userRole="compliance_manager"
+          onNavigate={handleNavigate}
+        />
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("85%")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Klarheit beginnt hier.")).toBeInTheDocument();
+    expect(screen.getByText("Audit-Readiness-Score")).toBeInTheDocument();
+    expect(screen.getByText("Acme Security")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Pre-Audit-Prüfung ausführen/i })).toBeInTheDocument();
+
+    const expiringTab = screen.getByRole("button", { name: /Anstehende Prüfungen/i });
+    fireEvent.click(expiringTab);
+
+    expect(screen.getByText("Annual SOC 2 Type II Report")).toBeInTheDocument();
+    expect(screen.getByText("13 Tage")).toBeInTheDocument();
+    expect(screen.getByText(/25\.\s*Sep/i)).toBeInTheDocument();
+
+    // Click Tasks tab and verify translated German priority and status
+    const deNavBar = screen.getByRole("navigation", { name: /Dashboard-Bereiche/i });
+    const tasksTab = within(deNavBar).getByRole("button", { name: /Aufgaben/i });
+    fireEvent.click(tasksTab);
+    expect(screen.getByText("Kritisch")).toBeInTheDocument();
+    expect(screen.getByText("Ausstehend")).toBeInTheDocument();
+
+    // Click Registers tab and verify translated German risk status
+    const registersTab = within(deNavBar).getByRole("button", { name: /Risiken & Dienstleister/i });
+    fireEvent.click(registersTab);
+    expect(screen.getByText("Behandelt")).toBeInTheDocument();
+
+    // Click Activity tab and verify translated German action and resource
+    const activityTab = within(deNavBar).getByRole("button", { name: /Aktivität/i });
+    fireEvent.click(activityTab);
+    expect(screen.getByText("Nachweis hochgeladen")).toBeInTheDocument();
+    expect(screen.getAllByText("Nachweis").length).toBeGreaterThan(0);
+    expect(screen.getByText("Nachweis erstellt")).toBeInTheDocument();
+    expect(screen.getByText("Nachweis aktualisiert")).toBeInTheDocument();
+    expect(screen.getByText("Nachweisstatus geändert")).toBeInTheDocument();
+    expect(screen.getByText("Aufgabe erstellt")).toBeInTheDocument();
+    expect(screen.getAllByText("Aufgabe").length).toBeGreaterThan(0);
+    expect(screen.getByText("Mitgliedseinladung versendet")).toBeInTheDocument();
+    expect(screen.getAllByText("Mitglied").length).toBeGreaterThan(0);
+    expect(screen.getByText("Mitglied · Aktivität")).toBeInTheDocument();
+    expect(screen.getByText("Systemaktivität")).toBeInTheDocument();
+    expect(screen.getByText("Ressource")).toBeInTheDocument();
+    expect(screen.queryByText(/membership · invite/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/custom_integration/i)).not.toBeInTheDocument();
   });
 });
 

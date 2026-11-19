@@ -43,7 +43,7 @@ def test_seed_tier_a_framework_packs_defaults_to_unapproved_drafts_without_synth
     """
     drafts = seed_tier_a_framework_packs(session)  # Default: as_drafts=True
 
-    assert len(drafts) == 6
+    assert len(drafts) == 30
     for version in drafts:
         assert version.release_state == ReleaseState.DRAFT
         assert version.legal_reviewed_by_user_id is None
@@ -63,8 +63,39 @@ def test_seed_tier_a_framework_packs_independent_approval(session: Session) -> N
     """Verify synthetic test fixture pipeline enforces independent 2-person approval in automated test harness."""
     released = seed_tier_a_test_fixtures(session)
 
-    assert len(released) == 6
-    expected_slugs = {"iso-27001", "gdpr-bdsg", "nist-csf", "cis-controls-ig1", "mvsp", "iso-9001"}
+    assert len(released) == 30
+    expected_slugs = {
+        "iso-27001",
+        "gdpr-bdsg",
+        "nist-csf",
+        "cis-controls-ig1",
+        "mvsp",
+        "iso-9001",
+        "us-ca-ccpa-cpra",
+        "sa-pdpl",
+        "jp-appi",
+        "au-privacy-act",
+        "cisa-cpg",
+        "au-essential-eight-l1",
+        "uk-gdpr-dpa",
+        "ch-fadp",
+        "ae-pdpl",
+        "om-pdpl",
+        "jo-pdpl",
+        "ma-cndp-0908",
+        "us-va-vcdpa",
+        "us-co-cpa",
+        "us-ct-ctdpa",
+        "us-tx-tdpsa",
+        "us-ut-ucpa",
+        "fr-cnil-gdpr",
+        "es-aepd-lopdgdd",
+        "it-garante-privacy",
+        "nl-ap-uavg",
+        "ie-dpc-dpa",
+        "at-dsb-dsg",
+        "pl-uodo-rodo",
+    }
     actual_slugs = {v.framework.slug for v in released}
     assert actual_slugs == expected_slugs
 
@@ -100,11 +131,29 @@ def test_tier_a_framework_idempotent_seeding(session: Session) -> None:
     released1 = seed_tier_a_test_fixtures(session)
     released2 = seed_tier_a_test_fixtures(session)
 
-    assert len(released1) == len(released2) == 6
+    assert len(released1) == len(released2) == 30
 
     # Check total frameworks count in DB
     frameworks = session.scalars(select(Framework)).all()
-    assert len(frameworks) == 6
+    assert len(frameworks) == 30
+
+
+def test_module_b_draft_packs_available() -> None:
+    """Verify the 8 Module B packs are available as Module B drafts pending product authority reconciliation."""
+    from conformly.frameworks.packs import MODULE_B_PACKS
+
+    assert len(MODULE_B_PACKS) == 8
+    expected_b_slugs = {
+        "soc-2",
+        "soc-1",
+        "iso-27701",
+        "iso-27017",
+        "soc-3",
+        "iso-27018",
+        "iso-22301",
+        "iso-20000-1",
+    }
+    assert {p.slug for p in MODULE_B_PACKS} == expected_b_slugs
 
 
 def test_released_framework_post_release_immutability(session: Session) -> None:

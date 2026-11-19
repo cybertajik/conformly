@@ -224,7 +224,7 @@ def import_framework_pack_draft(
 def import_tier_a_framework_packs_as_drafts(
     session: Session, author_principal: Principal
 ) -> list[FrameworkVersion]:
-    """Import all 5 Tier A framework packs as unapproved DRAFTS for human review."""
+    """Import all 30 Tier A framework packs as unapproved DRAFTS for human review."""
     service = FrameworkService(session)
     draft_versions: list[FrameworkVersion] = []
     for pack in TIER_A_FRAMEWORK_PACKS:

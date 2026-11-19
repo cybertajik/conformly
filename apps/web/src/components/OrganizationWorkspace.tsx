@@ -1,3 +1,4 @@
+import { Modal } from "./Modal";
 import type {
   BusinessUnitSummary,
   LegalEntitySummary,
@@ -379,7 +380,7 @@ export function OrganizationWorkspace({ tenantId, userRole }: OrganizationWorksp
 
       {/* Register Legal Entity Modal */}
       {showEntityModal && (
-        <div className="modal-backdrop">
+        <Modal label="Register Legal Entity" onClose={() => setShowEntityModal(false)}>
           <div className="modal-content">
             <div className="modal-header">
               <h3>Register Legal Entity</h3>
@@ -387,8 +388,8 @@ export function OrganizationWorkspace({ tenantId, userRole }: OrganizationWorksp
             </div>
             <form onSubmit={handleCreateEntity}>
               <div className="form-group">
-                <label>Entity Name *</label>
-                <input
+                <label htmlFor="organizationworkspace-field-1">Entity Name *</label>
+                <input id="organizationworkspace-field-1"
                   type="text"
                   required
                   placeholder="e.g., Cyberdyne Systems GmbH"
@@ -397,8 +398,8 @@ export function OrganizationWorkspace({ tenantId, userRole }: OrganizationWorksp
                 />
               </div>
               <div className="form-group">
-                <label>Country Code (ISO 3166-1) *</label>
-                <input
+                <label htmlFor="organizationworkspace-field-2">Country Code (ISO 3166-1) *</label>
+                <input id="organizationworkspace-field-2"
                   type="text"
                   required
                   maxLength={2}
@@ -408,8 +409,8 @@ export function OrganizationWorkspace({ tenantId, userRole }: OrganizationWorksp
                 />
               </div>
               <div className="form-group">
-                <label>Commercial Registration / Tax Number</label>
-                <input
+                <label htmlFor="organizationworkspace-field-3">Commercial Registration / Tax Number</label>
+                <input id="organizationworkspace-field-3"
                   type="text"
                   placeholder="HRB 123456"
                   value={entityRegNum}
@@ -426,12 +427,12 @@ export function OrganizationWorkspace({ tenantId, userRole }: OrganizationWorksp
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* Create Business Unit Modal */}
       {showUnitModal && (
-        <div className="modal-backdrop">
+        <Modal label="Add Business Unit" onClose={() => setShowUnitModal(false)}>
           <div className="modal-content">
             <div className="modal-header">
               <h3>Add Business Unit</h3>
@@ -439,16 +440,16 @@ export function OrganizationWorkspace({ tenantId, userRole }: OrganizationWorksp
             </div>
             <form onSubmit={handleCreateUnit}>
               <div className="form-group">
-                <label>Parent Legal Entity *</label>
-                <select value={unitEntityId} onChange={(e) => setUnitEntityId(e.target.value)} required>
+                <label htmlFor="organizationworkspace-field-4">Parent Legal Entity *</label>
+                <select id="organizationworkspace-field-4" value={unitEntityId} onChange={(e) => setUnitEntityId(e.target.value)} required>
                   {entities.map((e) => (
                     <option key={e.id} value={e.id}>{e.name} ({e.country})</option>
                   ))}
                 </select>
               </div>
               <div className="form-group">
-                <label>Unit Name *</label>
-                <input
+                <label htmlFor="organizationworkspace-field-5">Unit Name *</label>
+                <input id="organizationworkspace-field-5"
                   type="text"
                   required
                   placeholder="e.g., Engineering, Cloud Operations"
@@ -457,8 +458,8 @@ export function OrganizationWorkspace({ tenantId, userRole }: OrganizationWorksp
                 />
               </div>
               <div className="form-group">
-                <label>Unit Code</label>
-                <input
+                <label htmlFor="organizationworkspace-field-6">Unit Code</label>
+                <input id="organizationworkspace-field-6"
                   type="text"
                   placeholder="ENG-01"
                   value={unitCode}
@@ -466,8 +467,8 @@ export function OrganizationWorkspace({ tenantId, userRole }: OrganizationWorksp
                 />
               </div>
               <div className="form-group">
-                <label>Description</label>
-                <textarea
+                <label htmlFor="organizationworkspace-field-7">Description</label>
+                <textarea id="organizationworkspace-field-7"
                   rows={2}
                   placeholder="Scope and purpose of this business unit"
                   value={unitDescription}
@@ -484,12 +485,12 @@ export function OrganizationWorkspace({ tenantId, userRole }: OrganizationWorksp
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* Create Location Modal */}
       {showLocModal && (
-        <div className="modal-backdrop">
+        <Modal label="Add Facility / Location" onClose={() => setShowLocModal(false)}>
           <div className="modal-content">
             <div className="modal-header">
               <h3>Add Facility / Location</h3>
@@ -497,16 +498,16 @@ export function OrganizationWorkspace({ tenantId, userRole }: OrganizationWorksp
             </div>
             <form onSubmit={handleCreateLocation}>
               <div className="form-group">
-                <label>Parent Legal Entity *</label>
-                <select value={locEntityId} onChange={(e) => setLocEntityId(e.target.value)} required>
+                <label htmlFor="organizationworkspace-field-8">Parent Legal Entity *</label>
+                <select id="organizationworkspace-field-8" value={locEntityId} onChange={(e) => setLocEntityId(e.target.value)} required>
                   {entities.map((e) => (
                     <option key={e.id} value={e.id}>{e.name} ({e.country})</option>
                   ))}
                 </select>
               </div>
               <div className="form-group">
-                <label>Location Name *</label>
-                <input
+                <label htmlFor="organizationworkspace-field-9">Location Name *</label>
+                <input id="organizationworkspace-field-9"
                   type="text"
                   required
                   placeholder="e.g., Frankfurt Data Center DC1"
@@ -515,8 +516,8 @@ export function OrganizationWorkspace({ tenantId, userRole }: OrganizationWorksp
                 />
               </div>
               <div className="form-group">
-                <label>Country *</label>
-                <input
+                <label htmlFor="organizationworkspace-field-10">Country *</label>
+                <input id="organizationworkspace-field-10"
                   type="text"
                   required
                   maxLength={2}
@@ -526,8 +527,8 @@ export function OrganizationWorkspace({ tenantId, userRole }: OrganizationWorksp
                 />
               </div>
               <div className="form-group">
-                <label>City</label>
-                <input
+                <label htmlFor="organizationworkspace-field-11">City</label>
+                <input id="organizationworkspace-field-11"
                   type="text"
                   placeholder="Frankfurt"
                   value={locCity}
@@ -535,8 +536,8 @@ export function OrganizationWorkspace({ tenantId, userRole }: OrganizationWorksp
                 />
               </div>
               <div className="form-group">
-                <label>Address</label>
-                <input
+                <label htmlFor="organizationworkspace-field-12">Address</label>
+                <input id="organizationworkspace-field-12"
                   type="text"
                   placeholder="Mainzer Landstraße 100"
                   value={locAddress}
@@ -553,7 +554,7 @@ export function OrganizationWorkspace({ tenantId, userRole }: OrganizationWorksp
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

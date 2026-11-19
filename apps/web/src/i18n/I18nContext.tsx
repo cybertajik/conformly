@@ -43,8 +43,17 @@ function getNestedValue(obj: Record<string, unknown>, path: string): string | nu
   return typeof current === "string" ? current : null;
 }
 
-export function I18nProvider({ children }: { children: React.ReactNode }) {
+export function I18nProvider({
+  children,
+  initialLocale,
+}: {
+  children: React.ReactNode;
+  initialLocale?: SupportedLocale;
+}) {
   const [locale, setLocaleState] = useState<SupportedLocale>(() => {
+    if (initialLocale && initialLocale in dictionaries) {
+      return initialLocale;
+    }
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY) as SupportedLocale | null;
       if (saved && saved in dictionaries) {
@@ -108,11 +117,27 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+const defaultContextValue: I18nContextValue = {
+  locale: "en",
+  setLocale: () => {},
+  t: (key: string, params?: Record<string, string | number>): string => {
+    const dict = en as unknown as Record<string, unknown>;
+    const text = getNestedValue(dict, key);
+    if (!text) {
+      return key;
+    }
+    if (params) {
+      return text.replace(/\{(\w+)\}/g, (match, paramKey) => {
+        return paramKey in params ? String(params[paramKey]) : match;
+      });
+    }
+    return text;
+  },
+  availableLocales: Object.values(SUPPORTED_LOCALES),
+};
+
 // eslint-disable-next-line react-refresh/only-export-components
 export function useTranslation() {
   const context = useContext(I18nContext);
-  if (!context) {
-    throw new Error("useTranslation must be used within an I18nProvider");
-  }
-  return context;
+  return context ?? defaultContextValue;
 }

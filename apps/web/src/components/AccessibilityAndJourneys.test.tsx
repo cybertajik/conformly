@@ -30,11 +30,13 @@ vi.mock("../api", () => ({
   verifyTenant: () => Promise.resolve({ ok: true }),
   revokeSession: () => Promise.resolve(),
   listFrameworkCatalog: () => Promise.resolve({ frameworks: [] }),
-  getExecutiveDashboardSummary: () =>
+  getDashboardSummary: () =>
     Promise.resolve({
       readiness_score: 85,
       overall_readiness_score: 85,
-      controls_summary: { total: 10, passing: 8, failing: 2 },
+      controls_summary: { total: 10, implemented: 8, in_progress: 1, not_started: 1 },
+      frameworks_adopted: [], expiring_evidence: [], review_due_policies: [], open_tasks: [], top_risks: [],
+      vendor_health: { total_vendors: 0, signed_dpa_count: 0, missing_dpa_count: 0, critical_vendors: 0 },
       policies_summary: { total: 5, active: 4, review_required: 1 },
       evidence_summary: { total: 12, valid: 10, expired: 2 },
       action_items: [],
@@ -92,23 +94,10 @@ describe("Customer Journey & Accessibility Verification", () => {
       </I18nProvider>
     );
 
-    const selectorBtn = screen.getByRole("button", { name: /Select language/i });
-    expect(selectorBtn).toBeInTheDocument();
-    expect(selectorBtn).toHaveAttribute("aria-haspopup", "listbox");
-    expect(selectorBtn).toHaveAttribute("aria-expanded", "false");
-
-    // Open dropdown
-    fireEvent.click(selectorBtn);
-    expect(selectorBtn).toHaveAttribute("aria-expanded", "true");
-
-    const listbox = screen.getByRole("listbox", { name: /Select language/i });
-    expect(listbox).toBeInTheDocument();
-
-    const germanOption = screen.getByRole("option", { name: /Deutsch/i });
-    expect(germanOption).toBeInTheDocument();
-
-    // Select German
-    fireEvent.click(germanOption);
+    const selector = screen.getByRole("combobox", { name: /Select language/i });
+    expect(selector).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /Deutsch/i })).toBeInTheDocument();
+    fireEvent.change(selector, { target: { value: "de" } });
     expect(document.documentElement.lang).toBe("de");
     expect(localStorage.getItem("conformly.locale")).toBe("de");
   });

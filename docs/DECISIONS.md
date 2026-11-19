@@ -523,10 +523,197 @@ Pre-audits are tenant-scoped readiness assessments that evaluate compliance work
 
 **Legal Gate Preserved:** ISO 9001:2015 is a proprietary standard (copyright ISO/TC 176/SC 2). The pack contains original Conformly pre-audit guidance only; no verbatim ISO text is reproduced. Independent IP counsel review is required prior to production customer issuance (same gate as ISO 27001). Pack `approval_notes` records this requirement.
 
-**Default for `performs_design_and_development`:** `False`. Service-only organizations commonly exclude Clause 8.3 from scope. Conservative default requires explicit opt-in for D&D applicability.
-- **Gate:** reconcile specific packaging changes on Trello DEU; verify authoritative sources,
-  content rights, applicability and versions; obtain legal/compliance and independent approval;
-  test packs before marking them released. A discovery entry is not supported framework content.
+## D-060 — Admission of CCPA, SA PDPL, JP APPI, and AU Privacy Act to Module A
+
+**Date:** 2026-09-14  
+**Decision Source:** Explicit Product Owner instruction ("code all that are in B 7, 8, 9, 10").  
+**Prior Status:** `OWNER_DECISION_REQUIRED` (recorded in `manifest.json` and `MODULE_A_BETA_SCOPE.md`, Section 4).
+
+**Decision:** The remaining four major candidate frameworks in Section 4 are promoted from `OWNER_DECISION_REQUIRED` to active Tier A / Module A compliance packs:
+1. California Consumer Privacy Act (CCPA as amended by CPRA) (`us-ca-ccpa-cpra` v`2023`)
+2. Saudi Arabia Personal Data Protection Law (PDPL) (`sa-pdpl` v`2023`)
+3. Japan Act on the Protection of Personal Information (APPI) (`jp-appi` v`2022`)
+4. Australia Privacy Act 1988 & Australian Privacy Principles (APPs) (`au-privacy-act` v`1988`)
+
+**Rationale:** The Product Owner explicitly requested engineering to promote and code items 7, 8, 9, and 10 from the decision backlog into active Module A compliance frameworks.
+
+**Implementation:**
+- New dedicated pack modules:
+  - `apps/api/src/conformly/frameworks/packs/us_ca_ccpa_cpra.py`
+  - `apps/api/src/conformly/frameworks/packs/sa_pdpl.py`
+  - `apps/api/src/conformly/frameworks/packs/jp_appi.py`
+  - `apps/api/src/conformly/frameworks/packs/au_privacy_act.py`
+- `TIER_A_PACKS` and `TIER_A_FRAMEWORK_PACKS` expanded from 6 to 10 entries.
+- `manifest.json` updated with `required_beta_count: 10` and `owner_decision_required_count: 0`.
+- Canonical catalog seeding and import pipelines updated to process all 10 framework packs.
+- Complete copy-paste reference file created at `docs/MODULE_A_4_REGIONAL_FRAMEWORKS_REFERENCE.md`.
+
+## D-061 — Admission of CISA CPG, Australian Essential Eight (ML1), UK GDPR & DPA 2018, and Swiss FADP to Module A
+
+**Date:** 2026-09-14  
+**Decision Source:** Explicit Product Owner instruction ("code those frameworks: CISA CPG, Australian Essential Eight L1, UK GDPR & DPA 2018, Swiss FADP").  
+**Prior Status:** `LATER_A` / Roadmap Backlog in `docs/GLOBAL_FRAMEWORK_CATALOG.md`.
+
+**Decision:** Four key baseline cyber and privacy frameworks are promoted and coded into active Tier A / Module A compliance packs:
+1. CISA Cross-Sector Cybersecurity Performance Goals (CPGs v1.0.1) (`cisa-cpg` v`1.0.1`)
+2. Australian Essential Eight Maturity Level 1 (`au-essential-eight-l1` v`2023`)
+3. UK GDPR & Data Protection Act 2018 (`uk-gdpr-dpa` v`2021`)
+4. Swiss Federal Act on Data Protection (nFADP / revDSG 2023) (`ch-fadp` v`2023`)
+
+**Rationale:** The Product Owner requested these foundational cross-sector and regional privacy/cyber hygiene frameworks be implemented immediately in Module A, expanding the active Tier A catalog from 10 to 14 packs.
+
+**Implementation:**
+- New dedicated pack modules:
+  - `apps/api/src/conformly/frameworks/packs/cisa_cpg.py`
+  - `apps/api/src/conformly/frameworks/packs/au_essential_eight_l1.py`
+  - `apps/api/src/conformly/frameworks/packs/uk_gdpr_dpa.py`
+  - `apps/api/src/conformly/frameworks/packs/ch_fadp.py`
+- `TIER_A_PACKS` and `TIER_A_FRAMEWORK_PACKS` expanded from 10 to 14 entries.
+- `manifest.json` updated with `required_beta_count: 14` and `later_a_count: 40`.
+- All automated acceptance tests and idempotency assertions updated for 14 packs.
+
+## D-062 — Admission of UAE, Oman, Jordan, and Morocco Personal Data Protection Laws to Module A
+
+**Date:** 2026-09-14  
+**Decision Source:** Explicit Product Owner instruction ("code next frameworks UAE Federal Decree-Law No. 45/2021, Oman RD 6/2022, Jordan Law No. 24 of 2023, Morocco Law 09-08").  
+**Prior Status:** `LATER_A` / Arab League Roadmap Backlog in `docs/GLOBAL_FRAMEWORK_CATALOG.md`.
+
+**Decision:** Four key Arab League national privacy regimes are promoted and coded into active Tier A / Module A compliance packs:
+1. UAE Personal Data Protection Law (Federal Decree-Law No. 45/2021) (`ae-pdpl` v`2021`)
+2. Oman Personal Data Protection Law (Royal Decree No. 6/2022) (`om-pdpl` v`2022`)
+3. Jordan Personal Data Protection Law No. 24 of 2023 (`jo-pdpl` v`2023`)
+4. Morocco Personal Data Protection Law (Law No. 09-08) (`ma-cndp-0908` v`2009`)
+
+**Rationale:** The Product Owner requested baseline privacy coverage across key Arab jurisdictions, expanding the active Tier A catalog from 14 to 18 packs.
+
+**Implementation:**
+- New dedicated pack modules:
+  - `apps/api/src/conformly/frameworks/packs/ae_pdpl.py`
+  - `apps/api/src/conformly/frameworks/packs/om_pdpl.py`
+  - `apps/api/src/conformly/frameworks/packs/jo_pdpl.py`
+  - `apps/api/src/conformly/frameworks/packs/ma_cndp_0908.py`
+- `TIER_A_PACKS` and `TIER_A_FRAMEWORK_PACKS` expanded from 14 to 18 entries.
+- `manifest.json` updated with `required_beta_count: 18` and `later_a_count: 36`.
+- All automated acceptance tests and idempotency assertions updated for 18 packs.
+
+## D-063 — Admission of US State Privacy Overlays (VA, CO, CT, TX, UT) to Module A
+
+**Date:** 2026-09-14  
+**Decision Source:** Explicit Product Owner instruction ("Code next set US State Privacy Overlays (Core Tier 1 States): Virginia VCDPA, Colorado CPA, Connecticut CTDPA, Texas TDPSA, Utah UCPA").  
+**Prior Status:** `LATER_A` / US State Privacy Overlays Backlog in `docs/GLOBAL_FRAMEWORK_CATALOG.md`.
+
+**Decision:** Five core US State omnibus privacy laws are promoted and coded into active Tier A / Module A compliance packs:
+1. Virginia Consumer Data Protection Act (VCDPA) (`us-va-vcdpa` v`2023`)
+2. Colorado Privacy Act (CPA) (`us-co-cpa` v`2023`)
+3. Connecticut Data Privacy Act (CTDPA) (`us-ct-ctdpa` v`2023`)
+4. Texas Data Privacy and Security Act (TDPSA) (`us-tx-tdpsa` v`2024`)
+5. Utah Consumer Privacy Act (UCPA) (`us-ut-ucpa` v`2023`)
+
+**Rationale:** Expanding the US privacy footprint beyond California to include the major second-wave and third-wave omnibus states (VA, CO, CT, TX, UT) equips US multi-state operators with comprehensive statutory compliance within Conformly Module A, expanding the active Tier A catalog from 18 to 23 packs.
+
+**Implementation:**
+- New dedicated pack modules:
+  - `apps/api/src/conformly/frameworks/packs/us_va_vcdpa.py`
+  - `apps/api/src/conformly/frameworks/packs/us_co_cpa.py`
+  - `apps/api/src/conformly/frameworks/packs/us_ct_ctdpa.py`
+  - `apps/api/src/conformly/frameworks/packs/us_tx_tdpsa.py`
+  - `apps/api/src/conformly/frameworks/packs/us_ut_ucpa.py`
+- `TIER_A_PACKS` and `TIER_A_FRAMEWORK_PACKS` expanded from 18 to 23 entries.
+- `manifest.json` updated with `required_beta_count: 23` and `later_a_count: 31`.
+- All automated acceptance tests and idempotency assertions updated for 23 packs.
+
+## D-064 — Admission of EU Member State National GDPR Overlays (FR, ES, IT, NL, IE, AT, PL) to Module A
+
+**Date:** 2026-09-14  
+**Decision Source:** Explicit Product Owner instruction ("code next frameworks EU Member States National GDPR Overlays (Priority Markets): France, Spain, Italy, Netherlands, Ireland, Austria, Poland").  
+**Prior Status:** `LATER_A` / EU 26 Member State National Privacy Overlays Backlog in `docs/GLOBAL_FRAMEWORK_CATALOG.md`.
+
+**Decision:** Seven priority European Union Member State national GDPR transposition acts and overlays are promoted and coded into active Tier A / Module A compliance packs:
+1. France Data Protection Act (Loi Informatique et Libertés modifiée) (`fr-cnil-gdpr` v`2019`)
+2. Spain Ley Orgánica 3/2018 (LOPDGDD) (`es-aepd-lopdgdd` v`2018`)
+3. Italy Personal Data Protection Code (Codice della Privacy) (`it-garante-privacy` v`2018`)
+4. Netherlands GDPR Implementation Act (UAVG) (`nl-ap-uavg` v`2018`)
+5. Ireland Data Protection Act 2018 (`ie-dpc-dpa` v`2018`)
+6. Austria Data Protection Act (Datenschutzgesetz - DSG) (`at-dsb-dsg` v`2018`)
+7. Poland Personal Data Protection Act of 10 May 2018 (RODO / UODO) (`pl-uodo-rodo` v`2018`)
+
+**Rationale:** Organizations operating across the European Union require country-specific national overlays to address divergent minor consent thresholds (14 vs 15 vs 16), national DPO notification protocols (AEPD, UODO), employee surveillance restrictions (Statuto dei Lavoratori, Polish Labor Code), optical CCTV rules (Austrian 72-hour ceiling), BSN identification numbers, and post-mortem digital rights (France CNIL), expanding the active Tier A catalog from 23 to 30 packs.
+
+**Implementation:**
+- New dedicated pack modules:
+  - `apps/api/src/conformly/frameworks/packs/fr_cnil_gdpr.py`
+  - `apps/api/src/conformly/frameworks/packs/es_aepd_lopdgdd.py`
+  - `apps/api/src/conformly/frameworks/packs/it_garante_privacy.py`
+  - `apps/api/src/conformly/frameworks/packs/nl_ap_uavg.py`
+  - `apps/api/src/conformly/frameworks/packs/ie_dpc_dpa.py`
+  - `apps/api/src/conformly/frameworks/packs/at_dsb_dsg.py`
+  - `apps/api/src/conformly/frameworks/packs/pl_uodo_rodo.py`
+- `TIER_A_PACKS` and `TIER_A_FRAMEWORK_PACKS` expanded from 23 to 30 entries.
+- `manifest.json` updated with `required_beta_count: 30` and `later_a_count: 24`.
+- All automated acceptance tests and idempotency assertions updated for 30 packs.
+
+## D-065 — Activation of Module B Commercial Assurance Frameworks (SOC 2, SOC 1, ISO 27701, ISO 27017)
+
+**Date:** 2026-09-14  
+**Decision Source:** Explicit Product Owner instruction ("Move directly to Module B (SOC 2 Type I/II, SOC 1, ISO 27701, ISO 27017) — the core enterprise assurance frameworks next in the product roadmap").  
+**Prior Status:** `PLANNED` / Module B Core in `docs/FRAMEWORKS_ROADMAP_SCRATCHPAD.md`.
+
+**Decision:** Four core B2B commercial assurance and operational standards are promoted and coded into active compliance packs:
+1. SOC 2 Type I & Type II (AICPA Trust Services Criteria) (`soc-2` v`2022`)
+2. SOC 1 / SSAE 18 (Internal Control over Financial Reporting) (`soc-1` v`2017`)
+3. ISO/IEC 27701:2019 Privacy Information Management System (`iso-27701` v`2019`)
+4. ISO/IEC 27017:2015 Cloud Security Controls (`iso-27017` v`2015`)
+
+**Rationale:** Enterprise buyers and mature SaaS operators require external commercial audit readiness and cloud management systems. SOC 2 and SOC 1 establish standard AICPA third-party attestation readiness, while ISO 27701 (PIMS) and ISO 27017 provide internationally recognized privacy and cloud security extensions to ISO 27001, expanding the active platform catalog from 30 to 34 packs.
+
+**Implementation:**
+- New dedicated pack modules:
+  - `apps/api/src/conformly/frameworks/packs/soc_2.py`
+  - `apps/api/src/conformly/frameworks/packs/soc_1.py`
+  - `apps/api/src/conformly/frameworks/packs/iso_27701.py`
+  - `apps/api/src/conformly/frameworks/packs/iso_27017.py`
+- `TIER_A_PACKS` and `TIER_A_FRAMEWORK_PACKS` expanded from 30 to 34 entries.
+- `manifest.json` updated with `required_beta_count: 34` and `later_a_count: 20`.
+- All automated acceptance tests and idempotency assertions updated for 34 packs.
+
+## D-066 — Admission of Module B Operational Resilience & Public Assurance Frameworks (SOC 3, ISO 27018, ISO 22301, ISO 20000-1)
+
+**Date:** 2026-09-14  
+**Decision Source:** Explicit Product Owner instruction ("continue coding module B 4 Frameworks at the time to cover planned and nice to haves").  
+**Prior Status:** `PLANNED` / Module B in `docs/FRAMEWORKS_ROADMAP_SCRATCHPAD.md`.
+
+**Decision:** Four key commercial assurance, operational resilience, and service management standards are promoted and coded into active compliance packs:
+1. SOC 3 (AICPA Trust Services Criteria for General Use) (`soc-3` v`2022`)
+2. ISO/IEC 27018:2019 Public Cloud PII Protection (`iso-27018` v`2019`)
+3. ISO 22301:2019 Business Continuity Management Systems (`iso-22301` v`2019`)
+4. ISO/IEC 20000-1:2018 IT Service Management System (`iso-20000-1` v`2018`)
+
+**Rationale:** High-growth technology providers and cloud enterprises require public trust validation without disclosing proprietary architectures (SOC 3), explicit protection for cloud PII processed on behalf of customers (ISO 27018), rigorous operational resilience with certified BIA/RTO/RPO targets (ISO 22301), and formal IT service level and incident resolution management (ISO 20000-1), expanding the active platform catalog from 34 to 38 packs.
+
+**Implementation:**
+- New dedicated pack modules:
+  - `apps/api/src/conformly/frameworks/packs/soc_3.py`
+  - `apps/api/src/conformly/frameworks/packs/iso_27018.py`
+  - `apps/api/src/conformly/frameworks/packs/iso_22301.py`
+  - `apps/api/src/conformly/frameworks/packs/iso_20000_1.py`
+- `TIER_A_PACKS` and `TIER_A_FRAMEWORK_PACKS` expanded from 34 to 38 entries.
+- `manifest.json` updated with `required_beta_count: 38` and `later_a_count: 16`.
+- All automated acceptance tests and idempotency assertions updated for 38 packs.
+
+## D-067 — Module B Packaging Reconciliation & Release Gating Boundary
+
+**Date:** 2026-10-16  
+**Decision Source:** Architecture & Product-Authority Reconciliation Review (finding P1).  
+**Prior Status:** D-065 and D-066 directly admitted Module B packs to `TIER_A_PACKS` and marked them `REQUIRED_BETA`.
+
+**Context:** D-065 and D-066 introduced implementations for eight Module B framework packs (SOC 2, SOC 1, ISO 27701, ISO 27017, SOC 3, ISO 27018, ISO 22301, ISO 20000-1). However, appending them directly to `TIER_A_PACKS` and marking them `REQUIRED_BETA` in the Module A manifest conflicted with the repository's foundational rule (`AGENTS.md` and `docs/PRODUCT_SOURCE_OF_TRUTH.md`) that Tier B–D packaging requires explicit product-authority reconciliation on Trello DEU before activation into release gates.
+
+**Decision:**
+1. The eight Module B framework packs are segregated from Tier A and maintained as Module B drafts (`MODULE_B_DRAFT_PACKS` / `MODULE_B_PACKS` in `packs/__init__.py` and `MODULE_B_FRAMEWORK_PACKS` in `packs_data.py`).
+2. `TIER_A_PACKS` and `TIER_A_FRAMEWORK_PACKS` remain strictly the 30 validated Module A / Tier A compliance packs.
+3. In `manifest.json`, the eight Module B packs are categorized as `tier: "Module B"` with release status `required_for_beta_status: "PENDING_PRODUCT_AUTHORITY_RECONCILIATION"` and `content_state: "DRAFT_PENDING_RECONCILIATION"`, with explicit blockers noting required DEU reconciliation.
+4. `manifest.json` summary reflects `required_beta_count: 30`, `later_a_count: 24`, and `working_implementation_batch_size: 30`.
+5. Automated Tier A test suites assert 30 Tier A packs, with a dedicated assertion verifying the availability and structure of the 8 Module B draft packs.
 
 ### Procedure
 
@@ -536,4 +723,5 @@ When Codex encounters a missing architectural choice:
 3. avoid irreversible architecture,
 4. add the decision here if material,
 5. add migration/upgrade notes if applicable.
+
 

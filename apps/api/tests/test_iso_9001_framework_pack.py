@@ -422,14 +422,14 @@ class TestISO9001ManifestConsistency:
         req_ids = get_required_beta_pack_ids()
         assert "iso-9001" in req_ids, f"iso-9001 not found in required beta packs: {req_ids}"
 
-    def test_six_packs_required_for_beta(self) -> None:
-        """Exactly 6 packs must be flagged as REQUIRED_BETA."""
+    def test_thirty_packs_required_for_beta(self) -> None:
+        """Exactly 30 packs must be flagged as REQUIRED_BETA."""
         req_ids = get_required_beta_pack_ids()
-        assert len(req_ids) == 6, f"Expected 6 required_beta packs, got {len(req_ids)}: {req_ids}"
+        assert len(req_ids) == 30, f"Expected 30 required_beta packs, got {len(req_ids)}: {req_ids}"
 
-    def test_tier_a_packs_list_has_six_entries(self) -> None:
-        """TIER_A_FRAMEWORK_PACKS must contain exactly 6 pack definitions."""
-        assert len(TIER_A_FRAMEWORK_PACKS) == 6
+    def test_tier_a_packs_list_has_thirty_entries(self) -> None:
+        """TIER_A_FRAMEWORK_PACKS must contain exactly 30 pack definitions."""
+        assert len(TIER_A_FRAMEWORK_PACKS) == 30
 
     def test_iso_9001_in_tier_a_packs(self) -> None:
         slugs = {p.slug for p in TIER_A_FRAMEWORK_PACKS}
@@ -437,15 +437,15 @@ class TestISO9001ManifestConsistency:
 
 
 # =============================================================================
-# 5. Database seeding — 6-pack Tier A
+# 5. Database seeding — 30-pack catalog
 # =============================================================================
 
 
 class TestISO9001Seeding:
-    def test_seed_tier_a_test_fixtures_returns_six_packs(self, session: Session) -> None:
-        """seed_tier_a_test_fixtures must return exactly 6 RELEASED versions."""
+    def test_seed_tier_a_test_fixtures_returns_thirty_packs(self, session: Session) -> None:
+        """seed_tier_a_test_fixtures must return exactly 30 RELEASED versions."""
         versions = seed_tier_a_test_fixtures(session)
-        assert len(versions) == 6
+        assert len(versions) == 30
 
     def test_iso_9001_pack_is_seeded(self, session: Session) -> None:
         """ISO 9001 framework and version must be present after seeding."""
@@ -479,16 +479,16 @@ class TestISO9001Seeding:
         """Running seed twice must not create duplicate frameworks or versions."""
         versions1 = seed_tier_a_test_fixtures(session)
         versions2 = seed_tier_a_test_fixtures(session)
-        assert len(versions1) == len(versions2) == 6
+        assert len(versions1) == len(versions2) == 30
         # Check for exactly one iso-9001 framework in DB
         frameworks = session.scalars(select(Framework).where(Framework.slug == "iso-9001")).all()
         assert len(frameworks) == 1
 
-    def test_six_frameworks_total_after_seeding(self, session: Session) -> None:
-        """Exactly 6 frameworks must exist in the DB after Tier A seeding."""
+    def test_thirty_frameworks_total_after_seeding(self, session: Session) -> None:
+        """Exactly 30 frameworks must exist in the DB after seeding."""
         seed_tier_a_test_fixtures(session)
         all_frameworks = session.scalars(select(Framework)).all()
-        assert len(all_frameworks) == 6
+        assert len(all_frameworks) == 30
 
 
 # =============================================================================

@@ -319,7 +319,7 @@ export function PublicProfileWorkspace({
 
   if (loading) {
     return (
-      <div data-testid="profile-workspace-loading" className="p-8 text-center text-slate-400">
+      <div data-testid="profile-workspace-loading" className="p-8 text-center text-slate-500">
         <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-3" />
         Loading public profile configuration...
       </div>
@@ -328,7 +328,7 @@ export function PublicProfileWorkspace({
 
   if (!profile) {
     return (
-      <div className="p-8 text-center text-rose-400">
+      <div className="p-8 text-center text-rose-700">
         Unable to load public profile draft. {error}
       </div>
     );
@@ -339,18 +339,18 @@ export function PublicProfileWorkspace({
   return (
     <div data-testid="profile-workspace" className="space-y-6">
       {/* Top Banner / Status Overview */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl">
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold text-white tracking-tight">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
               Public Compliance Trust Center
             </h2>
             <span
               data-testid="profile-status-badge"
               className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 ${
                 profile.is_published
-                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                  : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                  ? "bg-emerald-500/10 text-emerald-700 border border-emerald-500/30"
+                  : "bg-amber-500/10 text-amber-700 border border-amber-500/30"
               }`}
             >
               <span
@@ -361,18 +361,18 @@ export function PublicProfileWorkspace({
               {profile.is_published ? "Published (Live)" : "Draft (Unpublished)"}
             </span>
           </div>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-500">
             Publish customer-facing audit readiness badges, ISO/SOC 2 certifications, and compliance commitments.
           </p>
-          <div className="flex items-center gap-2 text-xs text-slate-400 pt-1 font-mono">
+          <div className="flex items-center gap-2 text-xs text-slate-500 pt-1 font-mono">
             <span>Public URL:</span>
-            <span className="text-indigo-400">{publicUrl}</span>
+            <span className="text-indigo-600">{publicUrl}</span>
             <button
               onClick={() => {
                 navigator.clipboard.writeText(window.location.origin + publicUrl);
                 setSuccessMessage("Public Trust Center URL copied to clipboard.");
               }}
-              className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[11px] transition"
+              className="px-2 py-0.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded text-[11px] transition"
             >
               Copy Link
             </button>
@@ -385,7 +385,7 @@ export function PublicProfileWorkspace({
             <button
               data-testid="view-live-trust-center-btn"
               onClick={() => onOpenPublicView(profile.slug)}
-              className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-medium transition shadow"
+              className="px-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-900 rounded-xl text-sm font-medium transition shadow"
             >
               View Live Trust Center ↗
             </button>
@@ -414,25 +414,25 @@ export function PublicProfileWorkspace({
 
       {/* Notifications */}
       {error && (
-        <div data-testid="profile-workspace-error" className="p-4 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl text-sm">
+        <div data-testid="profile-workspace-error" className="p-4 bg-rose-500/10 border border-rose-500/30 text-rose-700 rounded-xl text-sm">
           {error}
         </div>
       )}
       {successMessage && (
-        <div data-testid="profile-workspace-success" className="p-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl text-sm">
+        <div data-testid="profile-workspace-success" className="p-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 rounded-xl text-sm">
           {successMessage}
         </div>
       )}
 
       {/* Workspace Tabs */}
-      <div className="flex border-b border-slate-800 gap-6 text-sm font-medium">
+      <div className="flex border-b border-slate-200 gap-6 text-sm font-medium">
         <button
           data-testid="tab-overview"
           onClick={() => setActiveTab("overview")}
           className={`pb-3 transition relative ${
             activeTab === "overview"
-              ? "text-indigo-400 border-b-2 border-indigo-400"
-              : "text-slate-400 hover:text-white"
+              ? "text-indigo-600 border-b-2 border-indigo-400"
+              : "text-slate-500 hover:text-white"
           }`}
         >
           Trust Center Overview
@@ -442,8 +442,8 @@ export function PublicProfileWorkspace({
           onClick={() => setActiveTab("credentials")}
           className={`pb-3 transition relative ${
             activeTab === "credentials"
-              ? "text-indigo-400 border-b-2 border-indigo-400"
-              : "text-slate-400 hover:text-white"
+              ? "text-indigo-600 border-b-2 border-indigo-400"
+              : "text-slate-500 hover:text-white"
           }`}
         >
           Credentials & Badges ({profile.credentials.length})
@@ -453,8 +453,8 @@ export function PublicProfileWorkspace({
           onClick={() => setActiveTab("statements")}
           className={`pb-3 transition relative ${
             activeTab === "statements"
-              ? "text-indigo-400 border-b-2 border-indigo-400"
-              : "text-slate-400 hover:text-white"
+              ? "text-indigo-600 border-b-2 border-indigo-400"
+              : "text-slate-500 hover:text-white"
           }`}
         >
           Compliance Commitments ({profile.statements.length})
@@ -464,8 +464,8 @@ export function PublicProfileWorkspace({
           onClick={() => setActiveTab("branding")}
           className={`pb-3 transition relative ${
             activeTab === "branding"
-              ? "text-indigo-400 border-b-2 border-indigo-400"
-              : "text-slate-400 hover:text-white"
+              ? "text-indigo-600 border-b-2 border-indigo-400"
+              : "text-slate-500 hover:text-white"
           }`}
         >
           Branding & Custom Slug
@@ -475,38 +475,38 @@ export function PublicProfileWorkspace({
       {/* TAB 1: OVERVIEW */}
       {activeTab === "overview" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-            <h3 className="text-base font-semibold text-white">Trust Center Summary</h3>
-            <div className="space-y-2 text-xs text-slate-400">
-              <div className="flex justify-between py-1 border-b border-slate-800/80">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
+            <h3 className="text-base font-semibold text-slate-900">Trust Center Summary</h3>
+            <div className="space-y-2 text-xs text-slate-500">
+              <div className="flex justify-between py-1 border-b border-slate-200/80">
                 <span>Display Name:</span>
-                <span className="text-white font-medium">{profile.display_name}</span>
+                <span className="text-slate-900 font-medium">{profile.display_name}</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-slate-800/80">
+              <div className="flex justify-between py-1 border-b border-slate-200/80">
                 <span>Custom URL Slug:</span>
-                <span className="text-indigo-400 font-mono">/{profile.slug}</span>
+                <span className="text-indigo-600 font-mono">/{profile.slug}</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-slate-800/80">
+              <div className="flex justify-between py-1 border-b border-slate-200/80">
                 <span>Credentials Displayed:</span>
-                <span className="text-white font-medium">{profile.credentials.length}</span>
+                <span className="text-slate-900 font-medium">{profile.credentials.length}</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-slate-800/80">
+              <div className="flex justify-between py-1 border-b border-slate-200/80">
                 <span>Statements Published:</span>
-                <span className="text-white font-medium">{profile.statements.length}</span>
+                <span className="text-slate-900 font-medium">{profile.statements.length}</span>
               </div>
               <div className="flex justify-between py-1">
                 <span>Version:</span>
-                <span className="text-white font-mono">v{profile.version}</span>
+                <span className="text-slate-900 font-mono">v{profile.version}</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 md:col-span-2">
-            <h3 className="text-base font-semibold text-white">Non-Accredited Notice & Disclaimer</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 md:col-span-2">
+            <h3 className="text-base font-semibold text-slate-900">Non-Accredited Notice & Disclaimer</h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
               Every public profile published via Conformly automatically displays our required disclaimer to ensure compliance transparency:
             </p>
-            <div className="p-4 bg-amber-950/20 border border-amber-500/30 rounded-xl text-amber-300 text-xs leading-relaxed">
+            <div className="p-4 bg-amber-950/20 border border-amber-500/30 rounded-xl text-amber-700 text-xs leading-relaxed">
               “Conformly is an audit-readiness and compliance operations platform, not an accredited certification body. Pre-audit certificates indicate verified readiness evaluation results.”
             </div>
           </div>
@@ -518,8 +518,8 @@ export function PublicProfileWorkspace({
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h3 className="text-lg font-bold text-white">Compliance Credentials</h3>
-              <p className="text-xs text-slate-400">
+              <h3 className="text-lg font-bold text-slate-900">Compliance Credentials</h3>
+              <p className="text-xs text-slate-500">
                 Manage Conformly-evaluated readiness badges and verified third-party certificates.
               </p>
             </div>
@@ -545,13 +545,13 @@ export function PublicProfileWorkspace({
           </div>
 
           {profile.credentials.length === 0 ? (
-            <div className="p-12 text-center bg-slate-900 border border-dashed border-slate-800 rounded-2xl text-slate-500 text-sm">
+            <div className="p-12 text-center bg-white border border-dashed border-slate-200 rounded-2xl text-slate-500 text-sm">
               No credentials added yet. Link a Conformly Pre-Audit assessment badge or add your external ISO/SOC 2 certifications.
             </div>
           ) : (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-950/60 text-slate-400 uppercase tracking-wider text-[11px] border-b border-slate-800">
+            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+              <table className="w-full text-left text-xs text-slate-600">
+                <thead className="bg-slate-50/60 text-slate-500 uppercase tracking-wider text-[11px] border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-4">Credential</th>
                     <th className="py-3 px-4">Type</th>
@@ -563,11 +563,11 @@ export function PublicProfileWorkspace({
                 </thead>
                 <tbody className="divide-y divide-slate-800">
                   {profile.credentials.map((c) => (
-                    <tr key={c.id} data-testid={`admin-cred-row-${c.id}`} className="hover:bg-slate-800/40 transition">
-                      <td className="py-4 px-4 font-medium text-white">
+                    <tr key={c.id} data-testid={`admin-cred-row-${c.id}`} className="hover:bg-slate-50/40 transition">
+                      <td className="py-4 px-4 font-medium text-slate-900">
                         <div>{c.title}</div>
                         {c.source_certificate_id && (
-                          <span className="text-[10px] text-emerald-400 font-mono">
+                          <span className="text-[10px] text-emerald-700 font-mono">
                             Conformly Pre-Audit Linked
                           </span>
                         )}
@@ -576,20 +576,20 @@ export function PublicProfileWorkspace({
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                             c.credential_type === "conformly_readiness"
-                              ? "bg-emerald-500/10 text-emerald-400"
-                              : "bg-indigo-500/10 text-indigo-400"
+                              ? "bg-emerald-500/10 text-emerald-700"
+                              : "bg-indigo-500/10 text-indigo-600"
                           }`}
                         >
                           {c.credential_type === "conformly_readiness" ? "Conformly Badge" : "3rd Party"}
                         </span>
                       </td>
-                      <td className="py-4 px-4 text-slate-400">{c.issuer_name}</td>
+                      <td className="py-4 px-4 text-slate-500">{c.issuer_name}</td>
                       <td className="py-4 px-4">
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
                             c.status === "active"
-                              ? "bg-emerald-500/10 text-emerald-400"
-                              : "bg-rose-500/10 text-rose-400"
+                              ? "bg-emerald-500/10 text-emerald-700"
+                              : "bg-rose-500/10 text-rose-700"
                           }`}
                         >
                           {c.status.toUpperCase()}
@@ -602,8 +602,8 @@ export function PublicProfileWorkspace({
                             onClick={() => handleToggleVisibility(c.id, c.is_publicly_visible)}
                             className={`px-2 py-0.5 rounded text-[11px] font-medium transition ${
                               c.is_publicly_visible
-                                ? "bg-slate-800 text-slate-200 hover:bg-slate-700"
-                                : "bg-slate-800/50 text-slate-500 hover:text-slate-300"
+                                ? "bg-slate-50 text-slate-800 hover:bg-slate-100"
+                                : "bg-slate-50/50 text-slate-500 hover:text-slate-600"
                             }`}
                           >
                             {c.is_publicly_visible ? "👁️ Visible" : "Hidden"}
@@ -618,7 +618,7 @@ export function PublicProfileWorkspace({
                             <button
                               data-testid={`revoke-cred-btn-${c.id}`}
                               onClick={() => setShowRevokeModal(c.id)}
-                              className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 rounded transition text-[11px]"
+                              className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 rounded transition text-[11px]"
                             >
                               Revoke
                             </button>
@@ -626,7 +626,7 @@ export function PublicProfileWorkspace({
                           <button
                             data-testid={`delete-cred-btn-${c.id}`}
                             onClick={() => handleDeleteCredential(c.id)}
-                            className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded transition text-[11px]"
+                            className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 rounded transition text-[11px]"
                           >
                             Delete
                           </button>
@@ -645,15 +645,15 @@ export function PublicProfileWorkspace({
       {activeTab === "statements" && (
         <div className="space-y-6">
           <div>
-            <h3 className="text-lg font-bold text-white">Compliance Commitments</h3>
-            <p className="text-xs text-slate-400">
+            <h3 className="text-lg font-bold text-slate-900">Compliance Commitments</h3>
+            <p className="text-xs text-slate-500">
               Publish executive security pledges, data protection policies, and compliance statements.
             </p>
           </div>
 
           {isManager && (
-            <form onSubmit={handleAddStatement} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-              <h4 className="text-sm font-semibold text-white">Add New Commitment</h4>
+            <form onSubmit={handleAddStatement} className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
+              <h4 className="text-sm font-semibold text-slate-900">Add New Commitment</h4>
               <div className="space-y-3">
                 <input
                   type="text"
@@ -661,7 +661,7 @@ export function PublicProfileWorkspace({
                   value={stTitle}
                   onChange={(e) => setStTitle(e.target.value)}
                   required
-                  className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:border-indigo-500"
                 />
                 <textarea
                   placeholder="Detailed commitment text..."
@@ -669,7 +669,7 @@ export function PublicProfileWorkspace({
                   onChange={(e) => setStContent(e.target.value)}
                   required
                   rows={3}
-                  className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:border-indigo-500"
                 />
                 <div className="flex justify-end">
                   <button
@@ -686,17 +686,17 @@ export function PublicProfileWorkspace({
 
           <div className="space-y-4">
             {profile.statements.map((st) => (
-              <div key={st.id} data-testid={`admin-statement-${st.id}`} className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex justify-between items-start gap-4">
+              <div key={st.id} data-testid={`admin-statement-${st.id}`} className="bg-white border border-slate-200 rounded-xl p-5 flex justify-between items-start gap-4">
                 <div className="space-y-1">
-                  <h4 className="text-sm font-semibold text-white">{st.title}</h4>
-                  <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-line">
+                  <h4 className="text-sm font-semibold text-slate-900">{st.title}</h4>
+                  <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">
                     {st.statement_content}
                   </p>
                 </div>
                 {isManager && (
                   <button
                     onClick={() => handleDeleteStatement(st.id)}
-                    className="px-2.5 py-1 text-xs text-rose-400 hover:bg-rose-500/10 rounded transition shrink-0"
+                    className="px-2.5 py-1 text-xs text-rose-700 hover:bg-rose-500/10 rounded transition shrink-0"
                   >
                     Remove
                   </button>
@@ -709,31 +709,31 @@ export function PublicProfileWorkspace({
 
       {/* TAB 4: BRANDING & CUSTOM SLUG */}
       {activeTab === "branding" && (
-        <form onSubmit={handleSaveBranding} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6 max-w-2xl">
+        <form onSubmit={handleSaveBranding} className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6 max-w-2xl">
           <div className="space-y-1">
-            <h3 className="text-lg font-bold text-white">Trust Center Branding</h3>
-            <p className="text-xs text-slate-400">
+            <h3 className="text-lg font-bold text-slate-900">Trust Center Branding</h3>
+            <p className="text-xs text-slate-500">
               Customize how your organization appears to prospective customers and compliance auditors.
             </p>
           </div>
 
           <div className="space-y-4 text-xs">
             <div>
-              <label className="block text-slate-400 font-medium mb-1">Company Display Name</label>
+              <label className="block text-slate-500 font-medium mb-1">Company Display Name</label>
               <input
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 required
                 disabled={!isManager}
-                className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:border-indigo-500 disabled:opacity-50"
               />
             </div>
 
             <div>
-              <label className="block text-slate-400 font-medium mb-1">Custom Trust Center URL Slug</label>
+              <label className="block text-slate-500 font-medium mb-1">Custom Trust Center URL Slug</label>
               <div className="flex items-center">
-                <span className="px-3 py-2.5 bg-slate-800 border border-r-0 border-slate-800 rounded-l-xl text-slate-500 text-xs font-mono">
+                <span className="px-3 py-2.5 bg-slate-50 border border-r-0 border-slate-200 rounded-l-xl text-slate-500 text-xs font-mono">
                   /trust-center/
                 </span>
                 <input
@@ -742,7 +742,7 @@ export function PublicProfileWorkspace({
                   onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
                   required
                   disabled={!isManager}
-                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-r-xl text-sm font-mono text-indigo-400 focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-r-xl text-sm font-mono text-indigo-600 focus:outline-none focus:border-indigo-500 disabled:opacity-50"
                 />
               </div>
               <p className="text-[11px] text-slate-500 mt-1">
@@ -751,51 +751,51 @@ export function PublicProfileWorkspace({
             </div>
 
             <div>
-              <label className="block text-slate-400 font-medium mb-1">Company Summary / Mission</label>
+              <label className="block text-slate-500 font-medium mb-1">Company Summary / Mission</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
                 disabled={!isManager}
-                className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:border-indigo-500 disabled:opacity-50"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-slate-400 font-medium mb-1">Logo URL (Optional)</label>
+                <label className="block text-slate-500 font-medium mb-1">Logo URL (Optional)</label>
                 <input
                   type="url"
                   placeholder="https://example.com/logo.png"
                   value={logoUrl}
                   onChange={(e) => setLogoUrl(e.target.value)}
                   disabled={!isManager}
-                  className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:border-indigo-500 disabled:opacity-50"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-400 font-medium mb-1">Website URL</label>
+                <label className="block text-slate-500 font-medium mb-1">Website URL</label>
                 <input
                   type="url"
                   placeholder="https://example.com"
                   value={websiteUrl}
                   onChange={(e) => setWebsiteUrl(e.target.value)}
                   disabled={!isManager}
-                  className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:border-indigo-500 disabled:opacity-50"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-slate-400 font-medium mb-1">Compliance Contact Email</label>
+              <label className="block text-slate-500 font-medium mb-1">Compliance Contact Email</label>
               <input
                 type="email"
                 placeholder="compliance@example.com"
                 value={contactEmail}
                 onChange={(e) => setContactEmail(e.target.value)}
                 disabled={!isManager}
-                className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:border-indigo-500 disabled:opacity-50"
               />
             </div>
           </div>
@@ -816,75 +816,75 @@ export function PublicProfileWorkspace({
 
       {/* MODAL 1: ADD THIRD-PARTY CERTIFICATION */}
       {showThirdPartyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <form onSubmit={handleAddThirdParty} className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-50/80 backdrop-blur-sm">
+          <form onSubmit={handleAddThirdParty} className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-base font-bold text-white">Add Third-Party Certification</h3>
-              <button type="button" onClick={() => setShowThirdPartyModal(false)} className="text-slate-400 hover:text-white">✕</button>
+              <h3 className="text-base font-bold text-slate-900">Add Third-Party Certification</h3>
+              <button type="button" onClick={() => setShowThirdPartyModal(false)} className="text-slate-500 hover:text-slate-900">✕</button>
             </div>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-400 mb-1">Certification Title</label>
+                <label className="block text-slate-500 mb-1">Certification Title</label>
                 <input
                   type="text"
                   placeholder="e.g., ISO/IEC 27001:2022 Certification"
                   value={tpTitle}
                   onChange={(e) => setTpTitle(e.target.value)}
                   required
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900"
                 />
               </div>
               <div>
-                <label className="block text-slate-400 mb-1">Auditing Body / Issuer</label>
+                <label className="block text-slate-500 mb-1">Auditing Body / Issuer</label>
                 <input
                   type="text"
                   placeholder="e.g., BSI Group, Schellman, Coalfire"
                   value={tpIssuer}
                   onChange={(e) => setTpIssuer(e.target.value)}
                   required
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900"
                 />
               </div>
               <div>
-                <label className="block text-slate-400 mb-1">Scope Description</label>
+                <label className="block text-slate-500 mb-1">Scope Description</label>
                 <textarea
                   placeholder="Scope of systems, locations, and cloud services covered..."
                   value={tpScope}
                   onChange={(e) => setTpScope(e.target.value)}
                   required
                   rows={2}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 mb-1">Issue Date</label>
+                  <label className="block text-slate-500 mb-1">Issue Date</label>
                   <input
                     type="date"
                     value={tpIssuedAt}
                     onChange={(e) => setTpIssuedAt(e.target.value)}
                     required
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-400 mb-1">Expiration Date</label>
+                  <label className="block text-slate-500 mb-1">Expiration Date</label>
                   <input
                     type="date"
                     value={tpValidUntil}
                     onChange={(e) => setTpValidUntil(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-slate-400 mb-1">External Verification URL</label>
+                <label className="block text-slate-500 mb-1">External Verification URL</label>
                 <input
                   type="url"
                   placeholder="https://verify.issuer.com/..."
                   value={tpVerificationUrl}
                   onChange={(e) => setTpVerificationUrl(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900"
                 />
               </div>
             </div>
@@ -892,7 +892,7 @@ export function PublicProfileWorkspace({
               <button
                 type="button"
                 onClick={() => setShowThirdPartyModal(false)}
-                className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs"
+                className="px-4 py-2 bg-slate-50 text-slate-600 rounded-xl text-xs"
               >
                 Cancel
               </button>
@@ -910,26 +910,26 @@ export function PublicProfileWorkspace({
 
       {/* MODAL 2: LINK CONFORMLY PRE-AUDIT BADGE */}
       {showPreAuditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-50/80 backdrop-blur-sm">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-base font-bold text-white">Import Conformly Pre-Audit Badge</h3>
-              <button onClick={() => setShowPreAuditModal(false)} className="text-slate-400 hover:text-white">✕</button>
+              <h3 className="text-base font-bold text-slate-900">Import Conformly Pre-Audit Badge</h3>
+              <button onClick={() => setShowPreAuditModal(false)} className="text-slate-500 hover:text-slate-900">✕</button>
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-500">
               Select an active Pre-Audit certificate evaluated and issued by Conformly:
             </p>
 
             {availableCertificates.length === 0 ? (
-              <div className="p-6 text-center text-slate-500 text-xs bg-slate-950 rounded-xl border border-slate-800">
+              <div className="p-6 text-center text-slate-500 text-xs bg-slate-50 rounded-xl border border-slate-200">
                 No active pre-audit certificates found. Run a pre-audit assessment in the Pre-Audit workspace first.
               </div>
             ) : (
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {availableCertificates.map((c) => (
-                  <div key={c.id} className="p-3 bg-slate-950 border border-slate-800 rounded-xl flex justify-between items-center gap-3">
+                  <div key={c.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex justify-between items-center gap-3">
                     <div className="text-xs">
-                      <div className="text-white font-medium">{c.certificate_number}</div>
+                      <div className="text-slate-900 font-medium">{c.certificate_number}</div>
                       <div className="text-slate-500">
                         Issued {new Date(c.issued_at).toLocaleDateString()} • Expires {new Date(c.expires_at).toLocaleDateString()}
                       </div>
@@ -949,7 +949,7 @@ export function PublicProfileWorkspace({
             <div className="flex justify-end pt-2">
               <button
                 onClick={() => setShowPreAuditModal(false)}
-                className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs"
+                className="px-4 py-2 bg-slate-50 text-slate-600 rounded-xl text-xs"
               >
                 Close
               </button>
@@ -960,28 +960,28 @@ export function PublicProfileWorkspace({
 
       {/* MODAL 3: REVOCATION REASON */}
       {showRevokeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <form onSubmit={handleRevokeCredential} className="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 space-y-4">
-            <h3 className="text-base font-bold text-white">Revoke Credential</h3>
-            <p className="text-xs text-slate-400">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-50/80 backdrop-blur-sm">
+          <form onSubmit={handleRevokeCredential} className="bg-white border border-slate-200 rounded-2xl max-w-sm w-full p-6 space-y-4">
+            <h3 className="text-base font-bold text-slate-900">Revoke Credential</h3>
+            <p className="text-xs text-slate-500">
               Revoking a credential marks it as inactive. It will no longer appear on your public trust center.
             </p>
             <div>
-              <label className="block text-slate-400 text-xs mb-1">Reason for Revocation</label>
+              <label className="block text-slate-500 text-xs mb-1">Reason for Revocation</label>
               <textarea
                 value={revokeReason}
                 onChange={(e) => setRevokeReason(e.target.value)}
                 required
                 rows={2}
                 placeholder="e.g., Certificate superseded by recertification audit."
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900"
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setShowRevokeModal(null)}
-                className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs"
+                className="px-4 py-2 bg-slate-50 text-slate-600 rounded-xl text-xs"
               >
                 Cancel
               </button>

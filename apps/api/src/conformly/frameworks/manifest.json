@@ -6,10 +6,10 @@
   "authority": "docs/PRODUCT_SOURCE_OF_TRUTH.md and docs/MODULE_A_BETA_IMPLEMENTATION_PROMPT.md",
   "summary": {
     "total_catalog_candidates": 54,
-    "required_beta_count": 6,
-    "owner_decision_required_count": 4,
-    "later_a_count": 44,
-    "working_implementation_batch_size": 6
+    "required_beta_count": 30,
+    "owner_decision_required_count": 0,
+    "later_a_count": 24,
+    "working_implementation_batch_size": 30
   },
   "packs": [
     {
@@ -149,21 +149,19 @@
       "pack_id": "us-ca-ccpa-cpra",
       "name": "California Consumer Privacy Act (CCPA as amended by CPRA)",
       "source_edition": "Cal. Civ. Code § 1798.100 et seq. & CPPA Regulations (11 CCR § 7000 et seq.)",
-      "conformly_content_revision": "none",
+      "conformly_content_revision": "2026.1-draft",
       "jurisdiction": "United States - California (US-CA)",
-      "declared_scope": "Consumer privacy rights (opt-out of sale/share, limit use of sensitive personal information), notice at collection, privacy policy, vendor/service provider contracts",
+      "declared_scope": "Consumer privacy rights (notice at collection, right to delete, right to correct, right to know, opt-out of sale/share, limit sensitive info, non-discrimination, vendor contracting thresholds)",
       "profile": "For-Profit Business Meeting Statutory Thresholds",
-      "required_for_beta_status": "OWNER_DECISION_REQUIRED",
-      "decision_provenance": "docs/GLOBAL_FRAMEWORK_CATALOG.md Section 6",
-      "content_state": "UNIMPLEMENTED_PENDING_OWNER_CONFIRMATION",
-      "owner": "Product Owner",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-060 — Product Owner explicitly admitted CCPA/CPRA to Module A active packs, 2026-09-14. Supersedes prior OWNER_DECISION_REQUIRED status.",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Privacy & Regulatory Architecture",
       "blockers": [
-        "Requires explicit Product Owner decision: whether required for beta or deferred to general Tier A",
-        "Threshold evaluation rule design (annual gross revenue >$25M, buying/selling 100k consumers, 50% revenue from selling)",
-        "Service provider contract clause review under § 1798.140(ag)"
+        "Independent second-person human review and formal approval required before RELEASED state"
       ],
       "evidence": [
-        "docs/GLOBAL_FRAMEWORK_CATALOG.md#6-united-states",
+        "apps/api/src/conformly/frameworks/packs/us_ca_ccpa_cpra.py",
         "https://cppa.ca.gov/regulations/"
       ]
     },
@@ -171,20 +169,19 @@
       "pack_id": "sa-pdpl",
       "name": "Saudi Arabia Personal Data Protection Law (PDPL)",
       "source_edition": "Royal Decree No. M/19 of 9/2/1443H (as amended by M/148 of 5/9/1444H) & Implementing Regulations (SDAIA)",
-      "conformly_content_revision": "none",
+      "conformly_content_revision": "2026.1-draft",
       "jurisdiction": "Kingdom of Saudi Arabia (SA)",
-      "declared_scope": "Controller obligations, data subject rights, legal bases, cross-border transfer rules, record of processing activities",
+      "declared_scope": "Controller obligations, data subject rights, lawful processing & consent, privacy policy, security safeguards, breach notification to SDAIA, cross-border data transfer controls",
       "profile": "Saudi Commercial Entity Baseline",
-      "required_for_beta_status": "OWNER_DECISION_REQUIRED",
-      "decision_provenance": "docs/GLOBAL_FRAMEWORK_CATALOG.md Section 7",
-      "content_state": "UNIMPLEMENTED_PENDING_OWNER_CONFIRMATION",
-      "owner": "Product Owner",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-060 — Product Owner explicitly admitted Saudi Arabia PDPL to Module A active packs, 2026-09-14. Supersedes prior OWNER_DECISION_REQUIRED status.",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Privacy & Regulatory Architecture",
       "blockers": [
-        "Requires explicit Product Owner decision: whether required for beta or deferred to general Tier A",
-        "SDAIA executive regulation mapping and cross-border transfer regulatory review"
+        "Independent second-person human review and formal approval required before RELEASED state"
       ],
       "evidence": [
-        "docs/GLOBAL_FRAMEWORK_CATALOG.md#7-arab-country-coverage",
+        "apps/api/src/conformly/frameworks/packs/sa_pdpl.py",
         "https://sdaia.gov.sa/en/SDAIA/about/Pages/RegulationsAndPolicies.aspx"
       ]
     },
@@ -192,41 +189,39 @@
       "pack_id": "jp-appi",
       "name": "Japan Act on the Protection of Personal Information (APPI)",
       "source_edition": "Act No. 57 of 2003 (as amended through 2020/2022 reforms) & PPC Guidelines",
-      "conformly_content_revision": "none",
+      "conformly_content_revision": "2026.1-draft",
       "jurisdiction": "Japan (JP)",
-      "declared_scope": "Personal Information Handling Business Operator (PIHBO) obligations, purpose of use specification, safety management measures, provision to third parties, cross-border transfers",
+      "declared_scope": "Personal Information Handling Business Operator (PIHBO) obligations, purpose of use specification, safety control measures, supervision of employees & trustees, leak reporting to PPC, cross-border transfer restrictions",
       "profile": "Commercial Enterprise Operating in Japan",
-      "required_for_beta_status": "OWNER_DECISION_REQUIRED",
-      "decision_provenance": "docs/GLOBAL_FRAMEWORK_CATALOG.md Section 9",
-      "content_state": "UNIMPLEMENTED_PENDING_OWNER_CONFIRMATION",
-      "owner": "Product Owner",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-060 — Product Owner explicitly admitted Japan APPI to Module A active packs, 2026-09-14. Supersedes prior OWNER_DECISION_REQUIRED status.",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Privacy & Regulatory Architecture",
       "blockers": [
-        "Requires explicit Product Owner decision: whether required for beta or deferred to general Tier A",
-        "Personal Information Protection Commission (PPC) guideline translation & legal verification"
+        "Independent second-person human review and formal approval required before RELEASED state"
       ],
       "evidence": [
-        "docs/GLOBAL_FRAMEWORK_CATALOG.md#9-japan",
-        "https://www.ppc.go.jp/personalinfo/legal/"
+        "apps/api/src/conformly/frameworks/packs/jp_appi.py",
+        "https://www.ppc.go.jp/en/"
       ]
     },
     {
       "pack_id": "au-privacy-act",
       "name": "Australia Privacy Act 1988 & Australian Privacy Principles (APPs)",
       "source_edition": "Privacy Act 1988 (Cth) incorporating 13 Australian Privacy Principles & Notifiable Data Breaches (NDB) Scheme",
-      "conformly_content_revision": "none",
+      "conformly_content_revision": "2026.1-draft",
       "jurisdiction": "Australia (AU)",
-      "declared_scope": "APP entity obligations (open & transparent management, collection, use/disclosure, cross-border disclosure under APP 8, security of personal information under APP 11, access and correction), NDB mandatory notification",
+      "declared_scope": "APP entity obligations (open & transparent management, collection, notification, use/disclosure, cross-border disclosure, security safeguards, access, correction), Notifiable Data Breaches mandatory reporting to OAIC",
       "profile": "APP Entity (Turnover > $3M AUD or Health/Opt-in Small Business)",
-      "required_for_beta_status": "OWNER_DECISION_REQUIRED",
-      "decision_provenance": "docs/GLOBAL_FRAMEWORK_CATALOG.md Section 10",
-      "content_state": "UNIMPLEMENTED_PENDING_OWNER_CONFIRMATION",
-      "owner": "Product Owner",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-060 — Product Owner explicitly admitted Australia Privacy Act to Module A active packs, 2026-09-14. Supersedes prior OWNER_DECISION_REQUIRED status.",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Privacy & Regulatory Architecture",
       "blockers": [
-        "Requires explicit Product Owner decision: whether required for beta or deferred to general Tier A",
-        "OAIC guideline alignment and small business exemption evaluation rules ($3M turnover threshold)"
+        "Independent second-person human review and formal approval required before RELEASED state"
       ],
       "evidence": [
-        "docs/GLOBAL_FRAMEWORK_CATALOG.md#10-australia",
+        "apps/api/src/conformly/frameworks/packs/au_privacy_act.py",
         "https://www.oaic.gov.au/privacy/australian-privacy-principles"
       ]
     },
@@ -234,31 +229,577 @@
       "pack_id": "cisa-cpg",
       "name": "CISA Cross-Sector Cybersecurity Performance Goals",
       "source_edition": "CISA CPG Version 1.0.1 (March 2023)",
-      "conformly_content_revision": "none",
+      "conformly_content_revision": "2026.1-draft",
       "jurisdiction": "United States / Critical Infrastructure & General Cyber",
       "declared_scope": "Baseline cyber performance goals across Account Security, Device Security, Data Security, Governance, Response, Supply Chain",
       "profile": "Baseline Cross-Sector Cyber Hygiene",
-      "required_for_beta_status": "LATER_A",
-      "decision_provenance": "docs/GLOBAL_FRAMEWORK_CATALOG.md Section 4",
-      "content_state": "ROADMAP_BACKLOG",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-061 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
       "owner": "Conformly Security Architecture",
-      "blockers": ["Scheduled for Tier A Post-Beta"],
-      "evidence": ["https://www.cisa.gov/cybersecurity-performance-goals"]
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/cisa_cpg.py",
+        "https://www.cisa.gov/cybersecurity-performance-goals"
+      ]
     },
     {
       "pack_id": "au-essential-eight-l1",
       "name": "Essential Eight Maturity Level 1 Profile",
       "source_edition": "Australian Signals Directorate (ASD) Essential Eight Maturity Model (2023)",
-      "conformly_content_revision": "none",
+      "conformly_content_revision": "2026.1-draft",
       "jurisdiction": "Australia (AU) / Global Operations",
       "declared_scope": "Introductory Maturity Level 1 strategies: application control, patch applications, configure Microsoft Office macros, user application hardening, restrict admin privileges, patch OS, MFA, regular backups",
       "profile": "Maturity Level 1",
-      "required_for_beta_status": "LATER_A",
-      "decision_provenance": "docs/GLOBAL_FRAMEWORK_CATALOG.md Section 10",
-      "content_state": "ROADMAP_BACKLOG",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-061 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
       "owner": "Conformly Security Architecture",
-      "blockers": ["Scheduled for Tier A Post-Beta"],
-      "evidence": ["https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/essential-eight"]
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/au_essential_eight_l1.py",
+        "https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/essential-eight"
+      ]
+    },
+    {
+      "pack_id": "uk-gdpr-dpa",
+      "name": "UK GDPR & Data Protection Act 2018",
+      "source_edition": "Data Protection Act 2018 (c. 12) & Retained UK GDPR (SI 2019/419 as amended)",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "United Kingdom (GB)",
+      "declared_scope": "Post-Brexit UK data protection principles, lawful bases, transparency, DSARs, processor contracts, security of processing, ICO breach notification, and UK IDTA international transfers",
+      "profile": "UK Privacy Operations Baseline Profile",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-061 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/uk_gdpr_dpa.py",
+        "https://ico.org.uk/for-organisations/data-protection-and-the-eu/"
+      ]
+    },
+    {
+      "pack_id": "ch-fadp",
+      "name": "Swiss Federal Act on Data Protection (nFADP / revDSG)",
+      "source_edition": "Swiss Federal Act on Data Protection (FADP, SR 235.1) of 25 Sept 2020 (in force 1 Sept 2023)",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "Switzerland (CH)",
+      "declared_scope": "Modern Swiss data protection principles, privacy by design/default, technical data security, outsourcing, cross-border disclosure abroad, duty to inform, DPIA, and FDPIC breach reporting",
+      "profile": "Swiss Commercial Privacy Operations Profile",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-061 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/ch_fadp.py",
+        "https://www.edoeb.admin.ch/edoeb/en/home/datenschutz/grundlagen/revidiertes-datenschutzgesetz.html"
+      ]
+    },
+    {
+      "pack_id": "ae-pdpl",
+      "name": "UAE Personal Data Protection Law",
+      "source_edition": "Federal Decree-Law No. 45 of 2021 on Personal Data Protection",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "United Arab Emirates (AE)",
+      "declared_scope": "UAE onshore personal data protection principles, lawful processing conditions, consent, UAE Data Office breach reporting, data subject rights, and cross-border transfers",
+      "profile": "UAE Onshore Privacy Operations Profile",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-062 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/ae_pdpl.py",
+        "https://u.ae/en/about-the-uae/digital-uae/data/data-protection-laws"
+      ]
+    },
+    {
+      "pack_id": "om-pdpl",
+      "name": "Oman Personal Data Protection Law",
+      "source_edition": "Royal Decree No. 6/2022 Promulgating the Personal Data Protection Law",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "Sultanate of Oman (OM)",
+      "declared_scope": "Oman personal data processing principles, express consent, privacy notices, MTCIT breach reporting, and international transfer controls",
+      "profile": "Oman Commercial Privacy Operations Profile",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-062 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/om_pdpl.py",
+        "https://www.mtcit.gov.om/sectors/governance/personal"
+      ]
+    },
+    {
+      "pack_id": "jo-pdpl",
+      "name": "Jordan Personal Data Protection Law",
+      "source_edition": "Law No. 24 of 2023 on the Protection of Personal Data",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "Hashemite Kingdom of Jordan (JO)",
+      "declared_scope": "Jordanian personal data processing principles, prior consent, data subject rights, 72h Council breach reporting, and transfer safeguards",
+      "profile": "Jordan Commercial Privacy Operations Profile",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-062 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/jo_pdpl.py",
+        "https://www.modee.gov.jo/EN/List/The_law_regulations_and_instructions"
+      ]
+    },
+    {
+      "pack_id": "ma-cndp-0908",
+      "name": "Morocco Personal Data Protection Law (Law 09-08)",
+      "source_edition": "Dahir No. 1-09-15 promulgating Law No. 09-08 & CNDP Regulations",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "Kingdom of Morocco (MA)",
+      "declared_scope": "Morocco data processing principles, unambiguous consent, rights of information and access, technical security, and CNDP cross-border authorizations",
+      "profile": "Morocco Commercial Privacy Operations Profile",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-062 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/ma_cndp_0908.py",
+        "https://www.cndp.ma/textes-et-lois/"
+      ]
+    },
+    {
+      "pack_id": "us-va-vcdpa",
+      "name": "Virginia Consumer Data Protection Act (VCDPA)",
+      "source_edition": "Virginia Consumer Data Protection Act (Va. Code Ann. § 59.1-575 et seq.)",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "Commonwealth of Virginia (US-VA)",
+      "declared_scope": "Virginia consumer rights (access, correct, delete, portability, opt-out), controller duties, opt-in sensitive consent, DPAs, and processor contracting",
+      "profile": "US State Omnibus Privacy Profile",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-063 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/us_va_vcdpa.py",
+        "https://law.lis.virginia.gov/vacodefull/title59.1/chapter53/"
+      ]
+    },
+    {
+      "pack_id": "us-co-cpa",
+      "name": "Colorado Privacy Act (CPA)",
+      "source_edition": "Colorado Privacy Act (Colo. Rev. Stat. § 6-1-1301 et seq.)",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "State of Colorado (US-CO)",
+      "declared_scope": "Colorado consumer rights, universal opt-out mechanisms (UOOM), sensitive data consent, DPAs, and processor duties",
+      "profile": "US State Omnibus Privacy Profile",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-063 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/us_co_cpa.py",
+        "https://coag.gov/resources/colorado-privacy-act/"
+      ]
+    },
+    {
+      "pack_id": "us-ct-ctdpa",
+      "name": "Connecticut Data Privacy Act (CTDPA)",
+      "source_edition": "Connecticut Data Privacy Act (Conn. Gen. Stat. § 42-515 et seq. / Public Act No. 22-15)",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "State of Connecticut (US-CT)",
+      "declared_scope": "Connecticut consumer rights, mandatory appeals process, teen privacy safeguards (ages 13-16), DPAs, and processor contracts",
+      "profile": "US State Omnibus Privacy Profile",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-063 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/us_ct_ctdpa.py",
+        "https://portal.ct.gov/AG/Sections/Privacy/Connecticut-Data-Privacy-Act"
+      ]
+    },
+    {
+      "pack_id": "us-tx-tdpsa",
+      "name": "Texas Data Privacy and Security Act (TDPSA)",
+      "source_edition": "Texas Data Privacy and Security Act (Tex. Bus. & Com. Code Ann. § 541.001 et seq.)",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "State of Texas (US-TX)",
+      "declared_scope": "Texas broad applicability, consumer rights, sensitive data sale disclosures, DPAs, and processor contracting",
+      "profile": "US State Omnibus Privacy Profile",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-063 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/us_tx_tdpsa.py",
+        "https://statutes.capitol.texas.gov/Docs/BC/htm/BC.541.htm"
+      ]
+    },
+    {
+      "pack_id": "us-ut-ucpa",
+      "name": "Utah Consumer Privacy Act (UCPA)",
+      "source_edition": "Utah Consumer Privacy Act (Utah Code Ann. § 13-61-101 et seq.)",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "State of Utah (US-UT)",
+      "declared_scope": "Utah dual applicability thresholds ($100M+ revenue), consumer rights, sensitive data notice & opt-out, and processor contracts",
+      "profile": "US State Omnibus Privacy Profile",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-063 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/us_ut_ucpa.py",
+        "https://le.utah.gov/xcode/Title13/Chapter61/"
+      ]
+    },
+    {
+      "pack_id": "fr-cnil-gdpr",
+      "name": "France Data Protection Act (Loi Informatique et Libertés)",
+      "source_edition": "Loi n° 78-17 du 6 janvier 1978 modifiée",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "French Republic (FR)",
+      "declared_scope": "French national GDPR overlays, minor consent (age 15), post-mortem directives, CNIL reference methodologies, and health data safeguards",
+      "profile": "EU Member State National GDPR Overlay",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-064 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/fr_cnil_gdpr.py",
+        "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000000886460/"
+      ]
+    },
+    {
+      "pack_id": "es-aepd-lopdgdd",
+      "name": "Spain Data Protection Act (LOPDGDD)",
+      "source_edition": "Ley Orgánica 3/2018 (LOPDGDD)",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "Kingdom of Spain (ES)",
+      "declared_scope": "Spanish national GDPR overlays, minor consent (age 14), mandatory DPD sector designations, and workplace digital rights (disconnection, devices, CCTV, geolocation)",
+      "profile": "EU Member State National GDPR Overlay",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-064 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/es_aepd_lopdgdd.py",
+        "https://www.boe.es/buscar/act.php?id=BOE-A-2018-16673"
+      ]
+    },
+    {
+      "pack_id": "it-garante-privacy",
+      "name": "Italy Personal Data Protection Code (Codice della Privacy)",
+      "source_edition": "D.Lgs. 196/2003 as amended by D.Lgs. 101/2018",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "Italian Republic (IT)",
+      "declared_scope": "Italian national GDPR overlays, minor consent (age 14), Statuto dei Lavoratori workplace monitoring restrictions, and Garante deontological measures",
+      "profile": "EU Member State National GDPR Overlay",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-064 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/it_garante_privacy.py",
+        "https://www.garanteprivacy.it/codice"
+      ]
+    },
+    {
+      "pack_id": "nl-ap-uavg",
+      "name": "Netherlands GDPR Implementation Act (UAVG)",
+      "source_edition": "Uitvoeringswet Algemene verordening gegevensbescherming (Stb. 2018, 144)",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "Kingdom of the Netherlands (NL)",
+      "declared_scope": "Dutch national GDPR overlays, minor consent (age 16), Citizen Service Number (BSN) restrictions, and biometric processing rules",
+      "profile": "EU Member State National GDPR Overlay",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-064 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/nl_ap_uavg.py",
+        "https://wetten.overheid.nl/BWBR0040940/"
+      ]
+    },
+    {
+      "pack_id": "ie-dpc-dpa",
+      "name": "Ireland Data Protection Act 2018",
+      "source_edition": "Data Protection Act 2018 (Act 7 of 2018)",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "Republic of Ireland (IE)",
+      "declared_scope": "Irish national GDPR overlays, minor consent (age 16), legal professional privilege protections against access disclosures, and DPC inquiries",
+      "profile": "EU Member State National GDPR Overlay",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-064 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/ie_dpc_dpa.py",
+        "https://www.dataprotection.ie/en/legislation/data-protection-act-2018"
+      ]
+    },
+    {
+      "pack_id": "at-dsb-dsg",
+      "name": "Austria Data Protection Act (Datenschutzgesetz - DSG)",
+      "source_edition": "Datenschutzgesetz (BGBl. I Nr. 165/1999 idF BGBl. I Nr. 120/2017)",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "Republic of Austria (AT)",
+      "declared_scope": "Austrian constitutional data protection fundamental right (§ 1), minor consent (age 14), and strict 72-hour video surveillance rules (§ 12-13)",
+      "profile": "EU Member State National GDPR Overlay",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-064 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/at_dsb_dsg.py",
+        "https://www.dsb.gv.at/gesetze-und-urteile/national.html"
+      ]
+    },
+    {
+      "pack_id": "pl-uodo-rodo",
+      "name": "Poland Personal Data Protection Act (RODO / UODO)",
+      "source_edition": "Ustawa z dnia 10 maja 2018 r. o ochronie danych osobowych (Dz.U. 2018 poz. 1000)",
+      "conformly_content_revision": "2026.1-draft",
+      "jurisdiction": "Republic of Poland (PL)",
+      "declared_scope": "Polish national GDPR overlays, 14-day IOD/DPO notification to UODO, workplace monitoring under Labor Code, and UODO inspection compliance",
+      "profile": "EU Member State National GDPR Overlay",
+      "required_for_beta_status": "REQUIRED_BETA",
+      "decision_provenance": "ADR D-064 & User authorization; promoted to active Tier A",
+      "content_state": "DRAFT_REVISION_UNDERWAY",
+      "owner": "Conformly Legal & Compliance Research",
+      "blockers": [
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/pl_uodo_rodo.py",
+        "https://uodo.gov.pl/pl/p/prawo"
+      ]
+    },
+    {
+      "pack_id": "soc-2",
+      "name": "SOC 2 Type I & Type II (AICPA Trust Services Criteria)",
+      "source_edition": "AICPA TSP Section 100 / Trust Services Criteria (2017 with 2022 Points of Focus)",
+      "conformly_content_revision": "2026.1-draft",
+      "tier": "Module B",
+      "jurisdiction": "Global / North America (AICPA)",
+      "declared_scope": "Common Criteria Security (CC1-CC9), Availability, Confidentiality, Processing Integrity, and Privacy",
+      "profile": "B2B SaaS Attestation Profile",
+      "required_for_beta_status": "PENDING_PRODUCT_AUTHORITY_RECONCILIATION",
+      "decision_provenance": "ADR D-065 & docs/FRAMEWORKS_ROADMAP_SCRATCHPAD.md; Module B Core",
+      "content_state": "DRAFT_PENDING_RECONCILIATION",
+      "owner": "Conformly Security & Compliance Architecture",
+      "blockers": [
+        "Requires product-authority reconciliation on Trello DEU before activation into release gates per repository rules",
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/soc_2.py",
+        "https://www.aicpa-cima.com/resources/landing/trust-services-criteria"
+      ]
+    },
+    {
+      "pack_id": "soc-1",
+      "name": "SOC 1 / SSAE 18 (Internal Control over Financial Reporting)",
+      "source_edition": "SSAE No. 18 / AT-C Section 320 (SOC 1: Reporting on Controls Relevant to User Entities' Internal Control over Financial Reporting)",
+      "conformly_content_revision": "2026.1-draft",
+      "tier": "Module B",
+      "jurisdiction": "Global / North America (AICPA)",
+      "declared_scope": "IT General Controls (ITGC), Segregation of Duties, batch operations, and financial integrity control objectives",
+      "profile": "Financial ITGC & Service Organization Profile",
+      "required_for_beta_status": "PENDING_PRODUCT_AUTHORITY_RECONCILIATION",
+      "decision_provenance": "ADR D-065 & docs/FRAMEWORKS_ROADMAP_SCRATCHPAD.md; Module B Core",
+      "content_state": "DRAFT_PENDING_RECONCILIATION",
+      "owner": "Conformly Financial Compliance & Assurance",
+      "blockers": [
+        "Requires product-authority reconciliation on Trello DEU before activation into release gates per repository rules",
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/soc_1.py",
+        "https://www.aicpa-cima.com/resources/landing/system-and-organization-controls-soc-1"
+      ]
+    },
+    {
+      "pack_id": "iso-27701",
+      "name": "ISO/IEC 27701:2019 Privacy Information Management System (PIMS)",
+      "source_edition": "ISO/IEC 27701:2019",
+      "conformly_content_revision": "2026.1-draft",
+      "tier": "Module B",
+      "jurisdiction": "Global / International",
+      "declared_scope": "PIMS management clauses 5 & 6, PII Controller controls (Clause 7), and PII Processor controls (Clause 8)",
+      "profile": "PIMS Pre-Audit Readiness Profile",
+      "required_for_beta_status": "PENDING_PRODUCT_AUTHORITY_RECONCILIATION",
+      "decision_provenance": "ADR D-065 & docs/FRAMEWORKS_ROADMAP_SCRATCHPAD.md; Module B Core",
+      "content_state": "DRAFT_PENDING_RECONCILIATION",
+      "owner": "Conformly Data Protection & Privacy Architecture",
+      "blockers": [
+        "Requires product-authority reconciliation on Trello DEU before activation into release gates per repository rules",
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/iso_27701.py",
+        "https://www.iso.org/standard/71670.html"
+      ]
+    },
+    {
+      "pack_id": "iso-27017",
+      "name": "ISO/IEC 27017:2015 Cloud Security Controls",
+      "source_edition": "ISO/IEC 27017:2015",
+      "conformly_content_revision": "2026.1-draft",
+      "tier": "Module B",
+      "jurisdiction": "Global / International",
+      "declared_scope": "Cloud-specific controls for Cloud Service Customers (CSC) and Cloud Service Providers (CSP), shared responsibility, and multi-tenant virtualization security",
+      "profile": "Cloud Security Pre-Audit Profile",
+      "required_for_beta_status": "PENDING_PRODUCT_AUTHORITY_RECONCILIATION",
+      "decision_provenance": "ADR D-065 & docs/FRAMEWORKS_ROADMAP_SCRATCHPAD.md; Module B Core",
+      "content_state": "DRAFT_PENDING_RECONCILIATION",
+      "owner": "Conformly Cloud Security & Infrastructure Architecture",
+      "blockers": [
+        "Requires product-authority reconciliation on Trello DEU before activation into release gates per repository rules",
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/iso_27017.py",
+        "https://www.iso.org/standard/43757.html"
+      ]
+    },
+    {
+      "pack_id": "soc-3",
+      "name": "SOC 3 (AICPA Trust Services Criteria for General Use)",
+      "source_edition": "AICPA TSP Section 100 / Trust Services Criteria for General Use (SOC 3)",
+      "conformly_content_revision": "2026.1-draft",
+      "tier": "Module B",
+      "jurisdiction": "Global / North America (AICPA)",
+      "declared_scope": "Public management assertion, system description boundaries, and Trust Services Criteria for external stakeholders",
+      "profile": "Public Assurance Profile",
+      "required_for_beta_status": "PENDING_PRODUCT_AUTHORITY_RECONCILIATION",
+      "decision_provenance": "ADR D-066 & docs/FRAMEWORKS_ROADMAP_SCRATCHPAD.md; Module B",
+      "content_state": "DRAFT_PENDING_RECONCILIATION",
+      "owner": "Conformly Security & Compliance Architecture",
+      "blockers": [
+        "Requires product-authority reconciliation on Trello DEU before activation into release gates per repository rules",
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/soc_3.py",
+        "https://www.aicpa-cima.com/resources/landing/system-and-organization-controls-soc-3"
+      ]
+    },
+    {
+      "pack_id": "iso-27018",
+      "name": "ISO/IEC 27018:2019 Public Cloud PII Protection",
+      "source_edition": "ISO/IEC 27018:2019",
+      "conformly_content_revision": "2026.1-draft",
+      "tier": "Module B",
+      "jurisdiction": "Global / International",
+      "declared_scope": "Code of practice for protection of PII in public clouds acting as PII processors, customer data sovereignty, and sub-processor transparency",
+      "profile": "Cloud Privacy Pre-Audit Profile",
+      "required_for_beta_status": "PENDING_PRODUCT_AUTHORITY_RECONCILIATION",
+      "decision_provenance": "ADR D-066 & docs/FRAMEWORKS_ROADMAP_SCRATCHPAD.md; Module B",
+      "content_state": "DRAFT_PENDING_RECONCILIATION",
+      "owner": "Conformly Data Protection & Privacy Architecture",
+      "blockers": [
+        "Requires product-authority reconciliation on Trello DEU before activation into release gates per repository rules",
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/iso_27018.py",
+        "https://www.iso.org/standard/76559.html"
+      ]
+    },
+    {
+      "pack_id": "iso-22301",
+      "name": "ISO 22301:2019 Business Continuity Management Systems (BCMS)",
+      "source_edition": "ISO 22301:2019",
+      "conformly_content_revision": "2026.1-draft",
+      "tier": "Module B",
+      "jurisdiction": "Global / International",
+      "declared_scope": "Operational resilience, Business Impact Analysis (BIA), Maximum Tolerable Period of Disruption (MTPD), RTO/RPO targets, and emergency disaster recovery exercises",
+      "profile": "BCMS Pre-Audit Readiness Profile",
+      "required_for_beta_status": "PENDING_PRODUCT_AUTHORITY_RECONCILIATION",
+      "decision_provenance": "ADR D-066 & docs/FRAMEWORKS_ROADMAP_SCRATCHPAD.md; Module B",
+      "content_state": "DRAFT_PENDING_RECONCILIATION",
+      "owner": "Conformly Enterprise Resilience & Operations",
+      "blockers": [
+        "Requires product-authority reconciliation on Trello DEU before activation into release gates per repository rules",
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/iso_22301.py",
+        "https://www.iso.org/standard/75106.html"
+      ]
+    },
+    {
+      "pack_id": "iso-20000-1",
+      "name": "ISO/IEC 20000-1:2018 IT Service Management System (SMS)",
+      "source_edition": "ISO/IEC 20000-1:2018",
+      "conformly_content_revision": "2026.1-draft",
+      "tier": "Module B",
+      "jurisdiction": "Global / International",
+      "declared_scope": "Service portfolio, customer SLAs, capacity and availability management, incident/problem resolution, configuration management (CMDB), and CSI",
+      "profile": "ITSM Pre-Audit Readiness Profile",
+      "required_for_beta_status": "PENDING_PRODUCT_AUTHORITY_RECONCILIATION",
+      "decision_provenance": "ADR D-066 & docs/FRAMEWORKS_ROADMAP_SCRATCHPAD.md; Module B",
+      "content_state": "DRAFT_PENDING_RECONCILIATION",
+      "owner": "Conformly IT Service & Operational Assurance",
+      "blockers": [
+        "Requires product-authority reconciliation on Trello DEU before activation into release gates per repository rules",
+        "Independent second-person human review and legal/compliance review required prior to release"
+      ],
+      "evidence": [
+        "apps/api/src/conformly/frameworks/packs/iso_20000_1.py",
+        "https://www.iso.org/standard/70636.html"
+      ]
     },
     {
       "pack_id": "eu-national-privacy-overlays",
