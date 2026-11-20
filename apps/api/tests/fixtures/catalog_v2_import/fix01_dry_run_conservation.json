@@ -1,0 +1,73 @@
+[
+  {
+    "sequence": 1,
+    "input_type": "CommonControl",
+    "origin_namespace": "synthetic",
+    "origin_id": "ctrl-01",
+    "payload": {
+      "control_key": "CC-GOV-001",
+      "domain": "governance",
+      "title": "Governance Policy",
+      "objective": "Ensure compliance policy is active"
+    }
+  },
+  {
+    "sequence": 2,
+    "input_type": "Pack",
+    "origin_namespace": "synthetic",
+    "origin_id": "pack-01",
+    "payload": {
+      "pack_key": "PACK-TIER-A",
+      "name": "Tier A Baseline Pack",
+      "pack_type": "baseline",
+      "version_label": "1.0.0"
+    }
+  },
+  {
+    "sequence": 3,
+    "input_type": "Requirement",
+    "origin_namespace": "synthetic",
+    "origin_id": "req-blocked",
+    "payload": {
+      "source_version_id": "src-ver-ok",
+      "requirement_key": "REQ-BLOCKED",
+      "normalized_outcome": "Shall maintain audit logs",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 4,
+    "input_type": "Requirement",
+    "origin_namespace": "synthetic",
+    "origin_id": "req-missing-src",
+    "payload": {
+      "source_version_id": "src-ver-missing",
+      "requirement_key": "REQ-MISSING",
+      "normalized_outcome": "Shall encrypt data"
+    }
+  },
+  {
+    "sequence": 5,
+    "input_type": "Mapping",
+    "origin_namespace": "synthetic",
+    "origin_id": "map-unresolved",
+    "payload": {
+      "source_version_id": "src-ver-ok",
+      "dependencies": [
+        "missing-endpoint"
+      ],
+      "mapping_key": "MAP-UNRESOLVED"
+    }
+  },
+  {
+    "sequence": 6,
+    "input_type": "CommonControl",
+    "origin_namespace": "synthetic",
+    "origin_id": "ctrl-rejected",
+    "payload": {
+      "control_key": "CC-REJ-001",
+      "title": "Rejected Control",
+      "body": "PROHIBITED_TOKEN"
+    }
+  }
+]

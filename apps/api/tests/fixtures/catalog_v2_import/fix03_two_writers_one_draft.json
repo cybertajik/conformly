@@ -1,0 +1,14 @@
+[
+  {
+    "sequence": 1,
+    "input_type": "CommonControl",
+    "origin_namespace": "synthetic",
+    "origin_id": "ctrl-writer-01",
+    "payload": {
+      "control_key": "CC-NET-001",
+      "domain": "network",
+      "title": "Network Boundary",
+      "objective": "Enforce firewall boundaries"
+    }
+  }
+]

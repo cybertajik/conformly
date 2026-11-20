@@ -6,6 +6,10 @@ export function canManageMemberships(role: TenantRole): boolean {
   return role === "owner" || role === "administrator";
 }
 
+export function canReadMemberships(role: TenantRole): boolean {
+  return role === "owner" || role === "administrator";
+}
+
 export function canManageOrganization(role: TenantRole): boolean {
   return role === "owner" || role === "administrator";
 }
@@ -15,6 +19,10 @@ export function canReadOrganization(role: TenantRole): boolean {
 }
 
 export function canManageEntitlements(role: TenantRole): boolean {
+  return role === "owner" || role === "administrator";
+}
+
+export function canReadEntitlements(role: TenantRole): boolean {
   return role === "owner" || role === "administrator";
 }
 
@@ -184,4 +192,10 @@ export function canManageWhistleblowerCases(role: TenantRole): boolean {
 
 export function canManageWhistleblowerPortal(role: TenantRole): boolean {
   return role === "owner" || role === "compliance_manager";
+}
+
+// ── Customer Demo / Compliance Portal ────────────────────────────────────────
+
+export function canAccessCustomerDemo(role: TenantRole): boolean {
+  return role === 'owner' || role === 'compliance_manager';
 }

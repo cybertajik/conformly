@@ -1,0 +1,14 @@
+[
+  {
+    "sequence": 1,
+    "input_type": "CommonControl",
+    "origin_namespace": "synthetic",
+    "origin_id": "ctrl-published-edit",
+    "payload": {
+      "control_key": "CC-PUB-001",
+      "domain": "governance",
+      "title": "Published Control Edit",
+      "objective": "Cannot edit published"
+    }
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "sequence": 1,
+    "input_type": "CommonControl",
+    "origin_namespace": "synthetic",
+    "origin_id": "ctrl-fail-01",
+    "payload": {
+      "control_key": "CC-OPS-001",
+      "domain": "operations",
+      "title": "Backup Operations",
+      "objective": "Daily backups"
+    }
+  },
+  {
+    "sequence": 2,
+    "input_type": "CommonControl",
+    "origin_namespace": "synthetic",
+    "origin_id": "ctrl-fail-02",
+    "payload": {
+      "control_key": "CC-OPS-002",
+      "domain": "operations",
+      "title": "Restore Tests",
+      "objective": "Semi-annual restore tests"
+    }
+  }
+]

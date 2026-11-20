@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, Uuid
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from conformly.db.base import Base
@@ -47,6 +47,11 @@ class PublicProfile(Base):
     """
 
     __tablename__ = "public_profiles"
+    # Revision 0016 creates both unique constraints and unique indexes; preserve both.
+    __table_args__ = (
+        UniqueConstraint("tenant_id", name="uq_public_profiles_tenant_id"),
+        UniqueConstraint("slug", name="uq_public_profiles_slug"),
+    )
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
     tenant_id: Mapped[UUID] = mapped_column(

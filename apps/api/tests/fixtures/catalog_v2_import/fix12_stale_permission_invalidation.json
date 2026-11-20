@@ -1,0 +1,13 @@
+[
+  {
+    "sequence": 1,
+    "input_type": "Requirement",
+    "origin_namespace": "synthetic",
+    "origin_id": "req-stale-01",
+    "payload": {
+      "requirement_key": "REQ-STALE-01",
+      "normalized_outcome": "Permission revoked mid-batch",
+      "source_version_id": "src-ver-revoked"
+    }
+  }
+]

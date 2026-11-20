@@ -28,6 +28,8 @@ class Vendor(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __table_args__ = (
         Index("ix_vendors_tenant_id", "tenant_id"),
         Index("ix_vendors_tenant_criticality", "tenant_id", "criticality"),
+        Index("ix_vendors_legal_entity", "tenant_id", "legal_entity_id"),
+        Index("ix_vendors_business_unit", "tenant_id", "business_unit_id"),
     )
 
     tenant_id: Mapped[UUID] = mapped_column(

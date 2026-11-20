@@ -599,3 +599,68 @@ def test_readiness_assessor_reviewer_tenant_approval_and_auto_suspension(
     session.refresh(cert)
     assert cert.status == CertificateStatus.SUSPENDED
     assert "finding raised on control" in (cert.suspended_reason or "")
+
+
+def test_policy_restricted_content_encryption_and_classification_upgrade(
+    session: Session, test_codec: EncryptedFieldCodec
+) -> None:
+    """Backend-shaped test for P1 protected policy narrative routing and classification upgrade."""
+    service = ComplianceService(session, test_codec)
+    tenant, author, author_p, author_ctx = make_tenant(session, Role.COMPLIANCE_MANAGER)
+
+    # 1. Create Internal policy with plaintext content
+    policy = service.create_policy(
+        author_p,
+        author_ctx,
+        title="Data Handling Standard",
+        description="Guidelines for data handling",
+        content="Internal standard body text.",
+        classification="Internal",
+    )
+    assert policy.version == 1
+    assert policy.classification == "Internal"
+    assert policy.content == "Internal standard body text."
+    assert policy.restricted_content_encrypted is None
+
+    # Verify initial get
+    fetched_p, fetched_decrypted = service.get_policy(author_p, author_ctx, policy.id)
+    assert fetched_p.content == "Internal standard body text."
+    assert fetched_decrypted is None
+
+    # 2. Upgrade classification to Restricted and route body to restricted_content
+    # Pass content="" to clear the current plaintext slot in backend storage
+    upgraded_policy = service.update_policy(
+        author_p,
+        author_ctx,
+        policy.id,
+        expected_version=1,
+        classification="Restricted",
+        content="",
+        restricted_content="Synthetic sensitive security policy narrative",
+    )
+    assert upgraded_policy.version == 2
+    assert upgraded_policy.classification == "Restricted"
+    assert upgraded_policy.content == ""
+    assert upgraded_policy.restricted_content_encrypted is not None
+
+    # 3. Authoritative detail reload and codec roundtrip check
+    reloaded_p, reloaded_decrypted = service.get_policy(author_p, author_ctx, policy.id)
+    assert reloaded_p.content == ""
+    assert reloaded_decrypted == "Synthetic sensitive security policy narrative"
+
+    # 4. Revision history audit (ordered desc by revision_number)
+    revs = service.list_policy_revisions(author_p, author_ctx, policy.id)
+    assert len(revs) == 2
+    # Rev 2 (latest) is Restricted with encrypted body and cleared plaintext
+    assert revs[0].revision_number == 2
+    assert revs[0].classification == "Restricted"
+    assert revs[0].content == ""
+    assert revs[0].restricted_content_encrypted is not None
+    # Rev 1 was Internal with plaintext
+    assert revs[1].revision_number == 1
+    assert revs[1].classification == "Internal"
+    assert revs[1].content == "Internal standard body text."
+    assert revs[1].restricted_content_encrypted is None
+
+    rev2_detail, rev2_decrypted = service.get_policy_revision(author_p, author_ctx, policy.id, 2)
+    assert rev2_decrypted == "Synthetic sensitive security policy narrative"

@@ -1,0 +1,14 @@
+[
+  {
+    "sequence": 1,
+    "input_type": "CommonControl",
+    "origin_namespace": "synthetic",
+    "origin_id": "ctrl-tenant-01",
+    "payload": {
+      "control_key": "CC-TEN-001",
+      "domain": "governance",
+      "title": "Tenant Control",
+      "objective": "Denied"
+    }
+  }
+]

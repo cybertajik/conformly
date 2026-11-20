@@ -3,7 +3,7 @@ from uuid import uuid4
 import pytest
 from sqlalchemy.orm import Session
 
-from conformly.authz.policy import Principal, TenantContext
+from conformly.authz.policy import AuthorizationDeniedError, Principal, TenantContext
 from conformly.authz.roles import Role
 from conformly.organization import service
 from conformly.organization.service import OrganizationNotFoundError
@@ -82,3 +82,62 @@ def test_organization_crud_and_tenant_isolation(session: Session):
             code="ROGUE",
             request_id="req-6",
         )
+
+def test_organization_location_foreign_tenant_isolation(session: Session):
+    tenant_a = uuid4()
+    tenant_b = uuid4()
+    user_a = uuid4()
+    user_b = uuid4()
+
+    principal_a = Principal(user_id=user_a)
+    context_a = TenantContext(tenant_id=tenant_a, user_id=user_a, role=Role.ADMINISTRATOR)
+
+    principal_b = Principal(user_id=user_b)
+    context_b = TenantContext(tenant_id=tenant_b, user_id=user_b, role=Role.ADMINISTRATOR)
+
+    entity_a = service.create_legal_entity(
+        session,
+        principal_a,
+        context_a,
+        name="Entity A",
+        registration_number="HRB 9999",
+        country="DE",
+        is_primary=True,
+        request_id="req-iso-1",
+    )
+
+    # Tenant B cannot create location attached to Tenant A's legal entity
+    with pytest.raises(OrganizationNotFoundError):
+        service.create_location(
+            session,
+            principal_b,
+            context_b,
+            legal_entity_id=entity_a.id,
+            name="Rogue Location",
+            country="DE",
+            city="Berlin",
+            address="Alexanderplatz 1",
+            request_id="req-iso-2",
+        )
+
+
+def test_organization_unauthorized_role_denial(session: Session):
+    tenant_id = uuid4()
+    user_id = uuid4()
+
+    # Employee does not have ORGANIZATION_MANAGE capability
+    principal = Principal(user_id=user_id)
+    context = TenantContext(tenant_id=tenant_id, user_id=user_id, role=Role.EMPLOYEE)
+
+    with pytest.raises(AuthorizationDeniedError):
+        service.create_legal_entity(
+            session,
+            principal,
+            context,
+            name="Unauthorized Entity",
+            registration_number=None,
+            country="DE",
+            is_primary=False,
+            request_id="req-denied-1",
+        )
+

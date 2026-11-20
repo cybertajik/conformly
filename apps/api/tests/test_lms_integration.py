@@ -1,7 +1,7 @@
 import time
 from collections.abc import Generator
 from datetime import UTC, datetime, timedelta
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -15,6 +15,7 @@ from conformly.auth.dependencies import (
 from conformly.authz.policy import Principal, TenantContext
 from conformly.authz.roles import Role
 from conformly.compliance.models import EvidenceControlLink, EvidenceStatus
+from conformly.frameworks.models import AdoptionStatus, CanonicalControl, TenantFrameworkAdoption
 from conformly.crypto.envelope import EnvelopeEncryptionService
 from conformly.crypto.fields import EncryptedFieldCodec, get_encrypted_field_codec
 from conformly.crypto.providers import AES256GCMProvider, LocalKeyManagementProvider
@@ -84,6 +85,31 @@ def client(session: Session) -> Generator[TestClient, None, None]:
     app.dependency_overrides.clear()
 
 
+
+
+def setup_canonical_control(session: Session, tenant_id: UUID) -> CanonicalControl:
+    ver_id = uuid4()
+    ctrl = CanonicalControl(
+        id=uuid4(),
+        framework_version_id=ver_id,
+        identifier="A.7.2.2",
+        title="Security Awareness Training",
+        description="Security awareness and training control",
+        category="human_resources",
+        guidance="All employees shall receive security awareness training",
+    )
+    adoption = TenantFrameworkAdoption(
+        id=uuid4(),
+        tenant_id=tenant_id,
+        framework_id=uuid4(),
+        framework_version_id=ver_id,
+        status=AdoptionStatus.ACTIVE,
+        adopted_by_user_id=uuid4(),
+    )
+    session.add_all([ctrl, adoption])
+    session.commit()
+    return ctrl
+
 def test_lms_courses_and_assignments_service(session: Session) -> None:
     user, tenant, _, _ = create_user_and_tenant(session)
 
@@ -108,7 +134,8 @@ def test_lms_courses_and_assignments_service(session: Session) -> None:
     assert courses[0].title == "Annual Information Security Awareness"
 
     # 2. Create assignment mapped to a control
-    mock_control_id = uuid4()
+    ctrl = setup_canonical_control(session, tenant.id)
+    mock_control_id = ctrl.id
     due_date = datetime.now(UTC) + timedelta(days=14)
     assignment = create_training_assignment(
         session,
@@ -146,7 +173,8 @@ def test_lms_partner_contract_and_evidence_generation(session: Session) -> None:
         description="Core awareness training",
         validity_period_days=365,
     )
-    mock_control_id = uuid4()
+    ctrl = setup_canonical_control(session, tenant.id)
+    mock_control_id = ctrl.id
     assignment = create_training_assignment(
         session,
         tenant_id=tenant.id,
@@ -233,7 +261,7 @@ def test_lms_partner_contract_and_evidence_generation(session: Session) -> None:
 
 
 def test_lms_signed_webhook_api_endpoint_flow(session: Session, client: TestClient) -> None:
-    user, tenant, principal, context = create_user_and_tenant(session, role=Role.ADMINISTRATOR)
+    user, tenant, principal, context = create_user_and_tenant(session, role=Role.COMPLIANCE_MANAGER)
     app.dependency_overrides[get_current_principal] = lambda: principal
     app.dependency_overrides[get_tenant_context] = lambda: context
     codec = make_test_codec()
@@ -261,7 +289,8 @@ def test_lms_signed_webhook_api_endpoint_flow(session: Session, client: TestClie
     )
     assert course_resp.status_code == 201
 
-    mock_control_id = uuid4()
+    ctrl = setup_canonical_control(session, tenant.id)
+    mock_control_id = ctrl.id
     assign_resp = client.post(
         f"/v1/tenants/{tenant.id}/lms/assignments",
         json={

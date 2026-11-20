@@ -1,0 +1,394 @@
+/* Scoped styles for the Conformly Synthetic Staff Catalog Demo */
+
+.catalog-demo {
+  --cd-bg: #0f172a;
+  --cd-surface: #1e293b;
+  --cd-surface-hover: #334155;
+  --cd-border: #334155;
+  --cd-text: #f8fafc;
+  --cd-text-muted: #94a3b8;
+  --cd-primary: #3b82f6;
+  --cd-primary-hover: #2563eb;
+  --cd-success: #10b981;
+  --cd-success-bg: rgba(16, 185, 129, 0.15);
+  --cd-warning: #f59e0b;
+  --cd-warning-bg: rgba(245, 158, 11, 0.15);
+  --cd-danger: #ef4444;
+  --cd-danger-bg: rgba(239, 68, 68, 0.15);
+  --cd-badge-bg: #475569;
+
+  min-height: 100vh;
+  background-color: var(--cd-bg);
+  color: var(--cd-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5;
+  padding: 0 0 4rem 0;
+  box-sizing: border-box;
+}
+
+.catalog-demo * {
+  box-sizing: border-box;
+}
+
+/* Header */
+.catalog-demo .catalog-demo-header,
+.catalog-demo .cd-header {
+  background-color: var(--cd-surface);
+  border-bottom: 1px solid var(--cd-border);
+  padding: 1.25rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.catalog-demo .header-brand h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0;
+  display: inline-block;
+  margin-right: 0.75rem;
+}
+
+.catalog-demo .header-session {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.catalog-demo .session-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.catalog-demo .session-user {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.catalog-demo .session-badge {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: var(--cd-primary);
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Banners & Notices */
+.catalog-demo .catalog-demo-banner,
+.catalog-demo .cd-banner {
+  background: linear-gradient(90deg, #d97706 0%, #b45309 100%);
+  color: #ffffff;
+  padding: 0.625rem 2rem;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.catalog-demo .catalog-demo-loading {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.1rem;
+  color: var(--cd-text-muted);
+}
+
+.catalog-demo .catalog-demo-alert {
+  max-width: 1200px;
+  margin: 1.5rem auto;
+  padding: 1rem 1.5rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.catalog-demo .alert-error {
+  background-color: var(--cd-danger-bg);
+  color: #fca5a5;
+  border: 1px solid var(--cd-danger);
+}
+
+.catalog-demo .alert-warning {
+  background-color: var(--cd-warning-bg);
+  color: #fde68a;
+  border: 1px solid var(--cd-warning);
+}
+
+/* Auth Prompt Box */
+.catalog-demo .catalog-demo-auth-box,
+.catalog-demo .cd-state-box {
+  background-color: var(--cd-surface);
+  border: 1px solid var(--cd-border);
+  border-radius: 8px;
+  padding: 3rem 2rem;
+  text-align: center;
+  max-width: 560px;
+  margin: 4rem auto;
+}
+
+.catalog-demo .catalog-demo-auth-box h2 {
+  font-size: 1.4rem;
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}
+
+.catalog-demo .catalog-demo-auth-box p {
+  color: var(--cd-text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Buttons */
+.catalog-demo .btn,
+.catalog-demo .cd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  text-decoration: none;
+}
+
+.catalog-demo .btn-primary {
+  background-color: var(--cd-primary);
+  color: #ffffff;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.catalog-demo .btn-primary:hover {
+  background-color: var(--cd-primary-hover);
+}
+
+.catalog-demo .btn-secondary {
+  background-color: #334155;
+  color: #e2e8f0;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.catalog-demo .btn-secondary:hover {
+  background-color: #475569;
+}
+
+.catalog-demo .btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.catalog-demo .btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+}
+
+/* Badges */
+.catalog-demo .badge,
+.catalog-demo .cd-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.catalog-demo .badge-draft {
+  background-color: var(--cd-badge-bg);
+  color: #e2e8f0;
+}
+
+.catalog-demo .badge-success,
+.catalog-demo .cd-badge-full {
+  background-color: var(--cd-success-bg);
+  color: var(--cd-success);
+  border: 1px solid var(--cd-success);
+}
+
+.catalog-demo .badge-warning,
+.catalog-demo .cd-badge-partial {
+  background-color: var(--cd-warning-bg);
+  color: var(--cd-warning);
+  border: 1px solid var(--cd-warning);
+}
+
+/* Main Container & Tabs */
+.catalog-demo .catalog-demo-main,
+.catalog-demo .cd-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.catalog-demo .catalog-demo-tabs,
+.catalog-demo .cd-tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--cd-border);
+  margin-bottom: 2rem;
+}
+
+.catalog-demo .tab-btn,
+.catalog-demo .cd-tab {
+  background: none;
+  border: none;
+  color: var(--cd-text-muted);
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.catalog-demo .tab-btn:hover,
+.catalog-demo .cd-tab:hover {
+  color: var(--cd-text);
+}
+
+.catalog-demo .tab-btn.active,
+.catalog-demo .cd-tab.active {
+  color: var(--cd-primary);
+  border-bottom-color: var(--cd-primary);
+  font-weight: 600;
+}
+
+/* Cards & Layout */
+.catalog-demo .card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+  gap: 1.5rem;
+}
+
+.catalog-demo .info-card {
+  background-color: var(--cd-surface);
+  border: 1px solid var(--cd-border);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.catalog-demo .info-card h3 {
+  margin-top: 0;
+  font-size: 1.15rem;
+  border-bottom: 1px solid var(--cd-border);
+  padding-bottom: 0.5rem;
+}
+
+.catalog-demo dl {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  row-gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.catalog-demo dt {
+  color: var(--cd-text-muted);
+  font-weight: 500;
+}
+
+.catalog-demo dd {
+  margin: 0;
+  word-break: break-all;
+}
+
+.catalog-demo code {
+  font-family: monospace;
+  background-color: #0f172a;
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+/* Requirements & Controls */
+.catalog-demo .req-nav {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.catalog-demo .detail-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.catalog-demo .detail-panel {
+  background-color: var(--cd-surface);
+  border: 1px solid var(--cd-border);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.catalog-demo .outcome-text {
+  font-size: 1rem;
+  font-style: italic;
+  margin-bottom: 1.25rem;
+  color: #cbd5e1;
+}
+
+.catalog-demo .ref-tag {
+  background-color: #334155;
+  color: #cbd5e1;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+.catalog-demo .control-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.catalog-demo .control-key {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #93c5fd;
+}
+
+.catalog-demo .mapping-analysis {
+  background-color: #0f172a;
+  border-left: 3px solid var(--cd-primary);
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  border-radius: 0 6px 6px 0;
+  font-size: 0.85rem;
+}
+
+.catalog-demo .mapping-analysis h5 {
+  margin: 0 0 0.25rem 0;
+  color: var(--cd-text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.catalog-demo .excluded-work {
+  color: #fca5a5;
+  margin-top: 0.5rem;
+}
+
+.catalog-demo .tab-hint {
+  color: var(--cd-text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.catalog-demo .er-item,
+.catalog-demo .ap-item {
+  background-color: #0f172a;
+  border: 1px solid var(--cd-border);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.catalog-demo .er-item h4,
+.catalog-demo .ap-item h4 {
+  margin: 0 0 0.5rem 0;
+  color: #93c5fd;
+  font-size: 0.95rem;
+}

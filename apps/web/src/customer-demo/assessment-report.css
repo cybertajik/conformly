@@ -1,0 +1,27 @@
+.assessment-report-panel {
+  box-sizing: border-box;
+  max-width: 56rem;
+  padding: clamp(1rem, 3vw, 2rem);
+  border: 1px solid #d9dee6;
+  border-radius: 1.25rem;
+  background: #fff;
+  color: #182332;
+  box-shadow: 0 8px 28px rgb(25 40 65 / 5%);
+  font-family: inherit;
+}
+.assessment-report-panel__heading { display: flex; align-items: center; gap: .8rem; }
+.assessment-report-panel h2 { margin: 0; font-size: 1.3rem; letter-spacing: -.02em; }
+.assessment-report-panel p { line-height: 1.6; max-width: 72ch; overflow-wrap: anywhere; }
+.assessment-report-panel__icon { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: .8rem; color: #004bba; background: #eaf2ff; font-size: 1.4rem; }
+.assessment-report-panel__details { color: #4b596d; font-size: .94rem; }
+.assessment-report-panel__actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem; }
+.assessment-report-panel button { min-height: 44px; padding: .7rem 1.15rem; border: 1px solid transparent; border-radius: .75rem; background: #005cc8; color: white; font: inherit; font-weight: 600; cursor: pointer; }
+.assessment-report-panel button:disabled { background: #e5e9ef; color: #4b596d; cursor: not-allowed; }
+.assessment-report-panel button:focus-visible { outline: 3px solid #15263e; outline-offset: 3px; }
+.assessment-report-panel .assessment-report-panel__cancel { color: #182332; background: #fff; border-color: #b9c4d3; }
+.assessment-report-panel__error { color: #9b1c1c; border-left: 3px solid #b91c1c; padding-left: .8rem; }
+@media (max-width: 480px) {
+  .assessment-report-panel__actions { flex-direction: column; }
+  .assessment-report-panel button { width: 100%; }
+}
+

@@ -5,13 +5,15 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from pydantic import BaseModel, Field
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from conformly.auth.dependencies import CurrentPrincipal, CurrentTenant
-from conformly.authz.roles import Role
 from conformly.crypto.fields import EncryptedFieldCodec, get_encrypted_field_codec
 from conformly.db.session import get_db
-from conformly.integrations.models import CredentialStatus
+from conformly.entitlements.service import is_module_enabled
+from conformly.identity.models import Tenant, TenantStatus
+from conformly.integrations.models import CredentialStatus, InboundWebhookEvent
 from conformly.integrations.service import (
     WebhookIdempotencyConflictError,
     WebhookReplayError,
@@ -24,6 +26,7 @@ from conformly.integrations.service import (
 )
 from conformly.lms.contract import LmsCompletionPayload
 from conformly.lms.models import AssignmentStatus, VerificationMethod
+from conformly.lms.policy import verify_lms_access
 from conformly.lms.service import (
     create_training_assignment,
     create_training_course,
@@ -34,16 +37,6 @@ from conformly.lms.service import (
 )
 
 lms_router = APIRouter(prefix="/v1/tenants/{tenant_id}/lms", tags=["LMS & Training Integration"])
-
-PRIVILEGED_LMS_ROLES = frozenset({Role.OWNER, Role.ADMINISTRATOR, Role.COMPLIANCE_MANAGER})
-
-
-def _check_lms_management(tenant: CurrentTenant) -> None:
-    if tenant.role not in PRIVILEGED_LMS_ROLES:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Role not authorized to manage training courses and assignments",
-        )
 
 
 class CreateCourseRequest(BaseModel):
@@ -117,11 +110,12 @@ class CompletionResponse(BaseModel):
 def register_course(
     tenant_id: UUID,
     request: CreateCourseRequest,
+    principal: CurrentPrincipal,
     tenant: CurrentTenant,
     database: Annotated[Session, Depends(get_db)],
 ) -> Any:
     """Register or update a training course in the catalog."""
-    _check_lms_management(tenant)
+    verify_lms_access(database, tenant_id=tenant_id, principal=principal, tenant=tenant, operation="mutate")
     course = create_training_course(
         database,
         tenant_id=tenant.tenant_id,
@@ -152,11 +146,13 @@ def register_course(
 @lms_router.get("/courses", response_model=list[CourseResponse])
 def list_courses(
     tenant_id: UUID,
+    principal: CurrentPrincipal,
     tenant: CurrentTenant,
     database: Annotated[Session, Depends(get_db)],
 ) -> Any:
-    """List all available training courses for the tenant."""
-    courses = list_training_courses(database, tenant.tenant_id)
+    """List all registered courses for this tenant."""
+    verify_lms_access(database, tenant_id=tenant_id, principal=principal, tenant=tenant, operation="read")
+    courses = list_training_courses(database, tenant_id=tenant.tenant_id)
     return [
         CourseResponse(
             id=c.id,
@@ -180,15 +176,15 @@ def list_courses(
     response_model=AssignmentResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def assign_training(
+def create_assignment(
     tenant_id: UUID,
     request: CreateAssignmentRequest,
     principal: CurrentPrincipal,
     tenant: CurrentTenant,
     database: Annotated[Session, Depends(get_db)],
 ) -> Any:
-    """Create a training assignment for a user or workforce member."""
-    _check_lms_management(tenant)
+    """Assign a training course to a workforce member."""
+    verify_lms_access(database, tenant_id=tenant_id, principal=principal, tenant=tenant, operation="mutate")
     assignment = create_training_assignment(
         database,
         tenant_id=tenant.tenant_id,
@@ -218,14 +214,29 @@ def assign_training(
 @lms_router.get("/assignments", response_model=list[AssignmentResponse])
 def list_assignments(
     tenant_id: UUID,
+    principal: CurrentPrincipal,
     tenant: CurrentTenant,
     database: Annotated[Session, Depends(get_db)],
-    status: AssignmentStatus | None = None,
+    status: str | None = None,
     user_id: UUID | None = None,
 ) -> Any:
-    """List training assignments with optional status and user filter."""
+    """List training assignments with optional status/user filtering."""
+    verify_lms_access(database, tenant_id=tenant_id, principal=principal, tenant=tenant, operation="read")
+    parsed_status = None
+    if status is not None:
+        try:
+            parsed_status = AssignmentStatus(status)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid assignment status: {status}",
+            ) from exc
+
     assignments = list_training_assignments(
-        database, tenant.tenant_id, status=status, user_id=user_id
+        database,
+        tenant_id=tenant.tenant_id,
+        status=parsed_status,
+        user_id=user_id,
     )
     return [
         AssignmentResponse(
@@ -247,11 +258,13 @@ def list_assignments(
 @lms_router.get("/completions", response_model=list[CompletionResponse])
 def list_completions(
     tenant_id: UUID,
+    principal: CurrentPrincipal,
     tenant: CurrentTenant,
     database: Annotated[Session, Depends(get_db)],
 ) -> Any:
-    """List verified training completions and linked compliance evidence."""
-    completions = list_training_completions(database, tenant.tenant_id)
+    """List all verified training completions for this tenant."""
+    verify_lms_access(database, tenant_id=tenant_id, principal=principal, tenant=tenant, operation="read")
+    completions = list_training_completions(database, tenant_id=tenant.tenant_id)
     return [
         CompletionResponse(
             id=c.id,
@@ -273,8 +286,11 @@ def list_completions(
     ]
 
 
-@lms_router.post("/webhooks/completion")
-async def receive_lms_completion_webhook(
+@lms_router.post(
+    "/webhooks/completion",
+    status_code=status.HTTP_200_OK,
+)
+async def intake_lms_completion(
     tenant_id: UUID,
     request: Request,
     database: Annotated[Session, Depends(get_db)],
@@ -285,6 +301,26 @@ async def receive_lms_completion_webhook(
     x_conformly_idempotency_key: Annotated[str | None, Header()] = None,
 ) -> Any:
     """Dedicated webhook intake for LMS completion events with signature, replay protection, and evidence mapping."""
+    # 1. Module entitlement check
+    if not is_module_enabled(database, tenant_id, "lms"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="LMS module is not enabled for this tenant",
+        )
+
+    # 2. Tenant lifecycle check
+    tenant_record = database.query(Tenant).filter(Tenant.id == tenant_id).first()
+    if tenant_record is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tenant not found",
+        )
+    if tenant_record.status != TenantStatus.ACTIVE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Tenant status '{tenant_record.status.value}' prohibits LMS operations",
+        )
+
     if not x_conformly_key_id or not x_conformly_signature or not x_conformly_timestamp:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -307,6 +343,12 @@ async def receive_lms_completion_webhook(
         )
 
     raw_body = await request.body()
+    if len(raw_body) > 65536:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Payload exceeds maximum permitted size of 64KB",
+        )
+
     signing_secret = get_credential_signing_secret(codec, matched)
 
     try:
@@ -328,62 +370,173 @@ async def receive_lms_completion_webhook(
         ) from exc
 
     try:
-        payload_dict = json.loads(raw_body.decode("utf-8")) if raw_body else {}
+        payload_dict = json.loads(raw_body.decode("utf-8")) if raw_body else None
+        if not isinstance(payload_dict, dict):
+            raise ValueError("Payload must be a JSON object")
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid JSON payload",
         ) from exc
 
-    event_id = (
-        x_conformly_idempotency_key
-        or payload_dict.get("event_id")
-        or payload_dict.get("idempotency_key")
-    )
-    if not event_id:
+    if len(payload_dict) > 30:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Missing idempotency event_id",
+            detail="Payload contains too many fields",
         )
 
-    try:
-        completion_payload = LmsCompletionPayload(
-            event_id=str(event_id),
-            tenant_id=str(tenant_id),
-            course_id=str(payload_dict["course_id"]),
-            course_version=str(payload_dict.get("course_version", "1.0")),
-            learner_email=str(payload_dict["learner_email"]),
-            completed_at=str(payload_dict.get("completed_at", datetime.now().isoformat())),
-            passed=bool(payload_dict.get("passed", True)),
-            assignment_id=payload_dict.get("assignment_id"),
-            score=float(payload_dict["score"]) if payload_dict.get("score") is not None else None,
-            certificate_id=payload_dict.get("certificate_id"),
+    # Event ID must originate from signed body
+    body_event_id = payload_dict.get("event_id") or payload_dict.get("idempotency_key")
+    if not body_event_id or not isinstance(body_event_id, str) or not body_event_id.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Signed completion payload must contain a non-empty event_id string",
         )
-    except KeyError as exc:
+    event_id = body_event_id.strip()
+
+    # Reject unsigned header override / mismatch
+    if x_conformly_idempotency_key is not None:
+        if x_conformly_idempotency_key.strip() != event_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="X-Conformly-Idempotency-Key header does not match signed event_id",
+            )
+
+    # Route and body tenant agreement
+    body_tenant_id = payload_dict.get("tenant_id")
+    if not body_tenant_id or not isinstance(body_tenant_id, str) or body_tenant_id.strip() != str(tenant_id):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Missing required field in completion payload: {exc}",
+            detail="Payload tenant_id does not match route tenant_id",
+        )
+
+    # Strict type checking: passed must be exact boolean True
+    passed_raw = payload_dict.get("passed")
+    if not isinstance(passed_raw, bool):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Field 'passed' is required and must be an exact boolean",
+        )
+    if passed_raw is not True:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Training completion indicates failed status; only passed completions can be recorded as compliance evidence",
+        )
+
+    course_id_raw = payload_dict.get("course_id")
+    if not course_id_raw or not isinstance(course_id_raw, str) or not course_id_raw.strip():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Field 'course_id' is required and must be a non-empty string",
+        )
+    course_id = course_id_raw.strip()
+
+    course_version_raw = payload_dict.get("course_version")
+    if not course_version_raw or not isinstance(course_version_raw, str) or not course_version_raw.strip():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Field 'course_version' is required and must be a non-empty string",
+        )
+    course_version = course_version_raw.strip()
+
+    learner_email_raw = payload_dict.get("learner_email")
+    if not learner_email_raw or not isinstance(learner_email_raw, str) or not learner_email_raw.strip() or "@" not in learner_email_raw:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Field 'learner_email' is required and must be a valid email address",
+        )
+    learner_email = learner_email_raw.strip().lower()
+
+    completed_at_raw = payload_dict.get("completed_at")
+    if not completed_at_raw or not isinstance(completed_at_raw, str) or not completed_at_raw.strip():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Field 'completed_at' is required and must be an ISO 8601 datetime string",
+        )
+    try:
+        completed_dt = datetime.fromisoformat(completed_at_raw)
+        if completed_dt.tzinfo is None:
+            raise ValueError("Timezone offset required")
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Field 'completed_at' must be a valid ISO 8601 datetime with timezone: {exc}",
         ) from exc
 
-    # Inbound event record for idempotency tracking
-    try:
-        event, is_new = check_and_record_inbound_idempotency(
-            database,
-            tenant_id=tenant_id,
-            idempotency_key=str(event_id),
-            event_topic="lms.course_completion",
-            raw_body=raw_body,
-            credential_id=matched.id,
-        )
-        if not is_new:
-            return {
-                "status": "idempotent_replay",
-                "event_id": str(event_id),
-                "cached_response": event.response_payload,
-            }
+    score_raw = payload_dict.get("score")
+    score: float | None = None
+    if score_raw is not None:
+        if isinstance(score_raw, bool) or not isinstance(score_raw, (int, float)):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Field 'score' must be a finite numeric value if provided",
+            )
+        import math
+        if math.isnan(score_raw) or math.isinf(score_raw):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Field 'score' must be finite",
+            )
+        score = float(score_raw)
 
-        # Record completion & evidence linkage
-        completion, evidence, _ = record_training_completion(
+    assignment_id_raw = payload_dict.get("assignment_id")
+    assignment_id: str | None = None
+    if assignment_id_raw is not None:
+        if not isinstance(assignment_id_raw, str) or not assignment_id_raw.strip():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Field 'assignment_id' must be a valid non-empty UUID string if provided",
+            )
+        assignment_id = assignment_id_raw.strip()
+
+    certificate_id_raw = payload_dict.get("certificate_id")
+    certificate_id: str | None = None
+    if certificate_id_raw is not None:
+        if not isinstance(certificate_id_raw, str):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Field 'certificate_id' must be a string if provided",
+            )
+        certificate_id = certificate_id_raw.strip() or None
+
+    completion_payload = LmsCompletionPayload(
+        event_id=event_id,
+        tenant_id=str(tenant_id),
+        course_id=course_id,
+        course_version=course_version,
+        learner_email=learner_email,
+        completed_at=completed_at_raw,
+        passed=True,
+        assignment_id=assignment_id,
+        score=score,
+        certificate_id=certificate_id,
+    )
+
+    # Check for idempotent replay
+    import hashlib
+    payload_sha256 = hashlib.sha256(raw_body).hexdigest()
+
+    existing_event = database.scalar(
+        select(InboundWebhookEvent).where(
+            InboundWebhookEvent.tenant_id == tenant_id,
+            InboundWebhookEvent.idempotency_key == event_id,
+        )
+    )
+    if existing_event is not None:
+        if existing_event.payload_sha256 and existing_event.payload_sha256 != payload_sha256:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Webhook event with this ID already processed with different payload",
+            )
+        return {
+            "status": "idempotent_replay",
+            "event_id": event_id,
+            "cached_response": existing_event.response_payload,
+        }
+
+    try:
+        # Record completion & evidence linkage (validates course, version, learner, assignment)
+        completion, evidence, is_new = record_training_completion(
             database,
             codec,
             tenant_id=tenant_id,
@@ -394,13 +547,22 @@ async def receive_lms_completion_webhook(
 
         response_data = {
             "status": "completed",
-            "event_id": str(event_id),
+            "event_id": event_id,
             "completion_id": str(completion.id),
             "course_id": completion.course_id,
             "learner_email": completion.workforce_email,
             "evidence_id": str(evidence.id) if evidence else None,
             "verified": True,
         }
+
+        event, _ = check_and_record_inbound_idempotency(
+            database,
+            tenant_id=tenant_id,
+            idempotency_key=event_id,
+            event_topic="lms.course_completion",
+            raw_body=raw_body,
+            credential_id=matched.id,
+        )
         finalize_inbound_idempotency(
             database,
             event,

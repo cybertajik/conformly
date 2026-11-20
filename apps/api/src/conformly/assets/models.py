@@ -38,6 +38,8 @@ class Asset(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __table_args__ = (
         Index("ix_assets_tenant_id", "tenant_id"),
         Index("ix_assets_tenant_type", "tenant_id", "asset_type"),
+        Index("ix_assets_legal_entity", "tenant_id", "legal_entity_id"),
+        Index("ix_assets_business_unit", "tenant_id", "business_unit_id"),
     )
 
     tenant_id: Mapped[UUID] = mapped_column(

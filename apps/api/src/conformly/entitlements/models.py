@@ -19,6 +19,7 @@ DEFAULT_TIER_A_MODULES = [
     "vendors",
     "organization",
     "audit",
+    "lms",
 ]
 
 

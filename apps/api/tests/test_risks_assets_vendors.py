@@ -288,3 +288,180 @@ def test_risks_assets_vendors_lifecycle_and_isolation(session: Session) -> None:
         risk_service.get_risk(
             session, principal_a, scoped_context, risk_a.id, request_id="req-scope-check"
         )
+
+
+def test_put_preserves_associations_across_single_field_edits(session: Session) -> None:
+    """Backend-shaped test for P1 full PUT association preservation across Risk, Asset, and Vendor."""
+    tenant_id = uuid4()
+    user_id = uuid4()
+    principal = Principal(user_id=user_id)
+    context = TenantContext(tenant_id=tenant_id, user_id=user_id, role=Role.OWNER)
+
+    # Setup parent org scope
+    legal_entity = org_service.create_legal_entity(
+        session,
+        principal,
+        context,
+        name="Conformly Corp",
+        registration_number="HRB 99999",
+        country="DE",
+        is_primary=True,
+        request_id="le-p1",
+    )
+    bu = org_service.create_business_unit(
+        session, principal, context, legal_entity_id=legal_entity.id, name="Security Ops", code="SEC", request_id="bu-p1"
+    )
+    finding_id = uuid4()
+    control_id = uuid4()
+
+    # ── 1. RISK PUT PRESERVATION ──
+    created_risk = risk_service.create_risk(
+        session,
+        principal,
+        context,
+        title="Original Risk Title",
+        description="Original risk description",
+        category=RiskCategory.SECURITY,
+        likelihood=3,
+        impact=4,
+        owner_user_id=user_id,
+        control_id=control_id,
+        finding_id=finding_id,
+        legal_entity_id=legal_entity.id,
+        business_unit_id=bu.id,
+        request_id="risk-p1-create",
+    )
+    assert created_risk.owner_user_id == user_id
+    assert created_risk.control_id == control_id
+    assert created_risk.finding_id == finding_id
+    assert created_risk.legal_entity_id == legal_entity.id
+    assert created_risk.business_unit_id == bu.id
+
+    # Update ONLY title, preserving all existing associations
+    updated_risk = risk_service.update_risk(
+        session,
+        principal,
+        context,
+        risk_id=created_risk.id,
+        title="Updated Risk Title Only",
+        description=created_risk.description,
+        category=created_risk.category,
+        likelihood=created_risk.likelihood,
+        impact=created_risk.impact,
+        residual_score=created_risk.residual_score,
+        status=created_risk.status,
+        owner_user_id=created_risk.owner_user_id,
+        control_id=created_risk.control_id,
+        finding_id=created_risk.finding_id,
+        legal_entity_id=created_risk.legal_entity_id,
+        business_unit_id=created_risk.business_unit_id,
+        request_id="risk-p1-put",
+    )
+    assert updated_risk.title == "Updated Risk Title Only"
+    assert updated_risk.owner_user_id == user_id
+    assert updated_risk.control_id == control_id
+    assert updated_risk.finding_id == finding_id
+    assert updated_risk.legal_entity_id == legal_entity.id
+    assert updated_risk.business_unit_id == bu.id
+
+    # ── 2. ASSET PUT PRESERVATION ──
+    created_asset = asset_service.create_asset(
+        session,
+        principal,
+        context,
+        name="Original Asset Name",
+        asset_type=AssetType.DATA,
+        classification=AssetClassification.RESTRICTED,
+        description="Original description",
+        owner_user_id=user_id,
+        control_id=control_id,
+        finding_id=finding_id,
+        legal_entity_id=legal_entity.id,
+        business_unit_id=bu.id,
+        request_id="asset-p1-create",
+    )
+    assert created_asset.owner_user_id == user_id
+    assert created_asset.control_id == control_id
+    assert created_asset.finding_id == finding_id
+    assert created_asset.legal_entity_id == legal_entity.id
+    assert created_asset.business_unit_id == bu.id
+
+    # Update ONLY name, preserving all existing associations
+    updated_asset = asset_service.update_asset(
+        session,
+        principal,
+        context,
+        asset_id=created_asset.id,
+        name="Updated Asset Name Only",
+        asset_type=created_asset.asset_type,
+        classification=created_asset.classification,
+        description=created_asset.description,
+        owner_user_id=created_asset.owner_user_id,
+        status=created_asset.status,
+        control_id=created_asset.control_id,
+        finding_id=created_asset.finding_id,
+        legal_entity_id=created_asset.legal_entity_id,
+        business_unit_id=created_asset.business_unit_id,
+        request_id="asset-p1-put",
+    )
+    assert updated_asset.name == "Updated Asset Name Only"
+    assert updated_asset.owner_user_id == user_id
+    assert updated_asset.control_id == control_id
+    assert updated_asset.finding_id == finding_id
+    assert updated_asset.legal_entity_id == legal_entity.id
+    assert updated_asset.business_unit_id == bu.id
+
+    # ── 3. VENDOR PUT PRESERVATION ──
+    created_vendor = vendor_service.create_vendor(
+        session,
+        principal,
+        context,
+        name="Original Vendor Name",
+        service_description="Original service description",
+        criticality=VendorCriticality.HIGH,
+        data_classification_accessed="Restricted",
+        country_residency="DE",
+        dpa_signed=True,
+        security_reviewed_at=None,
+        next_review_due_at=None,
+        owner_user_id=user_id,
+        control_id=control_id,
+        finding_id=finding_id,
+        legal_entity_id=legal_entity.id,
+        business_unit_id=bu.id,
+        request_id="vendor-p1-create",
+    )
+    assert created_vendor.owner_user_id == user_id
+    assert created_vendor.control_id == control_id
+    assert created_vendor.finding_id == finding_id
+    assert created_vendor.legal_entity_id == legal_entity.id
+    assert created_vendor.business_unit_id == bu.id
+    assert created_vendor.country_residency == "DE"
+
+    # Update ONLY name, preserving all existing associations
+    updated_vendor = vendor_service.update_vendor(
+        session,
+        principal,
+        context,
+        vendor_id=created_vendor.id,
+        name="Updated Vendor Name Only",
+        service_description=created_vendor.service_description,
+        criticality=created_vendor.criticality,
+        data_classification_accessed=created_vendor.data_classification_accessed,
+        country_residency=created_vendor.country_residency,
+        dpa_signed=created_vendor.dpa_signed,
+        status=created_vendor.status,
+        owner_user_id=created_vendor.owner_user_id,
+        control_id=created_vendor.control_id,
+        finding_id=created_vendor.finding_id,
+        legal_entity_id=created_vendor.legal_entity_id,
+        business_unit_id=created_vendor.business_unit_id,
+        request_id="vendor-p1-put",
+    )
+    assert updated_vendor.name == "Updated Vendor Name Only"
+    assert updated_vendor.owner_user_id == user_id
+    assert updated_vendor.control_id == control_id
+    assert updated_vendor.finding_id == finding_id
+    assert updated_vendor.legal_entity_id == legal_entity.id
+    assert updated_vendor.business_unit_id == bu.id
+    assert updated_vendor.country_residency == "DE"

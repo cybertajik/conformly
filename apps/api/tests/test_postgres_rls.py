@@ -1,28 +1,28 @@
-import os
+from datetime import UTC, datetime
 from uuid import uuid4
 
-import pytest
-from sqlalchemy import create_engine, select
+from sqlalchemy import Connection, select
 from sqlalchemy.orm import Session
 
 from conformly.audit.models import AuditActorType, AuditEvent, AuditOutcome
 from conformly.audit.service import record_audit_event
 from conformly.authz.roles import Role
+from conformly.compliance.models import ComplianceTask
+from conformly.frameworks.models import (
+    EvidenceSpecification,
+    Framework,
+    FrameworkVersion,
+    TenantFrameworkAdoption,
+)
 from conformly.identity.models import Membership, MembershipStatus, Tenant, User
 from conformly.tenancy.rls import set_rls_context, set_user_rls_context
 
 
-def test_postgresql_membership_rls_enforces_discovery_and_selected_tenant() -> None:
-    database_url = (
-        os.getenv("CONFORMLY_TEST_APP_DATABASE_URL")
-        or os.getenv("CONFORMLY_DATABASE_URL")
-        or os.getenv("TEST_DATABASE_URL")
-    )
-    if not database_url:
-        pytest.skip("PostgreSQL app-role integration URL is not configured")
-
-    engine = create_engine(database_url)
-    with engine.connect() as connection, connection.begin() as transaction:
+def test_postgresql_membership_rls_enforces_discovery_and_selected_tenant(
+    postgres_connection: Connection,
+) -> None:
+    connection = postgres_connection
+    with connection.begin() as transaction:
         session = Session(bind=connection)
         first_user = User(
             oidc_issuer="https://rls.example.test",
@@ -141,20 +141,14 @@ def test_postgresql_membership_rls_enforces_discovery_and_selected_tenant() -> N
         transaction.rollback()
 
 
-def test_postgresql_framework_evidence_requests_rls_enforces_tenant_isolation() -> None:
+def test_postgresql_framework_evidence_requests_rls_enforces_tenant_isolation(
+    postgres_connection: Connection,
+) -> None:
     """PostgreSQL RLS policy framework_requests_tenant strictly isolates framework_evidence_requests across tenants."""
-    database_url = (
-        os.getenv("CONFORMLY_TEST_APP_DATABASE_URL")
-        or os.getenv("CONFORMLY_DATABASE_URL")
-        or os.getenv("TEST_DATABASE_URL")
-    )
-    if not database_url:
-        pytest.skip("PostgreSQL app-role integration URL is not configured")
-
     from conformly.frameworks.workflow import FrameworkEvidenceRequest
 
-    engine = create_engine(database_url)
-    with engine.connect() as connection, connection.begin() as transaction:
+    connection = postgres_connection
+    with connection.begin() as transaction:
         session = Session(bind=connection)
         user_1 = User(
             oidc_issuer="https://rls.example.test",
@@ -173,24 +167,71 @@ def test_postgresql_framework_evidence_requests_rls_enforces_tenant_isolation() 
         session.add_all([user_1, user_2, tenant_1, tenant_2])
         session.flush()
 
+        # Independent synthetic content, not imported or published framework data.
+        framework = Framework(slug=f"rls-synthetic-{uuid4()}", name="Synthetic RLS framework")
+        session.add(framework)
+        session.flush()
+        version = FrameworkVersion(
+            framework_id=framework.id, version="test-1", created_by_user_id=user_1.id
+        )
+        session.add(version)
+        session.flush()
+        specification = EvidenceSpecification(
+            framework_version_id=version.id,
+            identifier="synthetic-evidence",
+            title="Synthetic evidence",
+            description="Independently authored isolation-test fixture",
+            evidence_type="document",
+        )
+        session.add(specification)
+        session.flush()
+
         set_rls_context(session, user_id=user_1.id, tenant_id=tenant_1.id, tenant_verified=True)
+        adoption_1 = TenantFrameworkAdoption(
+            tenant_id=tenant_1.id,
+            framework_id=framework.id,
+            framework_version_id=version.id,
+            adopted_by_user_id=user_1.id,
+        )
+        task_1 = ComplianceTask(
+            tenant_id=tenant_1.id,
+            title="Tenant 1 synthetic task",
+            description="Synthetic evidence request",
+            due_date=datetime(2030, 1, 1, tzinfo=UTC),
+        )
+        session.add_all([adoption_1, task_1])
+        session.flush()
 
         req_1 = FrameworkEvidenceRequest(
             tenant_id=tenant_1.id,
-            adoption_id=uuid4(),
-            specification_id=uuid4(),
-            task_id=uuid4(),
+            adoption_id=adoption_1.id,
+            specification_id=specification.id,
+            task_id=task_1.id,
         )
         session.add(req_1)
         session.flush()
 
         set_rls_context(session, user_id=user_2.id, tenant_id=tenant_2.id, tenant_verified=True)
+        adoption_2 = TenantFrameworkAdoption(
+            tenant_id=tenant_2.id,
+            framework_id=framework.id,
+            framework_version_id=version.id,
+            adopted_by_user_id=user_2.id,
+        )
+        task_2 = ComplianceTask(
+            tenant_id=tenant_2.id,
+            title="Tenant 2 synthetic task",
+            description="Synthetic evidence request",
+            due_date=datetime(2030, 1, 1, tzinfo=UTC),
+        )
+        session.add_all([adoption_2, task_2])
+        session.flush()
 
         req_2 = FrameworkEvidenceRequest(
             tenant_id=tenant_2.id,
-            adoption_id=uuid4(),
-            specification_id=uuid4(),
-            task_id=uuid4(),
+            adoption_id=adoption_2.id,
+            specification_id=specification.id,
+            task_id=task_2.id,
         )
         session.add(req_2)
         session.flush()

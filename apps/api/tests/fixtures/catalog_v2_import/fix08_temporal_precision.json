@@ -1,0 +1,15 @@
+[
+  {
+    "sequence": 1,
+    "input_type": "Requirement",
+    "origin_namespace": "synthetic",
+    "origin_id": "req-temporal-01",
+    "payload": {
+      "requirement_key": "REQ-TIME-01",
+      "normalized_outcome": "Strict temporal dates",
+      "source_version_id": "src-ver-temporal",
+      "effective_from": "2026-01-01",
+      "effective_until": "2026-12-31"
+    }
+  }
+]

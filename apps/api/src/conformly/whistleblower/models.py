@@ -13,8 +13,10 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     Uuid,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from conformly.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -74,7 +76,6 @@ class WhistleblowerPortal(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     slug: Mapped[str] = mapped_column(
         String(100),
-        unique=True,
         index=True,
         nullable=False,
     )
@@ -94,7 +95,10 @@ class WhistleblowerPortal(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         cascade="all, delete-orphan",
     )
 
-    __table_args__ = (Index("ix_whistleblower_portals_tenant_active", "tenant_id", "is_active"),)
+    __table_args__ = (
+        UniqueConstraint("slug", name="uq_whistleblower_portals_slug"),
+        Index("ix_whistleblower_portals_tenant_active", "tenant_id", "is_active"),
+    )
 
 
 class WhistleblowerCase(Base, UUIDPrimaryKeyMixin, TimestampMixin):
@@ -116,7 +120,6 @@ class WhistleblowerCase(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     public_case_id: Mapped[str] = mapped_column(
         String(32),
-        unique=True,
         index=True,
         nullable=False,
     )
@@ -132,8 +135,12 @@ class WhistleblowerCase(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     # New writes never place reporter-supplied metadata in these columns.
     category: Mapped[str | None] = mapped_column(String(100), nullable=True)
     title: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    encrypted_category: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
-    encrypted_title: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    encrypted_category: Mapped[dict[str, Any] | None] = mapped_column(
+        JSON().with_variant(JSONB(), "postgresql"), nullable=True
+    )
+    encrypted_title: Mapped[dict[str, Any] | None] = mapped_column(
+        JSON().with_variant(JSONB(), "postgresql"), nullable=True
+    )
     encrypted_summary: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     closed_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -160,6 +167,7 @@ class WhistleblowerCase(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
 
     __table_args__ = (
+        UniqueConstraint("public_case_id", name="uq_whistleblower_cases_public_case_id"),
         Index("ix_whistleblower_cases_tenant_status", "tenant_id", "status"),
         Index("ix_whistleblower_cases_tenant_created", "tenant_id", "created_at"),
     )

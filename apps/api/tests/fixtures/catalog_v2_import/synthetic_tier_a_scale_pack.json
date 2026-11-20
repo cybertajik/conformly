@@ -1,0 +1,1859 @@
+[
+  {
+    "sequence": 1,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-001",
+    "payload": {
+      "control_key": "CC-SCA-001",
+      "domain": "security",
+      "title": "Scale Control 001",
+      "objective": "Objective for scale control 001"
+    }
+  },
+  {
+    "sequence": 2,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-002",
+    "payload": {
+      "control_key": "CC-SCA-002",
+      "domain": "security",
+      "title": "Scale Control 002",
+      "objective": "Objective for scale control 002"
+    }
+  },
+  {
+    "sequence": 3,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-003",
+    "payload": {
+      "control_key": "CC-SCA-003",
+      "domain": "security",
+      "title": "Scale Control 003",
+      "objective": "Objective for scale control 003"
+    }
+  },
+  {
+    "sequence": 4,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-004",
+    "payload": {
+      "control_key": "CC-SCA-004",
+      "domain": "security",
+      "title": "Scale Control 004",
+      "objective": "Objective for scale control 004"
+    }
+  },
+  {
+    "sequence": 5,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-005",
+    "payload": {
+      "control_key": "CC-SCA-005",
+      "domain": "security",
+      "title": "Scale Control 005",
+      "objective": "Objective for scale control 005"
+    }
+  },
+  {
+    "sequence": 6,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-006",
+    "payload": {
+      "control_key": "CC-SCA-006",
+      "domain": "security",
+      "title": "Scale Control 006",
+      "objective": "Objective for scale control 006"
+    }
+  },
+  {
+    "sequence": 7,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-007",
+    "payload": {
+      "control_key": "CC-SCA-007",
+      "domain": "security",
+      "title": "Scale Control 007",
+      "objective": "Objective for scale control 007"
+    }
+  },
+  {
+    "sequence": 8,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-008",
+    "payload": {
+      "control_key": "CC-SCA-008",
+      "domain": "security",
+      "title": "Scale Control 008",
+      "objective": "Objective for scale control 008"
+    }
+  },
+  {
+    "sequence": 9,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-009",
+    "payload": {
+      "control_key": "CC-SCA-009",
+      "domain": "security",
+      "title": "Scale Control 009",
+      "objective": "Objective for scale control 009"
+    }
+  },
+  {
+    "sequence": 10,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-010",
+    "payload": {
+      "control_key": "CC-SCA-010",
+      "domain": "security",
+      "title": "Scale Control 010",
+      "objective": "Objective for scale control 010"
+    }
+  },
+  {
+    "sequence": 11,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-011",
+    "payload": {
+      "control_key": "CC-SCA-011",
+      "domain": "security",
+      "title": "Scale Control 011",
+      "objective": "Objective for scale control 011"
+    }
+  },
+  {
+    "sequence": 12,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-012",
+    "payload": {
+      "control_key": "CC-SCA-012",
+      "domain": "security",
+      "title": "Scale Control 012",
+      "objective": "Objective for scale control 012"
+    }
+  },
+  {
+    "sequence": 13,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-013",
+    "payload": {
+      "control_key": "CC-SCA-013",
+      "domain": "security",
+      "title": "Scale Control 013",
+      "objective": "Objective for scale control 013"
+    }
+  },
+  {
+    "sequence": 14,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-014",
+    "payload": {
+      "control_key": "CC-SCA-014",
+      "domain": "security",
+      "title": "Scale Control 014",
+      "objective": "Objective for scale control 014"
+    }
+  },
+  {
+    "sequence": 15,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-015",
+    "payload": {
+      "control_key": "CC-SCA-015",
+      "domain": "security",
+      "title": "Scale Control 015",
+      "objective": "Objective for scale control 015"
+    }
+  },
+  {
+    "sequence": 16,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-016",
+    "payload": {
+      "control_key": "CC-SCA-016",
+      "domain": "security",
+      "title": "Scale Control 016",
+      "objective": "Objective for scale control 016"
+    }
+  },
+  {
+    "sequence": 17,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-017",
+    "payload": {
+      "control_key": "CC-SCA-017",
+      "domain": "security",
+      "title": "Scale Control 017",
+      "objective": "Objective for scale control 017"
+    }
+  },
+  {
+    "sequence": 18,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-018",
+    "payload": {
+      "control_key": "CC-SCA-018",
+      "domain": "security",
+      "title": "Scale Control 018",
+      "objective": "Objective for scale control 018"
+    }
+  },
+  {
+    "sequence": 19,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-019",
+    "payload": {
+      "control_key": "CC-SCA-019",
+      "domain": "security",
+      "title": "Scale Control 019",
+      "objective": "Objective for scale control 019"
+    }
+  },
+  {
+    "sequence": 20,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-020",
+    "payload": {
+      "control_key": "CC-SCA-020",
+      "domain": "security",
+      "title": "Scale Control 020",
+      "objective": "Objective for scale control 020"
+    }
+  },
+  {
+    "sequence": 21,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-021",
+    "payload": {
+      "control_key": "CC-SCA-021",
+      "domain": "security",
+      "title": "Scale Control 021",
+      "objective": "Objective for scale control 021"
+    }
+  },
+  {
+    "sequence": 22,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-022",
+    "payload": {
+      "control_key": "CC-SCA-022",
+      "domain": "security",
+      "title": "Scale Control 022",
+      "objective": "Objective for scale control 022"
+    }
+  },
+  {
+    "sequence": 23,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-023",
+    "payload": {
+      "control_key": "CC-SCA-023",
+      "domain": "security",
+      "title": "Scale Control 023",
+      "objective": "Objective for scale control 023"
+    }
+  },
+  {
+    "sequence": 24,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-024",
+    "payload": {
+      "control_key": "CC-SCA-024",
+      "domain": "security",
+      "title": "Scale Control 024",
+      "objective": "Objective for scale control 024"
+    }
+  },
+  {
+    "sequence": 25,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-025",
+    "payload": {
+      "control_key": "CC-SCA-025",
+      "domain": "security",
+      "title": "Scale Control 025",
+      "objective": "Objective for scale control 025"
+    }
+  },
+  {
+    "sequence": 26,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-026",
+    "payload": {
+      "control_key": "CC-SCA-026",
+      "domain": "security",
+      "title": "Scale Control 026",
+      "objective": "Objective for scale control 026"
+    }
+  },
+  {
+    "sequence": 27,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-027",
+    "payload": {
+      "control_key": "CC-SCA-027",
+      "domain": "security",
+      "title": "Scale Control 027",
+      "objective": "Objective for scale control 027"
+    }
+  },
+  {
+    "sequence": 28,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-028",
+    "payload": {
+      "control_key": "CC-SCA-028",
+      "domain": "security",
+      "title": "Scale Control 028",
+      "objective": "Objective for scale control 028"
+    }
+  },
+  {
+    "sequence": 29,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-029",
+    "payload": {
+      "control_key": "CC-SCA-029",
+      "domain": "security",
+      "title": "Scale Control 029",
+      "objective": "Objective for scale control 029"
+    }
+  },
+  {
+    "sequence": 30,
+    "input_type": "CommonControl",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-ctrl-030",
+    "payload": {
+      "control_key": "CC-SCA-030",
+      "domain": "security",
+      "title": "Scale Control 030",
+      "objective": "Objective for scale control 030"
+    }
+  },
+  {
+    "sequence": 31,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-001",
+    "payload": {
+      "requirement_key": "REQ-SCALE-001",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 001",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 32,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-002",
+    "payload": {
+      "requirement_key": "REQ-SCALE-002",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 002",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 33,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-003",
+    "payload": {
+      "requirement_key": "REQ-SCALE-003",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 003",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 34,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-004",
+    "payload": {
+      "requirement_key": "REQ-SCALE-004",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 004",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 35,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-005",
+    "payload": {
+      "requirement_key": "REQ-SCALE-005",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 005",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 36,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-006",
+    "payload": {
+      "requirement_key": "REQ-SCALE-006",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 006",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 37,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-007",
+    "payload": {
+      "requirement_key": "REQ-SCALE-007",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 007",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 38,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-008",
+    "payload": {
+      "requirement_key": "REQ-SCALE-008",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 008",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 39,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-009",
+    "payload": {
+      "requirement_key": "REQ-SCALE-009",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 009",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 40,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-010",
+    "payload": {
+      "requirement_key": "REQ-SCALE-010",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 010",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 41,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-011",
+    "payload": {
+      "requirement_key": "REQ-SCALE-011",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 011",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 42,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-012",
+    "payload": {
+      "requirement_key": "REQ-SCALE-012",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 012",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 43,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-013",
+    "payload": {
+      "requirement_key": "REQ-SCALE-013",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 013",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 44,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-014",
+    "payload": {
+      "requirement_key": "REQ-SCALE-014",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 014",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 45,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-015",
+    "payload": {
+      "requirement_key": "REQ-SCALE-015",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 015",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 46,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-016",
+    "payload": {
+      "requirement_key": "REQ-SCALE-016",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 016",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 47,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-017",
+    "payload": {
+      "requirement_key": "REQ-SCALE-017",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 017",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 48,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-018",
+    "payload": {
+      "requirement_key": "REQ-SCALE-018",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 018",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 49,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-019",
+    "payload": {
+      "requirement_key": "REQ-SCALE-019",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 019",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 50,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-020",
+    "payload": {
+      "requirement_key": "REQ-SCALE-020",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 020",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 51,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-021",
+    "payload": {
+      "requirement_key": "REQ-SCALE-021",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 021",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 52,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-022",
+    "payload": {
+      "requirement_key": "REQ-SCALE-022",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 022",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 53,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-023",
+    "payload": {
+      "requirement_key": "REQ-SCALE-023",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 023",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 54,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-024",
+    "payload": {
+      "requirement_key": "REQ-SCALE-024",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 024",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 55,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-025",
+    "payload": {
+      "requirement_key": "REQ-SCALE-025",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 025",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 56,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-026",
+    "payload": {
+      "requirement_key": "REQ-SCALE-026",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 026",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 57,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-027",
+    "payload": {
+      "requirement_key": "REQ-SCALE-027",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 027",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 58,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-028",
+    "payload": {
+      "requirement_key": "REQ-SCALE-028",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 028",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 59,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-029",
+    "payload": {
+      "requirement_key": "REQ-SCALE-029",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 029",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 60,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-030",
+    "payload": {
+      "requirement_key": "REQ-SCALE-030",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 030",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 61,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-031",
+    "payload": {
+      "requirement_key": "REQ-SCALE-031",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 031",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 62,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-032",
+    "payload": {
+      "requirement_key": "REQ-SCALE-032",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 032",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 63,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-033",
+    "payload": {
+      "requirement_key": "REQ-SCALE-033",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 033",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 64,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-034",
+    "payload": {
+      "requirement_key": "REQ-SCALE-034",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 034",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 65,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-035",
+    "payload": {
+      "requirement_key": "REQ-SCALE-035",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 035",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 66,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-036",
+    "payload": {
+      "requirement_key": "REQ-SCALE-036",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 036",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 67,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-037",
+    "payload": {
+      "requirement_key": "REQ-SCALE-037",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 037",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 68,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-038",
+    "payload": {
+      "requirement_key": "REQ-SCALE-038",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 038",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 69,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-039",
+    "payload": {
+      "requirement_key": "REQ-SCALE-039",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 039",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 70,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-040",
+    "payload": {
+      "requirement_key": "REQ-SCALE-040",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 040",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 71,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-041",
+    "payload": {
+      "requirement_key": "REQ-SCALE-041",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 041",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 72,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-042",
+    "payload": {
+      "requirement_key": "REQ-SCALE-042",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 042",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 73,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-043",
+    "payload": {
+      "requirement_key": "REQ-SCALE-043",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 043",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 74,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-044",
+    "payload": {
+      "requirement_key": "REQ-SCALE-044",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 044",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 75,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-045",
+    "payload": {
+      "requirement_key": "REQ-SCALE-045",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 045",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 76,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-046",
+    "payload": {
+      "requirement_key": "REQ-SCALE-046",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 046",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 77,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-047",
+    "payload": {
+      "requirement_key": "REQ-SCALE-047",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 047",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 78,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-048",
+    "payload": {
+      "requirement_key": "REQ-SCALE-048",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 048",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 79,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-049",
+    "payload": {
+      "requirement_key": "REQ-SCALE-049",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 049",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 80,
+    "input_type": "Requirement",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-req-050",
+    "payload": {
+      "requirement_key": "REQ-SCALE-050",
+      "source_version_id": "scale-source-version-id",
+      "normalized_outcome": "Normalized outcome for requirement 050",
+      "text_origin": "conformly_paraphrase"
+    }
+  },
+  {
+    "sequence": 81,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-001",
+    "payload": {
+      "mapping_key": "MAP-SCALE-001",
+      "requirement_origin": "scale-req-001",
+      "control_origin": "scale-ctrl-001",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 001"
+    }
+  },
+  {
+    "sequence": 82,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-002",
+    "payload": {
+      "mapping_key": "MAP-SCALE-002",
+      "requirement_origin": "scale-req-002",
+      "control_origin": "scale-ctrl-002",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 002"
+    }
+  },
+  {
+    "sequence": 83,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-003",
+    "payload": {
+      "mapping_key": "MAP-SCALE-003",
+      "requirement_origin": "scale-req-003",
+      "control_origin": "scale-ctrl-003",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 003"
+    }
+  },
+  {
+    "sequence": 84,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-004",
+    "payload": {
+      "mapping_key": "MAP-SCALE-004",
+      "requirement_origin": "scale-req-004",
+      "control_origin": "scale-ctrl-004",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 004"
+    }
+  },
+  {
+    "sequence": 85,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-005",
+    "payload": {
+      "mapping_key": "MAP-SCALE-005",
+      "requirement_origin": "scale-req-005",
+      "control_origin": "scale-ctrl-005",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 005"
+    }
+  },
+  {
+    "sequence": 86,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-006",
+    "payload": {
+      "mapping_key": "MAP-SCALE-006",
+      "requirement_origin": "scale-req-006",
+      "control_origin": "scale-ctrl-006",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 006"
+    }
+  },
+  {
+    "sequence": 87,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-007",
+    "payload": {
+      "mapping_key": "MAP-SCALE-007",
+      "requirement_origin": "scale-req-007",
+      "control_origin": "scale-ctrl-007",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 007"
+    }
+  },
+  {
+    "sequence": 88,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-008",
+    "payload": {
+      "mapping_key": "MAP-SCALE-008",
+      "requirement_origin": "scale-req-008",
+      "control_origin": "scale-ctrl-008",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 008"
+    }
+  },
+  {
+    "sequence": 89,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-009",
+    "payload": {
+      "mapping_key": "MAP-SCALE-009",
+      "requirement_origin": "scale-req-009",
+      "control_origin": "scale-ctrl-009",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 009"
+    }
+  },
+  {
+    "sequence": 90,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-010",
+    "payload": {
+      "mapping_key": "MAP-SCALE-010",
+      "requirement_origin": "scale-req-010",
+      "control_origin": "scale-ctrl-010",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 010"
+    }
+  },
+  {
+    "sequence": 91,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-011",
+    "payload": {
+      "mapping_key": "MAP-SCALE-011",
+      "requirement_origin": "scale-req-011",
+      "control_origin": "scale-ctrl-011",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 011"
+    }
+  },
+  {
+    "sequence": 92,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-012",
+    "payload": {
+      "mapping_key": "MAP-SCALE-012",
+      "requirement_origin": "scale-req-012",
+      "control_origin": "scale-ctrl-012",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 012"
+    }
+  },
+  {
+    "sequence": 93,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-013",
+    "payload": {
+      "mapping_key": "MAP-SCALE-013",
+      "requirement_origin": "scale-req-013",
+      "control_origin": "scale-ctrl-013",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 013"
+    }
+  },
+  {
+    "sequence": 94,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-014",
+    "payload": {
+      "mapping_key": "MAP-SCALE-014",
+      "requirement_origin": "scale-req-014",
+      "control_origin": "scale-ctrl-014",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 014"
+    }
+  },
+  {
+    "sequence": 95,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-015",
+    "payload": {
+      "mapping_key": "MAP-SCALE-015",
+      "requirement_origin": "scale-req-015",
+      "control_origin": "scale-ctrl-015",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 015"
+    }
+  },
+  {
+    "sequence": 96,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-016",
+    "payload": {
+      "mapping_key": "MAP-SCALE-016",
+      "requirement_origin": "scale-req-016",
+      "control_origin": "scale-ctrl-016",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 016"
+    }
+  },
+  {
+    "sequence": 97,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-017",
+    "payload": {
+      "mapping_key": "MAP-SCALE-017",
+      "requirement_origin": "scale-req-017",
+      "control_origin": "scale-ctrl-017",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 017"
+    }
+  },
+  {
+    "sequence": 98,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-018",
+    "payload": {
+      "mapping_key": "MAP-SCALE-018",
+      "requirement_origin": "scale-req-018",
+      "control_origin": "scale-ctrl-018",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 018"
+    }
+  },
+  {
+    "sequence": 99,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-019",
+    "payload": {
+      "mapping_key": "MAP-SCALE-019",
+      "requirement_origin": "scale-req-019",
+      "control_origin": "scale-ctrl-019",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 019"
+    }
+  },
+  {
+    "sequence": 100,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-020",
+    "payload": {
+      "mapping_key": "MAP-SCALE-020",
+      "requirement_origin": "scale-req-020",
+      "control_origin": "scale-ctrl-020",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 020"
+    }
+  },
+  {
+    "sequence": 101,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-021",
+    "payload": {
+      "mapping_key": "MAP-SCALE-021",
+      "requirement_origin": "scale-req-021",
+      "control_origin": "scale-ctrl-021",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 021"
+    }
+  },
+  {
+    "sequence": 102,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-022",
+    "payload": {
+      "mapping_key": "MAP-SCALE-022",
+      "requirement_origin": "scale-req-022",
+      "control_origin": "scale-ctrl-022",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 022"
+    }
+  },
+  {
+    "sequence": 103,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-023",
+    "payload": {
+      "mapping_key": "MAP-SCALE-023",
+      "requirement_origin": "scale-req-023",
+      "control_origin": "scale-ctrl-023",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 023"
+    }
+  },
+  {
+    "sequence": 104,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-024",
+    "payload": {
+      "mapping_key": "MAP-SCALE-024",
+      "requirement_origin": "scale-req-024",
+      "control_origin": "scale-ctrl-024",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 024"
+    }
+  },
+  {
+    "sequence": 105,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-025",
+    "payload": {
+      "mapping_key": "MAP-SCALE-025",
+      "requirement_origin": "scale-req-025",
+      "control_origin": "scale-ctrl-025",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 025"
+    }
+  },
+  {
+    "sequence": 106,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-026",
+    "payload": {
+      "mapping_key": "MAP-SCALE-026",
+      "requirement_origin": "scale-req-026",
+      "control_origin": "scale-ctrl-026",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 026"
+    }
+  },
+  {
+    "sequence": 107,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-027",
+    "payload": {
+      "mapping_key": "MAP-SCALE-027",
+      "requirement_origin": "scale-req-027",
+      "control_origin": "scale-ctrl-027",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 027"
+    }
+  },
+  {
+    "sequence": 108,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-028",
+    "payload": {
+      "mapping_key": "MAP-SCALE-028",
+      "requirement_origin": "scale-req-028",
+      "control_origin": "scale-ctrl-028",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 028"
+    }
+  },
+  {
+    "sequence": 109,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-029",
+    "payload": {
+      "mapping_key": "MAP-SCALE-029",
+      "requirement_origin": "scale-req-029",
+      "control_origin": "scale-ctrl-029",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 029"
+    }
+  },
+  {
+    "sequence": 110,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-030",
+    "payload": {
+      "mapping_key": "MAP-SCALE-030",
+      "requirement_origin": "scale-req-030",
+      "control_origin": "scale-ctrl-030",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 030"
+    }
+  },
+  {
+    "sequence": 111,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-031",
+    "payload": {
+      "mapping_key": "MAP-SCALE-031",
+      "requirement_origin": "scale-req-031",
+      "control_origin": "scale-ctrl-001",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 031"
+    }
+  },
+  {
+    "sequence": 112,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-032",
+    "payload": {
+      "mapping_key": "MAP-SCALE-032",
+      "requirement_origin": "scale-req-032",
+      "control_origin": "scale-ctrl-002",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 032"
+    }
+  },
+  {
+    "sequence": 113,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-033",
+    "payload": {
+      "mapping_key": "MAP-SCALE-033",
+      "requirement_origin": "scale-req-033",
+      "control_origin": "scale-ctrl-003",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 033"
+    }
+  },
+  {
+    "sequence": 114,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-034",
+    "payload": {
+      "mapping_key": "MAP-SCALE-034",
+      "requirement_origin": "scale-req-034",
+      "control_origin": "scale-ctrl-004",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 034"
+    }
+  },
+  {
+    "sequence": 115,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-035",
+    "payload": {
+      "mapping_key": "MAP-SCALE-035",
+      "requirement_origin": "scale-req-035",
+      "control_origin": "scale-ctrl-005",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 035"
+    }
+  },
+  {
+    "sequence": 116,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-036",
+    "payload": {
+      "mapping_key": "MAP-SCALE-036",
+      "requirement_origin": "scale-req-036",
+      "control_origin": "scale-ctrl-006",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 036"
+    }
+  },
+  {
+    "sequence": 117,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-037",
+    "payload": {
+      "mapping_key": "MAP-SCALE-037",
+      "requirement_origin": "scale-req-037",
+      "control_origin": "scale-ctrl-007",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 037"
+    }
+  },
+  {
+    "sequence": 118,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-038",
+    "payload": {
+      "mapping_key": "MAP-SCALE-038",
+      "requirement_origin": "scale-req-038",
+      "control_origin": "scale-ctrl-008",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 038"
+    }
+  },
+  {
+    "sequence": 119,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-039",
+    "payload": {
+      "mapping_key": "MAP-SCALE-039",
+      "requirement_origin": "scale-req-039",
+      "control_origin": "scale-ctrl-009",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 039"
+    }
+  },
+  {
+    "sequence": 120,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-040",
+    "payload": {
+      "mapping_key": "MAP-SCALE-040",
+      "requirement_origin": "scale-req-040",
+      "control_origin": "scale-ctrl-010",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 040"
+    }
+  },
+  {
+    "sequence": 121,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-041",
+    "payload": {
+      "mapping_key": "MAP-SCALE-041",
+      "requirement_origin": "scale-req-041",
+      "control_origin": "scale-ctrl-011",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 041"
+    }
+  },
+  {
+    "sequence": 122,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-042",
+    "payload": {
+      "mapping_key": "MAP-SCALE-042",
+      "requirement_origin": "scale-req-042",
+      "control_origin": "scale-ctrl-012",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 042"
+    }
+  },
+  {
+    "sequence": 123,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-043",
+    "payload": {
+      "mapping_key": "MAP-SCALE-043",
+      "requirement_origin": "scale-req-043",
+      "control_origin": "scale-ctrl-013",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 043"
+    }
+  },
+  {
+    "sequence": 124,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-044",
+    "payload": {
+      "mapping_key": "MAP-SCALE-044",
+      "requirement_origin": "scale-req-044",
+      "control_origin": "scale-ctrl-014",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 044"
+    }
+  },
+  {
+    "sequence": 125,
+    "input_type": "Mapping",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-map-045",
+    "payload": {
+      "mapping_key": "MAP-SCALE-045",
+      "requirement_origin": "scale-req-045",
+      "control_origin": "scale-ctrl-015",
+      "mapping_type": "Full",
+      "rationale": "Rationale for mapping 045"
+    }
+  },
+  {
+    "sequence": 126,
+    "input_type": "Pack",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-pack-001",
+    "payload": {
+      "pack_key": "PACK-TIER-A-SCALE",
+      "name": "Synthetic Tier A Scale Pack",
+      "pack_type": "baseline",
+      "version_label": "1.0.0"
+    }
+  },
+  {
+    "sequence": 127,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-001",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-001"
+    }
+  },
+  {
+    "sequence": 128,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-002",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-002"
+    }
+  },
+  {
+    "sequence": 129,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-003",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-003"
+    }
+  },
+  {
+    "sequence": 130,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-004",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-004"
+    }
+  },
+  {
+    "sequence": 131,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-005",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-005"
+    }
+  },
+  {
+    "sequence": 132,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-006",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-006"
+    }
+  },
+  {
+    "sequence": 133,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-007",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-007"
+    }
+  },
+  {
+    "sequence": 134,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-008",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-008"
+    }
+  },
+  {
+    "sequence": 135,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-009",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-009"
+    }
+  },
+  {
+    "sequence": 136,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-010",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-010"
+    }
+  },
+  {
+    "sequence": 137,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-011",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-011"
+    }
+  },
+  {
+    "sequence": 138,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-012",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-012"
+    }
+  },
+  {
+    "sequence": 139,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-013",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-013"
+    }
+  },
+  {
+    "sequence": 140,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-014",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-014"
+    }
+  },
+  {
+    "sequence": 141,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-015",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-015"
+    }
+  },
+  {
+    "sequence": 142,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-016",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-016"
+    }
+  },
+  {
+    "sequence": 143,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-017",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-017"
+    }
+  },
+  {
+    "sequence": 144,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-018",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-018"
+    }
+  },
+  {
+    "sequence": 145,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-019",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-019"
+    }
+  },
+  {
+    "sequence": 146,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-020",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-020"
+    }
+  },
+  {
+    "sequence": 147,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-021",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-021"
+    }
+  },
+  {
+    "sequence": 148,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-022",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-022"
+    }
+  },
+  {
+    "sequence": 149,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-023",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-023"
+    }
+  },
+  {
+    "sequence": 150,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-024",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-024"
+    }
+  },
+  {
+    "sequence": 151,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-025",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-025"
+    }
+  },
+  {
+    "sequence": 152,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-026",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-026"
+    }
+  },
+  {
+    "sequence": 153,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-027",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-027"
+    }
+  },
+  {
+    "sequence": 154,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-028",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-028"
+    }
+  },
+  {
+    "sequence": 155,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-029",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-029"
+    }
+  },
+  {
+    "sequence": 156,
+    "input_type": "PackMembership",
+    "origin_namespace": "tier-a-scale",
+    "origin_id": "scale-mem-030",
+    "payload": {
+      "pack_origin": "scale-pack-001",
+      "requirement_origin": "scale-req-030"
+    }
+  }
+]

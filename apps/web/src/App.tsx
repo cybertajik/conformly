@@ -30,8 +30,12 @@ import { PublicProfileView } from "./components/PublicProfileView";
 import { PublicProfileWorkspace } from "./components/PublicProfileWorkspace";
 import { RiskWorkspace } from "./components/RiskWorkspace";
 import { VendorWorkspace } from "./components/VendorWorkspace";
+import { CustomerDemoWorkspace } from "./customer-demo/CustomerDemoWorkspace";
+import { CustomerDemoPortal } from "./customer-demo/CustomerDemoPortal";
+import { isCustomerDemoEnabled } from "./customer-demo/api";
 import { I18nProvider, useTranslation } from "./i18n/I18nContext";
 import {
+  canAccessCustomerDemo,
   canManageMemberships,
   canReadAssets,
   canReadEvidence,
@@ -58,10 +62,13 @@ export type Tab =
   | "public_profile"
   | "lifecycle"
   | "members"
-  | "trust_center";
+  | "trust_center"
+  | "customer_demo";
 
 type AppState = "loading" | "signed_out" | "ready" | "expired" | "denied" | "error";
 const SELECTED_TENANT_KEY = "conformly.selected_tenant";
+
+
 
 function AppContent() {
   const { t } = useTranslation();
@@ -226,6 +233,24 @@ function AppContent() {
 
   const effectiveToken = token || (getAccessToken() ?? "");
 
+  if (isCustomerDemoEnabled() && canAccessCustomerDemo(selected.role)) {
+    return (
+      <CustomerDemoPortal
+        key={`${selected.tenant_id}:${effectiveToken}`}
+        tenantId={selected.tenant_id}
+        tenantName={selected.tenant_name}
+        tenantSlug={selected.tenant_slug}
+        token={effectiveToken}
+        userRole={selected.role}
+        userId={userId}
+        tenants={tenants}
+        onSelectTenant={(tId) => void chooseTenant(tId)}
+        onSignOut={() => void signOut()}
+        onSessionExpired={() => setState("expired")}
+      />
+    );
+  }
+
   const navItems: { id: Tab; label: string; icon: string; check?: () => boolean }[] = [
     { id: "overview", label: t("nav.overview"), icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1" },
     { id: "onboarding", label: t("nav.onboarding"), icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" },
@@ -239,6 +264,16 @@ function AppContent() {
     { id: "public_profile", label: t("nav.trustCenter"), icon: "M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064", check: () => canReadPublicProfile(selected.role) },
     { id: "lifecycle", label: t("nav.lifecycle"), icon: "M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4", check: () => canReadExport(selected.role) },
     { id: "members", label: t("nav.members"), icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z", check: () => canManageMemberships(selected.role) },
+    ...(isCustomerDemoEnabled()
+      ? [
+          {
+            id: "customer_demo" as const,
+            label: "Customer Demo",
+            icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01",
+            check: () => selected.role === "owner" || selected.role === "compliance_manager",
+          },
+        ]
+      : []),
   ];
 
   const visibleNavItems = navItems.filter((item) => !item.check || item.check());
@@ -402,6 +437,15 @@ function AppContent() {
             tenantId={selected.tenant_id}
             currentUserRole={selected.role}
             currentUserId={userId}
+          />
+        )}
+        {tab === "customer_demo" && isCustomerDemoEnabled() && (selected.role === "owner" || selected.role === "compliance_manager") && (
+          <CustomerDemoWorkspace
+            key={`${selected.tenant_id}:${effectiveToken}`}
+            token={effectiveToken}
+            tenantId={selected.tenant_id}
+            userRole={selected.role}
+            onSessionExpired={() => setState("expired")}
           />
         )}
       </main>

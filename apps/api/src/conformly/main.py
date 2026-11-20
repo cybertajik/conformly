@@ -42,8 +42,10 @@ from conformly.api.whistleblower import (
     whistleblower_router,
 )
 from conformly.assets.api import router as assets_router
+from conformly.catalog_demo.api import register_catalog_demo_routes
 from conformly.compliance.service import InvalidStateTransitionError, InvalidTenantReferenceError
 from conformly.config import get_settings
+from conformly.customer_demo.api import register_customer_demo_routes
 from conformly.dashboard.api import router as dashboard_router
 from conformly.entitlements.api import router as entitlements_router
 from conformly.integrations.api import integrations_router
@@ -98,7 +100,18 @@ app.add_middleware(
     allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-Request-ID", "X-Correlation-ID"],
-    expose_headers=["X-Request-ID", "X-Correlation-ID"],
+    expose_headers=[
+        "X-Request-ID",
+        "X-Correlation-ID",
+        "Content-Disposition",
+        "X-Report-Tenant-ID",
+        "X-Report-Adoption-ID",
+        "X-Report-Answer-Revision",
+        "X-Report-Selection-Revision",
+        "X-Report-SHA256",
+        "X-Preaudit-Id",
+        "X-Preaudit-Snapshot-Digest",
+    ],
 )
 app.include_router(health_router)
 app.include_router(metrics_router)
@@ -131,6 +144,9 @@ app.include_router(risks_router)
 app.include_router(assets_router)
 app.include_router(vendors_router)
 app.include_router(dashboard_router)
+
+register_catalog_demo_routes(app)
+register_customer_demo_routes(app)
 
 
 @app.middleware("http")

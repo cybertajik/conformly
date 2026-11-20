@@ -4,7 +4,7 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from conformly.authz.policy import Principal, TenantContext
+from conformly.authz.policy import AuthorizationDeniedError, Principal, TenantContext
 from conformly.authz.roles import Role
 from conformly.entitlements import service
 from conformly.entitlements.dependencies import require_module
@@ -48,3 +48,26 @@ def test_entitlements_default_and_module_check(session: Session):
     )
     assert service.is_module_enabled(session, tenant_id, "whistleblower") is True
     guard_whistleblower(tenant_context=context, database=session)  # now succeeds
+
+def test_entitlements_role_denial(session: Session):
+    tenant_id = uuid4()
+    user_id = uuid4()
+
+    # Employee does not have ENTITLEMENT_READ or ENTITLEMENT_MANAGE
+    principal = Principal(user_id=user_id)
+    context = TenantContext(tenant_id=tenant_id, user_id=user_id, role=Role.EMPLOYEE)
+
+    with pytest.raises(AuthorizationDeniedError):
+        service.get_tenant_entitlement(session, principal, context, request_id="req-e-denied-1")
+
+    with pytest.raises(AuthorizationDeniedError):
+        service.update_tenant_entitlement(
+            session,
+            principal,
+            context,
+            enabled_modules=["frameworks"],
+            max_members=10,
+            max_storage_bytes=1024,
+            request_id="req-e-denied-2",
+        )
+

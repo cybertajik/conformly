@@ -1,0 +1,35 @@
+[
+  {
+    "sequence": 1,
+    "input_type": "EvidenceRequirement",
+    "origin_namespace": "synthetic",
+    "origin_id": "ev-child-01",
+    "payload": {
+      "title": "Evidence Child",
+      "description": "Deferred by scope"
+    }
+  },
+  {
+    "sequence": 2,
+    "input_type": "AssessmentProcedure",
+    "origin_namespace": "synthetic",
+    "origin_id": "proc-child-01",
+    "payload": {
+      "title": "Procedure Child",
+      "description": "Deferred by scope"
+    }
+  },
+  {
+    "sequence": 3,
+    "input_type": "Mapping",
+    "origin_namespace": "synthetic",
+    "origin_id": "map-cross-lineage",
+    "payload": {
+      "source_version_id": "src-ver-mismatch",
+      "dependencies": [
+        "unresolved-dep"
+      ],
+      "mapping_key": "MAP-MISMATCH"
+    }
+  }
+]

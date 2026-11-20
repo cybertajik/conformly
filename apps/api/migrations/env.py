@@ -5,14 +5,23 @@ from sqlalchemy import engine_from_config, pool
 
 from conformly.assets import models as asset_models
 from conformly.audit import models as audit_models
+from conformly.catalog_v2 import models as catalog_v2_models
+from conformly.catalog_v2 import models_import as catalog_v2_import_models
 from conformly.compliance import models as compliance_models
 from conformly.config import get_settings
+from conformly.customer_demo import assessment_models as customer_assessment_models
+from conformly.customer_demo import models as customer_demo_models
+from conformly.customer_demo import preaudit_models as customer_preaudit_models
+from conformly.customer_demo import verification_models as customer_verification_models
+from conformly.customer_demo import work_models as customer_control_work_models
 from conformly.db.base import Base
 from conformly.entitlements import models as entitlement_models
 from conformly.exports import models as export_models
 from conformly.frameworks import models as framework_models
 from conformly.frameworks import workflow as framework_workflow_models
 from conformly.identity import models as identity_models
+from conformly.integrations import models as integration_models
+from conformly.lms import models as lms_models
 from conformly.notifications import models as notification_models
 from conformly.organization import models as organization_models
 from conformly.preaudit import models as preaudit_models
@@ -26,12 +35,20 @@ from conformly.whistleblower import models as whistleblower_models
 _ = (
     asset_models,
     audit_models,
+    catalog_v2_models,
+    catalog_v2_import_models,
     compliance_models,
+    customer_assessment_models,
+    customer_demo_models,
+    customer_preaudit_models,
+    customer_control_work_models,
     entitlement_models,
     export_models,
     framework_models,
     framework_workflow_models,
     identity_models,
+    integration_models,
+    lms_models,
     notification_models,
     organization_models,
     preaudit_models,

@@ -40,6 +40,8 @@ class Risk(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __table_args__ = (
         Index("ix_risks_tenant_id", "tenant_id"),
         Index("ix_risks_tenant_status", "tenant_id", "status"),
+        Index("ix_risks_legal_entity", "tenant_id", "legal_entity_id"),
+        Index("ix_risks_business_unit", "tenant_id", "business_unit_id"),
     )
 
     tenant_id: Mapped[UUID] = mapped_column(

@@ -1,0 +1,98 @@
+[
+  {
+    "sequence": 1,
+    "input_type": "CommonControl",
+    "origin_namespace": "conformly.synthetic",
+    "origin_id": "CTRL-SYN-001",
+    "payload": {
+      "control_key": "CC-SYN-001",
+      "domain": "security",
+      "title": "Synthetic Access Control",
+      "statement": "Ensure all access to production environments is authorized and logged",
+      "version_label": "1.0.0"
+    }
+  },
+  {
+    "sequence": 2,
+    "input_type": "EvidenceRequirement",
+    "origin_namespace": "conformly.synthetic",
+    "origin_id": "ER-SYN-001",
+    "payload": {
+      "parent_control_sequence": 1,
+      "parent_control_origin_namespace": "conformly.synthetic",
+      "parent_control_origin_id": "CTRL-SYN-001",
+      "requirement_key": "ER-ACC-001",
+      "title": "Quarterly User Access Review Records",
+      "frequency": "quarterly",
+      "custom_frequency": null,
+      "scope_state": "All",
+      "scope_guidance": null,
+      "assurance_purpose": "operating_effectiveness",
+      "validity_rule": "period_coverage",
+      "max_age_days": null,
+      "guidance": "Provide quarterly user access review exports signed off by department heads.",
+      "artifact_types": [
+        {
+          "artifact_type": "record",
+          "sequence": 1
+        },
+        {
+          "artifact_type": "report",
+          "sequence": 2
+        }
+      ],
+      "required_metadata": [
+        {
+          "metadata_key": "system_name",
+          "sequence": 1
+        },
+        {
+          "metadata_key": "reviewer_id",
+          "sequence": 2
+        }
+      ],
+      "source_version_id": null
+    }
+  },
+  {
+    "sequence": 3,
+    "input_type": "AssessmentProcedure",
+    "origin_namespace": "conformly.synthetic",
+    "origin_id": "AP-SYN-001",
+    "payload": {
+      "parent_control_sequence": 1,
+      "parent_control_origin_namespace": "conformly.synthetic",
+      "parent_control_origin_id": "CTRL-SYN-001",
+      "procedure_key": "AP-ACC-001",
+      "title": "Quarterly User Access Review Audit Procedure",
+      "objective": "Verify that user access reviews are conducted quarterly and documented.",
+      "sample_guidance": "Sample 25% of active users across all production systems.",
+      "scope_guidance": null,
+      "decision_guidance": "Pass if all sample reviews were signed off within 14 days of quarter end.",
+      "assessor_qualifications": "Certified Internal Auditor or equivalent experience.",
+      "steps": [
+        {
+          "sequence": 1,
+          "step_kind": "inquire",
+          "instruction": "Request the quarterly user access review schedule and reviewer assignments.",
+          "expected_output": "Approved access review schedule and assigned reviewers list."
+        },
+        {
+          "sequence": 2,
+          "step_kind": "inspect",
+          "instruction": "Inspect ticket sign-off timestamps against sample selection.",
+          "expected_output": "Signed approval tickets for all selected sample accounts."
+        }
+      ],
+      "evidence_requirements": [
+        {
+          "sequence": 1,
+          "evidence_requirement_sequence": 2,
+          "evidence_requirement_origin_namespace": "conformly.synthetic",
+          "evidence_requirement_origin_id": "ER-SYN-001"
+        }
+      ],
+      "source_version_id": null
+    }
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "sequence": 1,
+    "input_type": "Requirement",
+    "origin_namespace": "synthetic-lineage-a",
+    "origin_id": "req-shared-key",
+    "payload": {
+      "requirement_key": "SEC-1.1",
+      "normalized_outcome": "Version A outcome",
+      "source_version_id": "src-ver-a"
+    }
+  },
+  {
+    "sequence": 2,
+    "input_type": "Requirement",
+    "origin_namespace": "synthetic-lineage-b",
+    "origin_id": "req-shared-key-b",
+    "payload": {
+      "requirement_key": "SEC-1.1",
+      "normalized_outcome": "Version B outcome",
+      "source_version_id": "src-ver-b"
+    }
+  }
+]

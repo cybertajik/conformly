@@ -1,0 +1,25 @@
+[
+  {
+    "sequence": 1,
+    "input_type": "CommonControl",
+    "origin_namespace": "synthetic",
+    "origin_id": "ctrl-replay-01",
+    "payload": {
+      "control_key": "CC-REP-001",
+      "domain": "access",
+      "title": "Access Control",
+      "objective": "Restrict access to authorized personnel"
+    }
+  },
+  {
+    "sequence": 2,
+    "input_type": "Pack",
+    "origin_namespace": "synthetic",
+    "origin_id": "pack-replay-01",
+    "payload": {
+      "pack_key": "PACK-REPLAY-01",
+      "name": "Replay Pack",
+      "pack_type": "baseline"
+    }
+  }
+]

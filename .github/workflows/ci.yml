@@ -26,6 +26,10 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
+      # This job owns the ephemeral service above; never reuse an external database.
+      CONFORMLY_TEST_DATABASE_DISPOSABLE: "yes"
+      CONFORMLY_TEST_DATABASE_NAME: conformly
+      CONFORMLY_TEST_DATABASE_ROLE: conformly_app
       CONFORMLY_DATABASE_URL: postgresql+psycopg://conformly:conformly@localhost:5432/conformly
       CONFORMLY_TEST_APP_DATABASE_URL: postgresql+psycopg://conformly_app:conformly_app@localhost:5432/conformly
     defaults:
